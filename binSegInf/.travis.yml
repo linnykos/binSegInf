@@ -1,0 +1,12 @@
+language: r
+
+cache: packages
+
+r_binary_packages:
+    - wbs
+    - covr
+
+after_success:
+  - Rscript -e 'library(covr); codecov()'
+
+warnings_are_errors: true
