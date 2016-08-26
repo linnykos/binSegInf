@@ -16,3 +16,10 @@ hausdorff <- function(set1, set2, one.sided = F){
   max(dist.vecx, dist.vecy)
 }
 
+enumerateJumps <- function(vec, tol = 1e-4){
+  dif = abs(diff(vec))
+  idx = which(dif > tol)
+  
+  idx
+}
+
