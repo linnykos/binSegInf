@@ -9,6 +9,95 @@ test_that("hausdorff works properly", {
   expect_true(hausdorff(set1, set2) == 1)
 })
 
+test_that("hausdorff works on singletons", {
+  set1 <- 1:5
+  set2 <- 2
+  
+  expect_true(hausdorff(set1, set2) == 3)
+})
+
+test_that("hausdorff is symmetric", {
+  set.seed(10)
+  set1 <- sample(1:100, 10)
+  set2 <- sample(1:100, 10)
+  
+  expect_true(hausdorff(set1, set2) == hausdorff(set2, set1))
+})
+
+test_that("it returns NA if either set is empty",{
+  set1 <- numeric(0)
+  set2 <- 1:5
+  expect_true(is.na(hausdorff(set1, set2)))
+  expect_true(is.na(hausdorff(set2, set1)))
+})
+
+test_that("it computes one-sided correctly", {
+  set1 <- c(1,5,10)
+  set2 <- c(2,3,6)
+  expect_true(hausdorff(set1, set2, T) == 4)
+  expect_true(hausdorff(set2, set1, T) == 2)
+})
+
+test_that("the maximum of both one-sided is the two-sided", {
+  set.seed(10)
+  set1 <- sample(1:100, 10)
+  set2 <- sample(1:100, 10)
+  
+  target <- max(hausdorff(set1, set2, T), hausdorff(set2, set1, T))
+  expect_true(hausdorff(set1, set2) == target)
+})
+
+test_that("it works on the identity (equal to 0)", {
+  set.seed(10)
+  set1 <- sample(1:100, 10)
+  expect_true(hausdorff(set1, set1, T) == 0)
+  expect_true(hausdorff(set1, set1, F) == 0)
+})
+
+test_that("it works on the singleton", {
+  expect_true(hausdorff(1,5,T) == 4)
+  expect_true(hausdorff(5,1) == 4)
+  expect_true(hausdorff(1,5,F) == 4)
+  expect_true(hausdorff(1,1) == 0)
+})
+
+test_that("the hausdorff distance is the maximum distance of intersection",{
+  set.seed(5)
+  len <- 10
+  set1 <- sample(1:100, len)
+  set2 <- sample(1:100, len)
+  
+  res <- hausdorff(set1, set2)
+  vec1 <- numeric(len)
+  for(i in 1:len){
+    vec1[i] <- any((set1[i]-res):(set1[i]+res) %in% set2)
+  }
+  
+  expect_true(all(vec1 == TRUE))
+  
+  vec2<- numeric(len)
+  for(i in 1:len){
+    vec2[i] <- any((set2[i]-res):(set2[i]+res) %in% set1)
+  }
+  
+  expect_true(all(vec2 == TRUE))
+})
+
+test_that("the one-sided hausdorff is the max dist from set1 to set2", {
+  set.seed(20)
+  len <- 10
+  set1 <- sample(1:100, len)
+  set2 <- sample(1:100, len)
+  
+  res <- hausdorff(set1, set2, T)
+  vec1 <- numeric(len)
+  for(i in 1:len){
+    vec1[i] <- any((set1[i]-res):(set1[i]+res) %in% set2)
+  }
+  
+  expect_true(all(vec1 == TRUE))
+})
+
 #########################
 
 ## test enumerateJumps
