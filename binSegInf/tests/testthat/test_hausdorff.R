@@ -2,6 +2,11 @@ context("Test Hausdorff")
 
 ## test hausdorff
 
+test_that("it errors when set1 and set2 are not numerics", {
+  expect_error(hausdorff(c("a","b"), 1:5))
+  expect_error(hausdorff(1:5,c("a","b")))
+})
+
 test_that("hausdorff works properly", {
   set1 <- c(1,5,10)
   set2 <- set1 + 1
@@ -111,6 +116,14 @@ test_that("it works when one set is singleton", {
 #########################
 
 ## test enumerateJumps
+
+test_that("it errors when vec is not numeric", {
+  expect_error(enumerateJumps(c("a","b")))
+})
+
+test_that("it returns numeric(0) for vec is length 0", {
+  expect_true(length(enumerateJumps(numeric(0))) == 0)
+})
 
 test_that("jumps works properly", {
   vec <- rep(1:4, each = 10)

@@ -40,7 +40,7 @@ hausdorff <- function(set1, set2, one.sided = F){
 #' @export
 enumerateJumps <- function(vec, tol = 1e-4){
   if(!is.numeric(vec)) stop("vec must be numeric")
-  if(length(vec) == 1) return(numeric(0))
+  if(length(vec) <= 1) return(numeric(0))
   
   dif = abs(diff(vec))
   idx = which(dif > tol)
