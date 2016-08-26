@@ -1,3 +1,17 @@
+#' Computes the Hausdorff Distance between TWo Sets
+#' 
+#' The two sets, set1 and set2, must be numeric vectors. If one.sided is true,
+#' the hausdorff returns max_(a in set1) min_(b in set2) |a-b|.
+#' 
+#' If either sets are empty, NA is returned.
+#'
+#' @param set1 a numeric vector
+#' @param set2 a numeric vector
+#' @param one.sided a logical to determine if a one-sided distance or 
+#'   two-sided distance is computed.
+#'
+#' @return a numeric (length 1)
+#' @export
 hausdorff <- function(set1, set2, one.sided = F){
   if(!is.numeric(set1) | !is.numeric(set2)) stop(paste("set1 and set2 must be",
     "numerics"))
