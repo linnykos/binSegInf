@@ -1,3 +1,29 @@
+#' CpVector Class Constructor
+#' 
+#' Creates an instance of the CpVector, short for "Change Point Vector".
+#' A CpVector objects has 3 elements, data (the realization from the
+#' changepoint model), jump.height (the height of jumps in the true signal)
+#' and jump.loc (the locations of the jumps in the true signal).
+#' 
+#' Here, CpVector is draws samples from a piecewise constant true signal from
+#' points 1 to n. The jump.loc is a vector between 0 and 1 (inclusive and 
+#' exclusive repsectively), and CpVector automatically scales jump.loc to
+#' fit between 1 and n. Here, jump.loc must always be one less element than
+#' jump.height.
+#' 
+#' Here, func is a function that dictates the noise model. For example, the
+#' default is rnorm.
+#'
+#' @param n the number of realizations
+#' @param jump.height a numeric vector of the jump heights
+#' @param jump.loc a numeric vector (between 0 (inclusive) and 1 (exclusive))
+#' of the jump locations between 0 and 1.
+#' @param func the function to dictate the noise model. The first parameter
+#' of func must dictate how many samples are drawn.
+#' @param ... additional parameters to pass into func.
+#'
+#' @return a CpVector instance
+#' @export
 CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
   if(length(jump.height) != length(jump.loc) + 1) 
     stop("jump.height must be one element more than jump.loc")

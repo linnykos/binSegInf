@@ -1,5 +1,20 @@
-plot.CpVector <- function(x, col.dots = grDevices::rgb(0.5,0.5,0.5), 
-  col.line = 1, ...){
+#' Plot function for CpVector
+#'
+#' @param x the CpVector instance
+#' @param col.dots the color of the data points (x$data)
+#' @param col.line the color of the true signal (x$jump.height and x$jump.idx)
+#' @param ... additional graphical parameters such as pch, par, etc.
+#'
+#' @return void
+#' @export
+#'
+#' @examples
+#' set.seed(10)
+#' res <- CpVector(n = 100, jump.height = 1:4, jump.loc = c(.25,.5,.75))
+#' defaultPlotDefaults()
+#' plot(res, ylab = "Value", xlab = "n")
+plot.CpVector <- function(x, col.dots = defaultColors(-1, 0.75), 
+  col.line = defaultColors(1), ...){
   
   graphics::plot(x$data, col = col.dots, ...)
   

@@ -7,7 +7,7 @@
 defaultColors(vec = NA, transparency = 1)
 }
 \arguments{
-\item{vec}{a vector of positive integers ranging between 
+\item{vec}{a vector of integers ranging between 
 .defaultColorRange() (inclusive)}
 
 \item{transparency}{a numeric between 0 and 1 (inclusive) to set the
