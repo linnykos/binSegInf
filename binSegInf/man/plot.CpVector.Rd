@@ -5,7 +5,7 @@
 \title{Plot function for CpVector}
 \usage{
 \method{plot}{CpVector}(x, col.dots = defaultColors(-1, 0.75),
-  col.line = defaultColors(1), ...)
+  col.line = defaultColors(1), ylim = NA, ...)
 }
 \arguments{
 \item{x}{the CpVector instance}
@@ -13,6 +13,8 @@
 \item{col.dots}{the color of the data points (x$data)}
 
 \item{col.line}{the color of the true signal (x$jump.height and x$jump.idx)}
+
+\item{ylim}{the graphical parameter ylim}
 
 \item{...}{additional graphical parameters such as pch, par, etc.}
 }
