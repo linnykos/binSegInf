@@ -1,4 +1,4 @@
-CpVector <- function(n, jump.height, jump.loc, func = rnorm, ...){
+CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
   if(length(jump.height) != length(jump.loc) + 1) 
     stop("jump.height must be one element more than jump.loc")
   if(min(jump.loc) < 0 | max(jump.loc) >= 1)
