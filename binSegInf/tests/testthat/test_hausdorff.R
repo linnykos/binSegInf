@@ -19,3 +19,15 @@ test_that("jumps works properly", {
   
   expect_true(all(res == c(10,20,30)))
 })
+
+test_that("it works when vec is length 1", {
+  vec <- 5
+  expect_true(length(enumerateJumps(vec)) == 0)
+})
+
+test_that("it works when vec is all singleton", {
+  vec <- 1:10
+  res <- enumerateJumps(vec)
+  
+  expect_true(all(res == 1:9))
+})
