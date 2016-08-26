@@ -12,6 +12,16 @@ test_that("it splits the jump indices evenly", {
   expect_true(all(d >= -1))
 })
 
+test_that("the number of returned idx are the same number of locs",{
+  set.seed(10)
+  res <- .computeJumpIdx(100, sample(1:100,10)/100)
+  expect_true(length(res) == 10)
+})
+
+test_that("it errors when n is too small", {
+  expect_error(.computeJumpIdx(10, c(0.1,0.11)))
+})
+
 ##################
 
 ## test .formMeanVec
@@ -72,5 +82,5 @@ test_that("it errors when jump.loc is not increasing",{
 test_that("it errors when n is not a positive integer", {
   expect_error(CpVector(0, 1:2, .5))
   expect_error(CpVector(-1, 1:2, .5))
-  expect_error(CpVector(50.2, 1:2, .5))
+  expect_error(CpVector(50.2, 1:2,.5))
 })
