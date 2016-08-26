@@ -98,6 +98,16 @@ test_that("the one-sided hausdorff is the max dist from set1 to set2", {
   expect_true(all(vec1 == TRUE))
 })
 
+test_that("it works when one set is singleton", {
+  set1 <- c(1,2,8,11)
+  set2 <- 4
+  
+  expect_true(hausdorff(set1, set2, F) == 7)
+  expect_true(hausdorff(set2, set1, F) == 7)
+  expect_true(hausdorff(set1, set2, T) == 7)
+  expect_true(hausdorff(set2, set1, T) == 2)
+})
+
 #########################
 
 ## test enumerateJumps
