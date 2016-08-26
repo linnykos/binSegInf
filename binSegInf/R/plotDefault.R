@@ -1,9 +1,19 @@
-defaultColors <- function(vec = NA, transparency = 0){
-  stopifnot(is.numeric(vec))
-  stopifnot(is.numeric(transparency), length(transparency) == 1)
+#' Default Colors
+#'
+#' @param vec a vector of positive integers ranging between 
+#' .defaultColorRange() (inclusive)
+#' @param transparency a numeric between 0 and 1 (inclusive) to set the
+#' transparency of the colors
+#'
+#' @return void
+#' @export
+defaultColors <- function(vec = NA, transparency = 1){
+  if(!is.na(vec)) stopifnot(is.numeric(vec), all(vec > 0), all(vec %% 1 == 0))
+  stopifnot(is.numeric(transparency), length(transparency) == 1,
+    transparency >= 0, transparency <= 1)
   
   if(all(is.na(vec))) vec <- .defaultColorRange()
-  trans <- round(transparency / 255)
+  trans <- round(transparency*255)
   
   color.numeric <- .defaultColorRange()
   color.rgb <- c(
@@ -15,44 +25,36 @@ defaultColors <- function(vec = NA, transparency = 0){
   plyr::mapvalues(vec, from = color.numeric, to = color.rgb, warn_missing = F)
 }
 
-.defaultColorRange <- function(){
-  1:4
-}
+.defaultColorRange <- function(){1:4}
 
 .demoColors <- function(){
   col.vec <- defaultColors()
   defaultPlotDefaults()
   graphics::plot(x = 1:length(col.vec), y = rep(1, length(col.vec)), 
-    col = col.vec, cex = 4)
+    col = col.vec, cex = 4, xlab = "", ylab = "", yaxt = "n")
 }
 
+.defaultFont <- function(){"sans"}
 
-#' Default Font
+.defaultCexDefault <- function(){1.5}
+
+.defaultPchDefault <- function(){16}
+
+
+#' Default Plot Settings
+#' 
+#' Removes all the plots and currently rendering pdf figures and sets
+#' all the default graphical parameters. Useful for standardizing the figures.
+#' 
+#' This sets the graphical parameters, "pch", "cex", "family" and "mar".
 #'
-#' @return a character of the font
+#' @return void
 #' @export
-defaultFont <- function(){
-  "sans"
-}
-
-#' Default Graphical Parameter (Cex) 
-#'
-#' @return a numeric of the cex
-#' @export
-defaultCexDefault <- function(){1.5}
-
-#' Default Graphical Parameter (Pch)
-#'
-#' @return a numeric of the pch
-#' @export
-defaultPchDefault <- function(){16}
-
-
 defaultPlotDefaults <- function(){
   res <- names(grDevices::dev.cur())
   if(res != "null device" & res != "pdf") grDevices::graphics.off()
-  graphics::par(pch = defaultPchDefault(), cex = defaultCexDefault(), 
-    family = defaultFont(), mar = c(4,4,1,1))
+  graphics::par(pch = .defaultPchDefault(), cex = .defaultCexDefault(), 
+    family = .defaultFont(), mar = c(4,4,1,1))
   
   invisible()
 }
