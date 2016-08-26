@@ -7,7 +7,7 @@ CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
   if(n %% 1 != 0 | n < 0) stop("n must be a positive integer")
   
   jump.idx <- .computeJumpIdx(n, jump.loc)
-  mean.vec <- .formMeanVec(n, jump.idx, jump.height)
+  mean.vec <- .formMeanVec(n, jump.height, jump.idx)
   
   data <- mean.vec + func(n, ...)
   
@@ -19,7 +19,7 @@ CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
   round(n*jump.loc)
 }
 
-.formMeanVec <- function(n, jump.loc, jump.height){
-  diff.vec <- diff(c(0,jump.loc,n))
+.formMeanVec <- function(n, jump.height, jump.idx){
+  diff.vec <- diff(c(0,jump.idx,n))
   rep(jump.height, times = diff.vec)
 }

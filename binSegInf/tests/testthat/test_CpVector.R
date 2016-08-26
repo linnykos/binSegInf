@@ -17,9 +17,9 @@ test_that("it splits the jump indices evenly", {
 ## test .formMeanVec
 
 test_that("it forms the mean vector properly", {
-  jump.loc <- c(25, 50, 75)
+  jump.idx <- c(25, 50, 75)
   jump.height <- 1:4
-  res <- .formMeanVec(100, jump.loc, jump.height)
+  res <- .formMeanVec(100, jump.height, jump.idx)
   
   expect_true(length(res) == 100)
   
