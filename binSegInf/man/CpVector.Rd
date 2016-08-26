@@ -35,6 +35,9 @@ exclusive repsectively), and CpVector automatically scales jump.loc to
 fit between 1 and n. Here, jump.loc must always be one less element than
 jump.height.
 
+Also, n must be large enough with respect to jump.loc that round(n*jump.loc)
+must be distinct integers. Otherwise, an error will be thrown.
+
 Here, func is a function that dictates the noise model. For example, the
 default is rnorm.
 }

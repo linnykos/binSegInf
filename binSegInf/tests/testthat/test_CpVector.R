@@ -33,10 +33,44 @@ test_that("it forms the mean vector properly", {
 ## test CpVector
 
 test_that("it forms a proper CpVector class", {
-  res <- CpVector(n = 100, 1:4, c(.25,.5,.75))
+  res <- CpVector(100, 1:4, c(.25,.5,.75))
   expect_true(length(res$data) == 100)
   expect_true(class(res) == "CpVector")
   
   expect_true(all(res$jump.height == 1:4))
   expect_true(all(res$jump.idx == c(25,50,75)))
+})
+
+test_that("it errors jump.height isn't one longer than jump.loc",{
+  expect_error(CpVector(10, 1:4, .5))
+})
+
+test_that("it errors when n, jump.loc or jump.height are not numeric", {
+  expect_error(CpVector("a", 1:2, .5))
+  expect_error(CpVector(10, c("a","b"), .5))
+  expect_error(CpVector(10, 1:2, "a"))
+  
+  res <- CpVector(10, 1:2, .5)
+  expect_true(class(res) == "CpVector")
+})
+
+test_that("jump.loc must be between 0 and 1, inclusive and exclusive", {
+  expect_error(CpVector(10, 1:2, -1))
+  expect_error(CpVector(10, 1:2, 1))
+})
+
+test_that("when jump.loc is 0, there's a jump.idx of 1", {
+  res <- CpVector(100, 1:2, 0)
+  expect_true(res$jump.idx == 1)
+})
+
+test_that("it errors when jump.loc is not increasing",{
+  expect_error(CpVector(100, 1:4, c(.25,.75,.5)))
+  expect_error(CpVector(100, 1:4, c(.25, .6, .6)))
+})
+
+test_that("it errors when n is not a positive integer", {
+  expect_error(CpVector(0, 1:2, .5))
+  expect_error(CpVector(-1, 1:2, .5))
+  expect_error(CpVector(50.2, 1:2, .5))
 })

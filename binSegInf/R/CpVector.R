@@ -11,6 +11,9 @@
 #' fit between 1 and n. Here, jump.loc must always be one less element than
 #' jump.height.
 #' 
+#' Also, n must be large enough with respect to jump.loc that round(n*jump.loc)
+#' must be distinct integers. Otherwise, an error will be thrown.
+#' 
 #' Here, func is a function that dictates the noise model. For example, the
 #' default is rnorm.
 #'
@@ -25,6 +28,8 @@
 #' @return a CpVector instance
 #' @export
 CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
+  if(!is.numeric(n) | !is.numeric(jump.height) | !is.numeric(jump.loc))
+    stop("n, jump.height and jump.loc must be numeric")
   if(length(jump.height) != length(jump.loc) + 1) 
     stop("jump.height must be one element more than jump.loc")
   if(min(jump.loc) < 0 | max(jump.loc) >= 1)
@@ -42,7 +47,13 @@ CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
 }
 
 .computeJumpIdx <- function(n, jump.loc){
-  round(n*jump.loc)
+  vec <- round(n*jump.loc)
+  vec <- sapply(vec, function(x) {max(min(x,n),1)})
+  
+  if(length(vec) != length(unique(vec))) stop(paste("n is too small compared",
+    "to jump.loc that changepoints are not unique"))
+  
+  vec
 }
 
 .formMeanVec <- function(n, jump.height, jump.idx){
