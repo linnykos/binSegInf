@@ -29,6 +29,15 @@ hausdorff <- function(set1, set2, one.sided = F){
   max(dist.vecx, dist.vecy)
 }
 
+#' Compute the Jump Locations
+#' 
+#' Here, an idx i is a changepoint if i+1 != i.
+#'
+#' @param vec a numeric vector
+#' @param tol the numeric threshold to determine if a location is a changepoint
+#'
+#' @return a set of numeric integers.
+#' @export
 enumerateJumps <- function(vec, tol = 1e-4){
   if(!is.numeric(vec)) stop("vec must be numeric")
   if(length(vec) == 1) return(numeric(0))
