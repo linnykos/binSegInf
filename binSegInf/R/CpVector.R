@@ -58,6 +58,8 @@ CpVector <- function(n, jump.height = 0, jump.loc = NA, func = stats::rnorm,
 }
 
 .computeJumpIdx <- function(n, jump.loc){
+  if(any(is.na(jump.loc))) return(numeric(0))
+  
   vec <- round(n*jump.loc)
   vec <- sapply(vec, function(x) {max(min(x,n),1)})
   

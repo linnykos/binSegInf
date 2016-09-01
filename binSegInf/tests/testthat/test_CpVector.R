@@ -22,6 +22,10 @@ test_that("it errors when n is too small", {
   expect_error(.computeJumpIdx(10, c(0.1,0.11)))
 })
 
+test_that("it returns numeric(0) if jump.loc is NA", {
+  expect_true(length(.computeJumpIdx(100, NA)) == 0)
+})
+
 ##################
 
 ## test .formMeanVec
@@ -36,6 +40,12 @@ test_that("it forms the mean vector properly", {
   d <- diff(table(res))
   expect_true(all(d <= 1))
   expect_true(all(d >= -1))
+})
+
+test_that("it works when jump.idx is numeric(0)", {
+  res <- .formMeanVec(100, 1, numeric(0))
+  expect_true(all(res == 1))
+  expect_true(length(res) == 100)
 })
 
 ######################
@@ -83,4 +93,9 @@ test_that("it errors when n is not a positive integer", {
   expect_error(CpVector(0, 1:2, .5))
   expect_error(CpVector(-1, 1:2, .5))
   expect_error(CpVector(50.2, 1:2,.5))
+})
+
+test_that("it errors if jump.loc has mis-NA's", {
+  expect_error(CpVector(100, 1:3, c(.5, NA)))
+  expect_error(CpVector(100, 1:3, c(.5, .7, NA)))
 })
