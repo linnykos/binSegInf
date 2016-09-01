@@ -27,14 +27,25 @@
 #'
 #' @return a CpVector instance
 #' @export
-CpVector <- function(n, jump.height, jump.loc, func = stats::rnorm, ...){
-  if(!is.numeric(n) | !is.numeric(jump.height) | !is.numeric(jump.loc))
-    stop("n, jump.height and jump.loc must be numeric")
-  if(length(jump.height) != length(jump.loc) + 1) 
-    stop("jump.height must be one element more than jump.loc")
-  if(min(jump.loc) < 0 | max(jump.loc) >= 1)
-    stop("jump.loc must lie between 0 (inclusive) and 1 (exclusive)")
-  if(!all(diff(jump.loc) > 0)) stop("jump.loc must be strictly increasing")
+CpVector <- function(n, jump.height = 0, jump.loc = NA, func = stats::rnorm, 
+  ...){
+  
+  if(!is.numeric(n) | !is.numeric(jump.height))
+    stop("n and jump.height must be numeric")
+  if(!any(is.na(jump.loc))){
+    if(!is.numeric(jump.loc)) stop("jump.loc must be numeric")
+    if(length(jump.height) != length(jump.loc) + 1) 
+      stop("jump.height must be one element more than jump.loc")
+    if(min(jump.loc) < 0 | max(jump.loc) >= 1)
+      stop("jump.loc must lie between 0 (inclusive) and 1 (exclusive)")
+    if(!all(diff(jump.loc) > 0)) stop("jump.loc must be strictly increasing")
+  } else {
+    if(length(jump.height) != 1)
+      stop("jump.height must be one element since jump.loc = NA")
+    if(length(jump.loc) != 1)
+      stop("jump.loc must be one element if it contains any NA")
+  }
+  
   if(n %% 1 != 0 | n < 0) stop("n must be a positive integer")
   
   jump.idx <- .computeJumpIdx(n, jump.loc)
