@@ -99,3 +99,17 @@ test_that("it errors if jump.loc has mis-NA's", {
   expect_error(CpVector(100, 1:3, c(.5, NA)))
   expect_error(CpVector(100, 1:3, c(.5, .7, NA)))
 })
+
+test_that("it fails if jump.height is not length 1 when jump.idx is NA",{
+  expect_error(CpVector(100, numeric(0), NA))
+  expect_error(CpVector(100, NA, NA))
+  expect_error(CpVector(100, c(0,1), NA))
+})
+
+test_that("it works with no jumps", {
+  set.seed(10)
+  res <- CpVector(10000, 1, NA)
+  expect_true(abs(mean(res$data) - 1) < 0.01)
+  expect_true(res$jump.height == 1)
+  expect_true(length(res$jump.idx) == 0)
+})
