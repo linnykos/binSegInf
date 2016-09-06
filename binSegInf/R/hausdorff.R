@@ -29,6 +29,10 @@ hausdorff <- function(set1, set2, one.sided = F){
   max(dist.vecx, dist.vecy)
 }
 
+testFunc <- funtion(void){
+  paste("This line is supposed to make the package crash"
+}
+
 #' Compute the Jump Locations
 #' 
 #' Here, an idx i is a changepoint if i+1 != i.
