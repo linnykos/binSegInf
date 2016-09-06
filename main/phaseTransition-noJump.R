@@ -4,7 +4,7 @@ library(genlasso)
 
 simulationGenerator <- function(rule, paramMat, criterion, trials){
   res <- lapply(1:nrow(paramMat), function(x){
-    sapply(1:trials, function(y){set.seed(y); criterion(rule(x))})
+    sapply(1:trials, function(y){set.seed(y); criterion(rule(paramMat[x,]))})
   })
   
   names(res) <- sapply(1:nrow(paramMat), function(x){
@@ -31,6 +31,13 @@ simulationGenerator <- function(rule, paramMat, criterion, trials){
   order(obj$res[,"min.th"], decreasing = TRUE)[1:numJumps]
 }
 
+.oneJumpRuleClosure <- function(n, func){
+  function(vec){
+    print(vec)
+    func(CpVector(n, vec[1:2], vec[3])$data)
+  }
+}
+
 #####################################
 
 noJumpRuleFl <- .noJumpRuleClosure(100, fusedlasso1d)
@@ -42,5 +49,12 @@ trials <- 10
 resFl <- simulationGenerator(noJumpRuleFl, paramMat, noJumpCriterion, trials)
 resBs <- simulationGenerator(noJumpRuleBs, paramMat, noJumpCriterion, trials)
 
+
+
+oneJumpRuleFl <- .oneJumpRuleClosure(100, fusedlasso1d)
+paramMat <- matrix(c(0,1,.5,0,1,.2), ncol = 3, nrow = 2, byrow = T)
+
+resFl1Jump <- simulationGenerator(oneJumpRuleFl, paramMat, noJumpCriterion,
+  trials)
 
 
