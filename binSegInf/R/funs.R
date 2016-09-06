@@ -17,26 +17,19 @@
 #' sd = .5
 #' mn = c(rep(-3, n/4), rep(2, n/4), rep(-1, n/4), rep(1, n/4))
 #' y = mn + rnorm(n,0,sd)
-#' blist = zlist = matrix(NA, nrow = n, ncol = 2^8)e
+#' ## blist are the breaks, and zlist are the associated signs.
+#' blist = zlist = matrix(NA, nrow = n, ncol = 2^8)
 #' thresh = .5
 #' binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n)
-
 binseg = function(s, e, j, k, thresh, y, n){
+    cat("s,e,j,k",fill=T)
     cat(s,e,j,k,fill=T)
     if(e-s<1){
-       ## cat(s,e,fill=T)
+        cat("terminated because e-s<1",fill=T)
+       slist[j,k] <<- s
+       elist[j,k] <<- e
        return() 
     } else {
-        leftindslist = lapply((s+1):e,
-                              function(rightind){s:(rightind-1)}) 
-        rightindslist = lapply((s+1):e,
-                               function(leftind){leftind:e}) 
-
-        ## Calculate all differences and their signs
-        df = unlist(Map(function(leftind,rightind){ mean(y[rightind]) - mean(y[leftind]) },
-                            leftindslist,
-                            rightindslist))
-
         all.bs = (s:(e-1))
         df = sapply(all.bs, function(b) sqrt.mn.diff(s=s, b=b, e=e, n=n, y=y, contrast.vec=FALSE, right.to.left=TRUE))
         df = c(rep(NA,s-1),df, rep(NA,n-s))
@@ -45,14 +38,24 @@ binseg = function(s, e, j, k, thresh, y, n){
         ## Obtain breakpoint and its sign
         b = which.max(abs(df))
         z = sn[b]
+        cat("b is", b, fill=T)
 
         ## Check threshold exceedance, then store
         if(abs(df[b]) < thresh){
+            Blist[j+1,k] <<- b
+            Zlist[j+1,k] <<- z
+            slist[j,k] <<- s
+            elist[j,k] <<- e
+            cat("terminated because biggest gap was",abs(df[b]),fill=T)
             return()
-        } else {
-            cat(df[b])
+        } else { 
+            cat(df[b], fill=T)
             blist[j+1,k] <<- b
+            Blist[j+1,k] <<- b
             zlist[j+1,k] <<- z
+            Zlist[j+1,k] <<- z
+            slist[j,k] <<- s
+            elist[j,k] <<- e
         }
                     
         ## Recurse
@@ -62,6 +65,92 @@ binseg = function(s, e, j, k, thresh, y, n){
 }
 
 
+
+#' Calculates the halfspace vector for the maximizing breakpoint and all the signs.
+#' @examples
+#' y = c(rnorm(10,0,1), rnorm(10,4,1))
+#' # Calculate linear inequality vectors
+#' myineqs = basis.hs(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
+halfspaces = function(s, b, e, thresh, n, y, terminal=F){
+    
+    if(!(s <= b & b <= e)){
+        stop("s<=b<=e is not true")
+    }
+
+    V = matrix(NA, nrow = n^2, ncol = n)
+    u = rep(NA,n)
+    other.bs = (s:(e-1))
+    other.bs = other.bs[other.bs != b]
+    ii = 0
+
+    ## Sqr mean difference of (s,b,e)
+    v.this = sqrt.mn.diff(s=s, b=b, e=e, n=n, contrast.vec=T,
+                          right.to.left=T)
+    z.this = sign(sum(v.this * y))
+    vz.this = v.this * z.this
+
+    ## Characterizing this break's sign.
+    ii = ii+1
+    V[ii,] = vz.this
+    u[ii] = 0
+
+    ## Characterizing Gap size exceedance
+    if(!terminal){
+        ii = ii+1
+        V[ii,] = vz.this## (if(!terminal) vz.this else -vz.this)
+        u[ii] = thresh ##(if(!terminal) thresh else -thresh)
+    }
+
+    if(length(other.bs) == 0){
+        V = V[c(),]
+    } else {
+        for(other.b in other.bs){
+           ## Sqrt mean difference of (s,other.b,e)
+            v.other = sqrt.mn.diff(s=s, b=other.b, e=e, n=n, contrast.vec=T,
+                                   right.to.left=T)
+            z.other = sign(sum(v.other * y))
+            vz.other = v.other * z.other
+
+            ## Characterizing other breaks' signs
+            ii = ii+1
+            V[ii,] = vz.other
+            u[ii] = 0
+
+            ## Characterizing maximizer of |sqrt mean difference|
+            if(!terminal){
+                ii = ii+1
+                V[ii,] = -vz.other + vz.this
+                u[ii] = 0
+            }
+            
+            ## Characterizing failure to exceed gap size (for terminal nodes)
+            if(terminal){
+                ii = ii + 1
+                V[ii,] = -vz.other
+                u[ii] = -thresh
+            }
+                
+            ## Quick sanity check of b
+            stopifnot(sum(vz.this  * y) > 0)
+            stopifnot(sum(vz.other * y) > 0)
+            stopifnot(sum(vz.this*y) > sum(vz.other*y))
+            if(!terminal){ stopifnot(sum(vz.this*y) > thresh)}
+            if(terminal){  stopifnot(sum(-vz.other*y) > -thresh)}
+        }
+        V = V[1:ii,,drop=F]
+        u = u[1:ii]
+    }
+    return(list(V=V,u=u))
+}
+
+
+#' Helper to see if V is big enough to store ii'th row. 
+#' @examples
+#' if(!big.enough(V,ii)){V = rbind(V, matrix(NA,nrow=nrow(V),ncol=n)}
+big.enough = function(V,ii){
+    nrow(V)
+    ## Not written yet.
+}
 
 #' Helper function to get right-to-left mean difference, or the contrast vector
 sqrt.mn.diff = function(s, b, e, n, y = NA, contrast.vec = FALSE,
@@ -89,7 +178,7 @@ sqrt.mn.diff = function(s, b, e, n, y = NA, contrast.vec = FALSE,
 #' # Calculate linear inequality vectors
 #' myineqs = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
 #' 
-haarbasis = function(s, b, e, n, y, type=c("basis", "ineq")){
+haarbasis = function(s, b, e, n, y, type=c("basis", "ineq"),){
     type = match.arg(type)
     
     if(!(s <= b & b <= e)){
@@ -109,7 +198,6 @@ haarbasis = function(s, b, e, n, y, type=c("basis", "ineq")){
         V = V[c(),]
     } else {
         for(other.b in other.bs){
-            cat(s,b,other.b,e,fill=T)
             ii = ii+1
             v.this = v.other = rep(NA,n)
 
@@ -173,4 +261,28 @@ check.orth.basis = function(basislist, tol = 1E-10){
     }
     print(inner.products)
     return(!any(as.numeric(inner.products)>tol, na.rm=T)) 
+}
+
+
+
+#' Helper to collapse matrix (with NAs) to a vector of unique elements.
+    collapse.prev = function(mat){
+        collapsed = as.numeric(mat)
+        collapsed = collapsed[!is.na(collapsed)]
+        collapsed = unique(collapsed)
+        return(collapsed)
+    }
+
+
+#' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
+trim = function(mat, type = c("rowcol","row")){
+    type = match.arg(type)
+    if(is.null(dim(mat))){ mat = mat[1:max(which(!is.na(mat)))]; return(mat)}
+    last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
+    mat = mat[1:last.j,,drop=F]
+    if(type=="rowcol"){
+        last.j = max(which(!(apply(mat,2,function(mycol) return(all(is.na(mycol)))))))
+        mat = mat[,1:last.j,drop=F]
+    }
+    return(mat)
 }
