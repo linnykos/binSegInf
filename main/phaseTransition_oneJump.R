@@ -1,20 +1,15 @@
+rm(list=ls())
 source("phaseTransition_source.R")
+oneJumpRuleFl <- .oneJumpRuleClosure(200, fusedlasso1d)
+firstJumpCriterion <- .extractJumpClosure(1)
+trials <- 100
+cores <- 20
 
-noJumpRuleFl <- .noJumpRuleClosure(100, fusedlasso1d)
-noJumpRuleBs <- .noJumpRuleClosure(100, sbs)
-noJumpCriterion <- .extractJumpClosure(1)
-paramMat <- matrix(0, 1, 1)
-trials <- 10
+jump.height <- seq(0, 5, length.out = 11)[-1]
+jump.loc <- seq(0, 1, length.out = 11)[2:10]
+paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
 
-resFl <- simulationGenerator(noJumpRuleFl, paramMat, noJumpCriterion, trials)
-resBs <- simulationGenerator(noJumpRuleBs, paramMat, noJumpCriterion, trials)
+resFl1Jump <- simulationGenerator(oneJumpRuleFl, paramMat, firstJumpCriterion,
+  trials, cores)
 
-
-
-oneJumpRuleFl <- .oneJumpRuleClosure(100, fusedlasso1d)
-paramMat <- matrix(c(0,1,.5,0,1,.2), ncol = 3, nrow = 2, byrow = T)
-
-resFl1Jump <- simulationGenerator(oneJumpRuleFl, paramMat, noJumpCriterion,
-  trials)
-
-
+save.image(file = paste0("res/oneJump-", Sys.Date(), ".RData"))

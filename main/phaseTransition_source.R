@@ -13,9 +13,13 @@ simulationGenerator <- function(rule, paramMat, criterion, trials,
   if(!is.na(cores)) registerDoMC(cores = cores)
 
   res <- lapply(1:nrow(paramMat), function(x){
+    cat(paste0("Row ", x, " started!\n"))
+
     fun <- function(y){set.seed(y); criterion(rule(paramMat[x,]))}
     if(is.na(cores)){
-      sapply(1:trials, fun)
+      vec <- sapply(1:trials, fun)
+      print(vec)
+      vec
     } else {
       .adjustFormat(foreach(trial = 1:trials) %dopar% fun(trial))
     }
@@ -58,7 +62,6 @@ simulationGenerator <- function(rule, paramMat, criterion, trials,
 
 .oneJumpRuleClosure <- function(n, func){
   function(vec){
-    print(vec)
     func(CpVector(n, vec[1:2], vec[3])$data)
   }
 }
