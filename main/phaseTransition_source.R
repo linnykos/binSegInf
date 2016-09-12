@@ -1,16 +1,41 @@
+#library(devtools)
+#install_github("linnylin92/binSegInf", ref = "kevin", subdir = "binSegInf")
+
 library(binSegInf)
 library(wbs)
 library(genlasso)
+library(foreach)
+library(doMC)
 
-simulationGenerator <- function(rule, paramMat, criterion, trials){
+simulationGenerator <- function(rule, paramMat, criterion, trials, 
+ cores = NA){
+
+  if(!is.na(cores)) registerDoMC(cores = cores)
+
   res <- lapply(1:nrow(paramMat), function(x){
-    sapply(1:trials, function(y){set.seed(y); criterion(rule(paramMat[x,]))})
+    fun <- function(y){set.seed(y); criterion(rule(paramMat[x,]))}
+    if(is.na(cores)){
+      sapply(1:trials, fun)
+    } else {
+      .adjustFormat(foreach(trial = 1:trials) %dopar% fun(trial))
+    }
   })
   
   names(res) <- sapply(1:nrow(paramMat), function(x){
     paste0(paramMat[x,], collapse = "-")})
   
   res
+}
+
+.adjustFormat <- function(lis){
+  len <- sapply(lis, length)
+  if(length(unique(len)) != 1) return(lis)
+
+  ncol <- length(unique(len))
+  if(ncol == 1) return(as.numeric(unlist(lis)))
+ 
+  vec <- as.numeric(unlist(lis))
+  matrix(vec, ncol = ncol, byrow = T)
 }
 
 .noJumpRuleClosure <- function(n, func){
@@ -37,24 +62,4 @@ simulationGenerator <- function(rule, paramMat, criterion, trials){
     func(CpVector(n, vec[1:2], vec[3])$data)
   }
 }
-
-#####################################
-
-noJumpRuleFl <- .noJumpRuleClosure(100, fusedlasso1d)
-noJumpRuleBs <- .noJumpRuleClosure(100, sbs)
-noJumpCriterion <- .extractJumpClosure(1)
-paramMat <- matrix(0, 1, 1)
-trials <- 10
-
-resFl <- simulationGenerator(noJumpRuleFl, paramMat, noJumpCriterion, trials)
-resBs <- simulationGenerator(noJumpRuleBs, paramMat, noJumpCriterion, trials)
-
-
-
-oneJumpRuleFl <- .oneJumpRuleClosure(100, fusedlasso1d)
-paramMat <- matrix(c(0,1,.5,0,1,.2), ncol = 3, nrow = 2, byrow = T)
-
-resFl1Jump <- simulationGenerator(oneJumpRuleFl, paramMat, noJumpCriterion,
-  trials)
-
 
