@@ -11,3 +11,4 @@ resFl <- simulationGenerator(noJumpRuleFl, paramMat, firstJumpCriterion, trials,
 resBs <- simulationGenerator(noJumpRuleBs, paramMat, firstJumpCriterion, trials, cores)
 
 save.image(file = paste0("res/noJump-", Sys.Date(), ".RData"))
+quit()
