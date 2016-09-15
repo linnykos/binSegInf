@@ -20,7 +20,7 @@
 #' ## blist are the breaks, and zlist are the associated signs.
 #' blist = zlist = matrix(NA, nrow = n, ncol = 2^8)
 #' thresh = .5
-#' binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n)
+#' ##binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n) ## check() doesn't like this; not sure why.
 binseg = function(s, e, j, k, thresh, y, n){
     cat("s,e,j,k",fill=T)
     cat(s,e,j,k,fill=T)
@@ -66,13 +66,17 @@ binseg = function(s, e, j, k, thresh, y, n){
 
 
 
-#' Calculates the halfspace vector for the maximizing breakpoint and all the signs.
+#' Calculates the halfspace vector for the maximizing breakpoint and all the
+#' signs.
+#' @param is.terminal.node T/F for whether the node is one where the threshhold
+#'     is not breached.
 #' @examples
 #' y = c(rnorm(10,0,1), rnorm(10,4,1))
 #' # Calculate linear inequality vectors
-#' myineqs = basis.hs(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
-halfspaces = function(s, b, e, thresh, n, y, terminal=F){
+#' ##myineqs = halfspaces(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
+halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     
+    if(verbose) cat("s,b,e are", s,b,e, fill=T)
     if(!(s <= b & b <= e)){
         stop("s<=b<=e is not true")
     }
@@ -95,10 +99,11 @@ halfspaces = function(s, b, e, thresh, n, y, terminal=F){
     u[ii] = 0
 
     ## Characterizing Gap size exceedance
-    if(!terminal){
+    if(!is.terminal.node){
         ii = ii+1
         V[ii,] = vz.this## (if(!terminal) vz.this else -vz.this)
         u[ii] = thresh ##(if(!terminal) thresh else -thresh)
+        stopifnot(sum(vz.this*y) > thresh)
     }
 
     if(length(other.bs) == 0){
@@ -112,31 +117,29 @@ halfspaces = function(s, b, e, thresh, n, y, terminal=F){
             vz.other = v.other * z.other
 
             ## Characterizing other breaks' signs
+            stopifnot(sum(vz.this  * y) > 0)
+            stopifnot(sum(vz.other * y) > 0)
             ii = ii+1
             V[ii,] = vz.other
             u[ii] = 0
 
             ## Characterizing maximizer of |sqrt mean difference|
-            if(!terminal){
+            if(!is.terminal.node){
+                stopifnot(sum(vz.this*y) > sum(vz.other*y))
                 ii = ii+1
                 V[ii,] = -vz.other + vz.this
                 u[ii] = 0
             }
             
             ## Characterizing failure to exceed gap size (for terminal nodes)
-            if(terminal){
+            if(is.terminal.node){
+                stopifnot(sum(-vz.this*y) > -thresh)
                 ii = ii + 1
                 V[ii,] = -vz.other
                 u[ii] = -thresh
             }
-                
-            ## Quick sanity check of b
-            stopifnot(sum(vz.this  * y) > 0)
-            stopifnot(sum(vz.other * y) > 0)
-            stopifnot(sum(vz.this*y) > sum(vz.other*y))
-            if(!terminal){ stopifnot(sum(vz.this*y) > thresh)}
-            if(terminal){  stopifnot(sum(-vz.other*y) > -thresh)}
         }
+
         V = V[1:ii,,drop=F]
         u = u[1:ii]
     }
@@ -145,8 +148,6 @@ halfspaces = function(s, b, e, thresh, n, y, terminal=F){
 
 
 #' Helper to see if V is big enough to store ii'th row. 
-#' @examples
-#' if(!big.enough(V,ii)){V = rbind(V, matrix(NA,nrow=nrow(V),ncol=n)}
 big.enough = function(V,ii){
     nrow(V)
     ## Not written yet.
@@ -162,23 +163,115 @@ sqrt.mn.diff = function(s, b, e, n, y = NA, contrast.vec = FALSE,
     if(contrast.vec) return(v) else return(sum(v*y))
 }
 
+#' Function to collect polyhedrons given some output from the binary
+#' segmentation function. Takes as input list contatining *list objects. 
+get.polyhedron = function(binseg.results, verbose = F) {
+
+    ## Extracting things
+    Blist = binseg.results$Blist
+    blist = binseg.results$blist
+    slist = binseg.results$slist
+    elist = binseg.results$elist
+    zlist = binseg.results$zlist
+    Zlist = binseg.results$Zlist
+
+    ## Initialize G and u
+    ii = 1
+    G = matrix(NA,nrow = nrow(trim(Blist))*n, ncol = n)
+    u = rep(NA, nrow(trim(Blist))*n)
+    nrow.G = 0
+
+    ## For each node in Blist, collect halfspaces.
+    for(my.j in 1:nrow(trim(Blist))){
+        if(verbose) cat('\r', 'step', my.j)
+        bsublist = Blist[my.j,]
+        for(b in bsublist[!is.na(bsublist)]){
+            if(my.j==1){k=1
+                se = c(1,n)
+            } else {
+                k = which(b==bsublist)
+                se = c(slist[my.j-1,
+                             k], elist[my.j-1,k]) 
+            }
+            
+            ## Collect halfspaces
+                ## print(se)
+                ## print(b)
+            my.halfspaces = halfspaces(s = se[1],
+                                       e = se[2],
+                                       b = b,
+                                       thresh = thresh,
+                                       n = n,
+                                       y = y,
+                                       is.terminal.node = is.na(blist[my.j,k]))
+            newrows = my.halfspaces[["V"]]
+            newconst = my.halfspaces[["u"]]
+            
+            ## Move on if no comparisons were made i.e. lengths to left=2, right=1
+            if(dim(newrows)[1]==0) next
+            
+            ## Add to Gamma matrix
+            newrowinds = nrow.G + c(1:nrow(newrows))
+            if(any(newrowinds > nrow(G) )){
+                G = rbind(G, matrix(NA,nrow=nrow(G),ncol=n))
+                u = c(u, rep(NA,length(u)))
+            }
+            G[newrowinds,] = newrows
+            u[newrowinds] = newconst 
+            
+            ## Updates for loop
+            nrow.G = nrow.G + nrow(newrows)
+            ii = ii + 1
+        }
+    }
+    if(verbose) cat(fill=T)
+
+    ## Trim and return
+    G = trim(G,"row")
+    u = trim(u)
+    return(list(G=G, u=u))
+}
+
+
+#' Function to get
+make.v = function(test.b, bs.output){
+
+    ## Basic checks
+    stopifnot( test.b %in% sort(collapse(trim(bs.output$blist))))
+    stopifnot(all(!is.na(collapse(G))))
+    stopifnot(all(!is.na(collapse(u))))
+    
+    ## Make contrast vector
+    n = length(bs.output$y)
+    v = rep(0,n)
+    z = zlist[which(test.b == blist, arr.ind = T)]
+    ends = c(0,sort(blist),n)
+    ind = which(test.b == ends)
+    my.se = ends[c(ind-1, ind+1)]
+    left.b = (my.se[1]+1):(test.b)
+    right.b = (test.b+1):(my.se[2])
+    v[left.b] = -1/length(left.b)
+    v[right.b] = 1/length(right.b)
+    v = v*z
+    return(v)
+}
 
 
 
 #' Calculates the unbalanced Haar basis for subvector of \code{y} or the vector
-#' \code{a} in linear inequalities \( a y \ge 0 \).
+#' \code{a} in linear inequalities a*y>=0
 #' @param type \code{basis} to return the unbalanced haar basis, and \code{ineq}
 #'     to return linear inequality vector.
 #' @examples
 #' y = c(rnorm(10,0,1), rnorm(10,4,1))
 #' 
 #' # Calculate Haar basis, s:e vs (b+1):e
-#' mybasis = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "basis")
+#' ##mybasis = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "basis")
 #' 
 #' # Calculate linear inequality vectors
-#' myineqs = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
+#' ##myineqs = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
 #' 
-haarbasis = function(s, b, e, n, y, type=c("basis", "ineq"),){
+haarbasis = function(s, b, e, n, y, type=c("basis", "ineq")){
     type = match.arg(type)
     
     if(!(s <= b & b <= e)){
@@ -266,12 +359,12 @@ check.orth.basis = function(basislist, tol = 1E-10){
 
 
 #' Helper to collapse matrix (with NAs) to a vector of unique elements.
-    collapse.prev = function(mat){
-        collapsed = as.numeric(mat)
-        collapsed = collapsed[!is.na(collapsed)]
-        collapsed = unique(collapsed)
-        return(collapsed)
-    }
+collapse = function(mat){
+    collapsed = as.numeric(mat)
+    collapsed = collapsed[!is.na(collapsed)]
+    collapsed = unique(collapsed)
+    return(collapsed)
+}
 
 
 #' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
