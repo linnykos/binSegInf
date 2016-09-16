@@ -12,7 +12,6 @@ library(devtools)
 load_all()
 
 ## Source in the p-value functions from the selectiveInference package 
-library(selectiveInference)
 # Replacement of all usages of pval.fl1d to poly.pval; 
 pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("gsell","rob"), u = rep(0,nrow(G))){
   return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
@@ -38,11 +37,9 @@ sigma=1
 lev1=0
 lev2=3
 y = c(rep(lev1,n/2),rep(lev2,n/2)) + rnorm(n,0,sigma)
-thresh = 1.8 
-pvals = rep(NA,nsim)
-y = c(rep(lev1,n/2),rep(lev2,n/2)) + rnorm(n,0,sigma)
+thresh = 0.5
 slist = elist = blist = Blist = zlist = Zlist = matrix(NA, nrow = n, ncol = 2^8)
-    
+
 ## Do Binary Segmentation
 binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n)
 
@@ -60,23 +57,19 @@ test.b.list = sort(collapse(blist))
 pvals = rep(NA,n)
 length(test.b.list)
 for(test.b in test.b.list){
-    ## readline()
     v = make.v(test.b, bs.output)
     pvals[test.b] = pval.fl1d(y = y,
                               G = G,
                               dik = v,
                               sigma = sigma,
                               u = u)
-
-    ## plot(v,type='l', main = pvals[test.b])
-    ## points(y/max(abs(y))/10, pch=16)
-    ## abline(v=test.b, col='red')
 }
 names(pvals) = 1:n
 print(pvals)
 
+
 ## Things to address:
-## 1. What is a good complexity measure for BS?
-## In genlasso, the degree of freedom  (Expectxk
+## 1. What is a good complexity measure for BS? 1 jump each is /not/.
+## 2. What is 
 
 

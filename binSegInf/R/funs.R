@@ -21,11 +21,13 @@
 #' blist = zlist = matrix(NA, nrow = n, ncol = 2^8)
 #' thresh = .5
 #' ##binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n) ## check() doesn't like this; not sure why.
-binseg = function(s, e, j, k, thresh, y, n){
-    cat("s,e,j,k",fill=T)
-    cat(s,e,j,k,fill=T)
+binseg = function(s, e, j, k, thresh, y, n, verbose=F){
+    if(verbose){
+        cat("s,e,j,k",fill=T)
+        cat(s,e,j,k,fill=T)
+    }
     if(e-s<1){
-        cat("terminated because e-s<1",fill=T)
+       if(verbose) cat("terminated because e-s<1", fill=T)
        slist[j,k] <<- s
        elist[j,k] <<- e
        return() 
@@ -38,7 +40,7 @@ binseg = function(s, e, j, k, thresh, y, n){
         ## Obtain breakpoint and its sign
         b = which.max(abs(df))
         z = sn[b]
-        cat("b is", b, fill=T)
+        if(verbose) cat("b is", b, fill=T)
 
         ## Check threshold exceedance, then store
         if(abs(df[b]) < thresh){
@@ -46,10 +48,10 @@ binseg = function(s, e, j, k, thresh, y, n){
             Zlist[j+1,k] <<- z
             slist[j,k] <<- s
             elist[j,k] <<- e
-            cat("terminated because biggest gap was",abs(df[b]),fill=T)
+            if(verbose) cat("terminated because biggest gap was",abs(df[b]),fill=T)
             return()
         } else { 
-            cat(df[b], fill=T)
+            if(verbose) cat(df[b], fill=T)
             blist[j+1,k] <<- b
             Blist[j+1,k] <<- b
             zlist[j+1,k] <<- z
@@ -63,6 +65,8 @@ binseg = function(s, e, j, k, thresh, y, n){
         binseg(b+1, e, j+1, 2*k, thresh, y, n)
     }
 }
+
+
 
 
 
@@ -174,6 +178,7 @@ get.polyhedron = function(binseg.results, verbose = F) {
     elist = binseg.results$elist
     zlist = binseg.results$zlist
     Zlist = binseg.results$Zlist
+    y = binseg.results$y
 
     ## Initialize G and u
     ii = 1
@@ -236,8 +241,15 @@ get.polyhedron = function(binseg.results, verbose = F) {
 #' Function to get
 make.v = function(test.b, bs.output){
 
+    ## Extract values
+    G = bs.output$G
+    u = bs.output$u
+    y = bs.output$y
+    blist = bs.output$blist
+    zlist = bs.output$zlist
+
     ## Basic checks
-    stopifnot( test.b %in% sort(collapse(trim(bs.output$blist))))
+    stopifnot(test.b %in% sort(collapse(trim(bs.output$blist))))
     stopifnot(all(!is.na(collapse(G))))
     stopifnot(all(!is.na(collapse(u))))
     
@@ -253,6 +265,10 @@ make.v = function(test.b, bs.output){
     v[left.b] = -1/length(left.b)
     v[right.b] = 1/length(right.b)
     v = v*z
+
+    ## Only for one-sided tests
+    stopifnot(v%*%y>0)
+    
     return(v)
 }
 
