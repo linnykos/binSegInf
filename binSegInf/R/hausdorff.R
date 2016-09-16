@@ -38,7 +38,7 @@ hausdorff <- function(set1, set2, one.sided = F){
 #'
 #' @return a set of numeric integers.
 #' @export
-enumerateJumps <- function(vec, tol = 1e-4){
+enumerateJumps <- function(vec, tol = 1e-10){
   if(!is.numeric(vec)) stop("vec must be numeric")
   if(length(vec) <= 1) return(numeric(0))
   

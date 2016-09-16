@@ -53,7 +53,7 @@ simulationGenerator <- function(rule, paramMat, criterion, trials,
 }
 
 .extractJumps.fusedlasso <- function(obj, numJumps, ...){
-  enumerateJumps(coef(obj, df = numJumps + 1)$beta)
+  enumerateJumps(coef(obj, df = numJumps + 1)$beta)[1:numJumps]
 }
 
 .extractJumps.sbs <- function(obj, numJumps, ...){
