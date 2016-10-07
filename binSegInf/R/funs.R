@@ -33,7 +33,8 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
        return() 
     } else {
         all.bs = (s:(e-1))
-        df = sapply(all.bs, function(b) sqrt.mn.diff(s=s, b=b, e=e, n=n, y=y, contrast.vec=FALSE, right.to.left=TRUE))
+        df = sapply(all.bs, function(b) cusum(s, b, e, y))
+        print(df)
         df = c(rep(NA,s-1),df, rep(NA,n-s))
         sn = sign(df) 
 
@@ -67,7 +68,22 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
 }
 
 
+##' Computes the CUSUM (cumulative sum) statistic. Note, we calculate this as
+##' the right-to-left difference.
+##' @param s starting index.
+##' @param b breakpoint index.
+##' @param e end index.
+##' @param n length of data
+##' @param y data.
 
+cusum = function(s, b, e, n = e-s+1, y, contrast.vec = TRUE, right.to.left = TRUE){
+    stopifnot(n==e-s+1)
+    n1 = b - s + 1
+    n2 = e - b
+    v = sqrt(1/((1/n1)+(1/n2)))*(c(-rep(1/n1, n1) , rep(1/n2, n2)))
+    if(!right.to.left) v = -v
+    if(contrast.vec) return(v) else return(sum(v*y))
+}
 
 
 #' Calculates the halfspace vector for the maximizing breakpoint and all the
@@ -92,8 +108,7 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     ii = 0
 
     ## Sqr mean difference of (s,b,e)
-    v.this = sqrt.mn.diff(s=s, b=b, e=e, n=n, contrast.vec=T,
-                          right.to.left=T)
+    v.this = cusum(s=s, b=b, e=e, n=n, contrast.vec=T, right.to.left=T)
     z.this = sign(sum(v.this * y))
     vz.this = v.this * z.this
 
@@ -115,8 +130,8 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     } else {
         for(other.b in other.bs){
            ## Sqrt mean difference of (s,other.b,e)
-            v.other = sqrt.mn.diff(s=s, b=other.b, e=e, n=n, contrast.vec=T,
-                                   right.to.left=T)
+            v.other = cusum(s=s, b=other.b, e=e, n=n, contrast.vec=T,
+                            right.to.left=T)
             z.other = sign(sum(v.other * y))
             vz.other = v.other * z.other
 
@@ -406,7 +421,7 @@ t.statistic = function(v1, v2){
 }
 
 #' Conducts a permutation t-test, given two subvectors
-#' @example EXAMPLES/perm.t.test.example.R
+#' Example doesn't work now, but here it is: EXAMPLES/perm.t.test.example.R
 perm.t.test = function(vec1, vec2, nsim=1000){
     vec = c(vec1,vec2)
     n1 = length(vec1)
@@ -423,9 +438,9 @@ perm.t.test = function(vec1, vec2, nsim=1000){
 }
 
 
-#' Gets underlying means for changepoints in y.  Wrote this because plot.sbs
-#' function doesn't work properly.
-#' @example EXAMPLES/get.mean.example.R
+##' Gets underlying means for changepoints in y.  Wrote this because plot.sbs
+##' function doesn't work properly.
+##' Example doesn't work now, but here it is: EXAMPLES/get.mean.example.R
 get.means = function(y, changepoints, ...){
     cps = c(0, sort(changepoints), n)
     mns = rep(NA, length(y))
