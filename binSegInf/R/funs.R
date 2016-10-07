@@ -169,7 +169,7 @@ sqrt.mn.diff = function(s, b, e, n, y = NA, contrast.vec = FALSE,
 
 #' Function to collect polyhedrons given some output from the binary
 #' segmentation function. Takes as input list contatining *list objects. 
-get.polyhedron = function(binseg.results, verbose = F) {
+get.polyhedron = function(binseg.results, thresh, verbose = F) {
 
     ## Extracting things
     Blist = binseg.results$Blist
@@ -179,6 +179,7 @@ get.polyhedron = function(binseg.results, verbose = F) {
     zlist = binseg.results$zlist
     Zlist = binseg.results$Zlist
     y = binseg.results$y
+    thresh = binseg.results$thresh
 
     ## Initialize G and u
     ii = 1
@@ -394,4 +395,44 @@ trim = function(mat, type = c("rowcol","row")){
         mat = mat[,1:last.j,drop=F]
     }
     return(mat)
+}
+
+
+#' Calculates a t-statistic for E(v2)-E(v1) given vectors v1 and v2.
+t.statistic = function(v1, v2){
+    numer = (mean(v2)-mean(v1))
+    denom = sqrt(var(v1)/length(v1) + var(v2)/length(v2))
+    return(numer/denom) 
+}
+
+#' Conducts a permutation t-test, given two subvectors
+#' @example EXAMPLES/perm.t.test.example.R
+perm.t.test = function(vec1, vec2, nsim=1000){
+    vec = c(vec1,vec2)
+    n1 = length(vec1)
+    n2 = length(vec2)
+    n = n1 + n2
+    null.tstats = replicate(nsim,{
+        newvec = vec[sample(1:n,n,replace=FALSE)]
+        newvec1 = newvec[1:n1]
+        newvec2 = newvec[(n1+1):(n2)]
+        t.statistic(newvec1,newvec2)})
+    pval = 1-ecdf(null.tstats)(t.statistic(vec1,vec2))
+    cat('Ran', nsim, 'permuatations for the permutation t-test.', fill=TRUE)
+    return(pval)
+}
+
+
+#' Gets underlying means for changepoints in y.  Wrote this because plot.sbs
+#' function doesn't work properly.
+#' @example EXAMPLES/get.mean.example.R
+get.means = function(y, changepoints, ...){
+    cps = c(0, sort(changepoints), n)
+    mns = rep(NA, length(y))
+    for(ii in 1:(length(cps)-1) ){
+        inds = (cps[ii]+1):(cps[ii+1])
+        mns[inds] = mean(y[inds])
+    }
+    if(any(is.na(mns))) stop("NAs in mns!")
+    return(mns)
 }
