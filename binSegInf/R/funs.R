@@ -33,8 +33,7 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
        return() 
     } else {
         all.bs = (s:(e-1))
-        df = sapply(all.bs, function(b) cusum(s, b, e, y))
-        print(df)
+        df = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
         df = c(rep(NA,s-1),df, rep(NA,n-s))
         sn = sign(df) 
 
@@ -73,20 +72,35 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
 ##' @param s starting index.
 ##' @param b breakpoint index.
 ##' @param e end index.
-##' @param n length of data
 ##' @param y data.
 
-cusum = function(s, b, e, n = e-s+1, y, contrast.vec = TRUE, right.to.left = TRUE){
-    stopifnot(n==e-s+1)
+newcusum = function(s, b, e, n = length(y), y=NA, contrast.vec = FALSE, right.to.left = TRUE){
+
+    if(n==1) stop("n cannot be 1!")
     n1 = b - s + 1
     n2 = e - b
-    v = sqrt(1/((1/n1)+(1/n2)))*(c(-rep(1/n1, n1) , rep(1/n2, n2)))
+
+    ## Initialize v
+    if(any(is.na(y))) {
+        v = rep(0,n)
+    } else {
+        v = rep(0,length(y))
+    }
+
+    ## Fill v
+    v[s:b] = -1/n1 
+    v[(b+1):e]  = 1/n2
+
+    ## Multiply v with a constant
+    v = v * sqrt(1/((1/n1)+(1/n2)))
+    
+    ## Adjust sign and return
     if(!right.to.left) v = -v
     if(contrast.vec) return(v) else return(sum(v*y))
 }
 
 
-#' Calculates the halfspace vector for the maximizing breakpoint and all the
+#' Calculates the halfspace vectors for the maximizing breakpoint and all the
 #' signs.
 #' @param is.terminal.node T/F for whether the node is one where the threshhold
 #'     is not breached.
@@ -107,8 +121,8 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     other.bs = other.bs[other.bs != b]
     ii = 0
 
-    ## Sqr mean difference of (s,b,e)
-    v.this = cusum(s=s, b=b, e=e, n=n, contrast.vec=T, right.to.left=T)
+    ## CUSUM comparison (s,b,e)
+    v.this = cusum(s=s, b=b, e=e, n=n, contrast.vec=TRUE, right.to.left=TRUE)
     z.this = sign(sum(v.this * y))
     vz.this = v.this * z.this
 
@@ -120,9 +134,8 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     ## Characterizing Gap size exceedance
     if(!is.terminal.node){
         ii = ii+1
-        V[ii,] = vz.this## (if(!terminal) vz.this else -vz.this)
-        u[ii] = thresh ##(if(!terminal) thresh else -thresh)
-        stopifnot(sum(vz.this*y) > thresh)
+        V[ii,] = vz.this
+        u[ii] = thresh
     }
 
     if(length(other.bs) == 0){
@@ -216,8 +229,6 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
             }
             
             ## Collect halfspaces
-                ## print(se)
-                ## print(b)
             my.halfspaces = halfspaces(s = se[1],
                                        e = se[2],
                                        b = b,
@@ -399,9 +410,14 @@ collapse = function(mat){
 }
 
 
-#' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
+##' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
+##' Returns NULL if mat is all NA's.
 trim = function(mat, type = c("rowcol","row")){
     type = match.arg(type)
+
+    ## If all NA matrix, return NULL.
+    if(all(is.na(as.numeric(mat)))) return(NULL)
+    
     if(is.null(dim(mat))){ mat = mat[1:max(which(!is.na(mat)))]; return(mat)}
     last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
     mat = mat[1:last.j,,drop=F]
@@ -450,4 +466,11 @@ get.means = function(y, changepoints, ...){
     }
     if(any(is.na(mns))) stop("NAs in mns!")
     return(mns)
+}
+
+
+
+# Makeshift replacement of all usages of pval.fl1d to poly.pval; 
+pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("gsell","rob"), u = rep(0,nrow(G))){
+  return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
 }

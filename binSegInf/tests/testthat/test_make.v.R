@@ -1,4 +1,4 @@
-context("Test contrast-forming function (make.v)")
+context("Test contrast-forming function make.v()")
 
 
 
