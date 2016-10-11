@@ -67,37 +67,6 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
 }
 
 
-##' Computes the CUSUM (cumulative sum) statistic. Note, we calculate this as
-##' the right-to-left difference.
-##' @param s starting index.
-##' @param b breakpoint index.
-##' @param e end index.
-##' @param y data.
-
-newcusum = function(s, b, e, n = length(y), y=NA, contrast.vec = FALSE, right.to.left = TRUE){
-
-    if(n==1) stop("n cannot be 1!")
-    n1 = b - s + 1
-    n2 = e - b
-
-    ## Initialize v
-    if(any(is.na(y))) {
-        v = rep(0,n)
-    } else {
-        v = rep(0,length(y))
-    }
-
-    ## Fill v
-    v[s:b] = -1/n1 
-    v[(b+1):e]  = 1/n2
-
-    ## Multiply v with a constant
-    v = v * sqrt(1/((1/n1)+(1/n2)))
-    
-    ## Adjust sign and return
-    if(!right.to.left) v = -v
-    if(contrast.vec) return(v) else return(sum(v*y))
-}
 
 
 #' Calculates the halfspace vectors for the maximizing breakpoint and all the
@@ -179,11 +148,6 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
 }
 
 
-#' Helper to see if V is big enough to store ii'th row. 
-big.enough = function(V,ii){
-    nrow(V)
-    ## Not written yet.
-}
 
 #' Helper function to get right-to-left mean difference, or the contrast vector
 sqrt.mn.diff = function(s, b, e, n, y = NA, contrast.vec = FALSE,
@@ -264,8 +228,129 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
     return(list(G=G, u=u))
 }
 
+##' Get all cusums, given S and E
+getcusums = function(s,e,y,returnmax = TRUE){
+   cusums =  sapply(s:(e-1), function(b){cusum(s,b,e,y)})
+   if(returnmax){return(list(bmax = which.max(cusums)+s-1, cusum = max(cusums)))}
+   return(cusums)
+}
 
-#' Function to get
+
+##' Function to carry out fixed-number-of-steps binary segmentation.
+##' @param y numeric vector, data
+##' @param k desired number of changepoints
+##' @import Matrix
+
+binseg.by.thresh = function(y,k){
+    ## Example
+    set.seed(0) 
+    y = c(rnorm(10,0,.5),rnorm(10,3,.5), rnorm(10,5,.5))
+    numsteps = 10
+    n=30
+    
+    ## initialize thin
+    ## A=T=S=E=list()
+    B = rep(NULL,n) 
+
+    Bcurr=Scurr=Ecurr=Matrix(0,ncol=2^numsteps, nrow = numsteps,sparse=TRUE)
+    A=T=S=E=Tcurr=Acurr=lapply(1:n,function(i) c())
+    jk  = list()
+
+    zetas = c()
+    Scurr[1,1] = 1
+    Ecurr[1,1] = length(y)
+    Tcurr[[1]] = c(1,1)
+    Acurr[[1]] = c()
+    
+    for(mystep in 1:numsteps){
+        print(mystep)
+
+        ## Get all candidate changepoints
+        curr.max=-Inf
+        for(ii in 1:sum(!sapply(Tcurr, is.null))){ 
+            j = Tcurr[[ii]][1]
+            k = Tcurr[[ii]][2]
+            cusums = getcusums(s = Scurr[j,k],
+                               e = Ecurr[j,k],
+                               y = y,
+                               returnmax = TRUE)
+            Bcurr[j, k] = cusums$bmax
+            breaking.cusum = cusums$cusum
+            
+            ## Keep running maximum
+            if(curr.max <= breaking.cusum){
+                curr.which.max = c(j,k) 
+                curr.max = breaking.cusum
+            }
+        }
+        
+        ## Record knot as CUSUM maximizer
+        zetas[mystep] = curr.max
+        jmax = curr.which.max[1]
+        kmax = curr.which.max[2]
+        
+        ## Update terminal and active node set
+        which.duplicate = which(sapply(Tcurr, function(myjk){all.equal(myjk, c(jmax, kmax))==TRUE}))
+        Tcurr[[which.duplicate]] <- c(jmax + 1, 2*kmax - 1)
+        Tcurr[[mystep+1]] <- c(jmax + 1, 2*kmax)
+        Acurr[[mystep+1]] <- c(jmax,kmax)
+        
+        ## Update Scurr and Ecurr for the /new/ nodes
+        Scurr[jmax+1,2*kmax-1] = Scurr[jmax,kmax]
+        Ecurr[jmax+1,2*kmax-1] = Bcurr[jmax,kmax]
+        
+        Scurr[jmax+1,2*kmax] = Bcurr[jmax,kmax]+1
+        Ecurr[jmax+1,2*kmax] = Ecurr[jmax,kmax]
+
+        ## Take snapshot
+        S[[mystep]] = trim(Scurr)
+        E[[mystep]] = trim(Ecurr)
+        A[[mystep]] = trimlist(Acurr)
+        T[[mystep]] = trimlist(Tcurr)
+        B[mystep] = Bcurr[jmax,kmax]
+        jk[[mystep]] = c(jmax,kmax) 
+    }
+
+    ## trim and return things
+    return(list(S = trimlist(S),
+                E = trimlist(E),
+                A = trimlist(A),
+                T = trimlist(T),
+                B = trimlist(B)))
+}    
+
+
+##' Computes the CUSUM (cumulative sum) statistic. Note, we calculate this as
+##' the right-to-left difference, by default.
+##' @param s starting index.
+##' @param b breakpoint index.
+##' @param e end index.
+##' @param y data.
+
+cusum = function(s,b,e,y, right.to.left = TRUE){
+
+    ## Form temporary quantities
+    n = e-b+1
+    n1 = b+1-s
+    n2 = e-b
+    if(n==1) stop("n cannot be 1!")
+    if(b>=e) stop("b must be strictly smaller than e!")
+    if(s>b) stop("b must be larger than or equal to!")
+
+    ## Form contrast
+    v[s:b] = -1/n1 
+    v[(b+1):e]  = 1/n2
+    v = v * sqrt(1/((1/n1)+(1/n2)))
+    if(!right.to.left) v = -v
+
+    ## Return the right thing
+    if(contrast.vec) return(v)
+    return(sum(v*y))
+}
+
+
+
+#' Function to obtain contrast
 make.v = function(test.b, bs.output){
 
     ## Extract values
@@ -426,6 +511,10 @@ trim = function(mat, type = c("rowcol","row")){
         mat = mat[,1:last.j,drop=F]
     }
     return(mat)
+}
+
+trimlist = function(mylist){
+    return(mylist[1:(max(which(!sapply(mylist, is.null))))])
 }
 
 
