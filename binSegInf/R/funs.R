@@ -238,30 +238,27 @@ getcusums = function(s,e,y,returnmax = TRUE){
 
 ##' Function to carry out fixed-number-of-steps binary segmentation.
 ##' @param y numeric vector, data
-##' @param k desired number of changepoints
-##' @import Matrix
+##' @param numsteps desired number of changepoints
+#### ' @import Matrix
 
-binseg.by.thresh = function(y,k){
-    ## Example
-    set.seed(0) 
-    y = c(rnorm(10,0,.5),rnorm(10,3,.5), rnorm(10,5,.5))
-    numsteps = 10
-    n=30
-    
-    ## initialize thin
-    ## A=T=S=E=list()
+binseg.by.thresh = function(y,numsteps){
+
+    ## initialize things
+    require(Matrix)   
     B = rep(NULL,n) 
-
-    Bcurr=Scurr=Ecurr=Matrix(0,ncol=2^numsteps, nrow = numsteps,sparse=TRUE)
-    A=T=S=E=Tcurr=Acurr=lapply(1:n,function(i) c())
-    jk  = list()
-
-    zetas = c()
+    Bcurr = Scurr = Ecurr =
+        Matrix(0, ncol=2^numsteps, nrow = numsteps, sparse=TRUE)
+    S = E = A = T =
+        Tcurr = Acurr =
+            lapply(1:n,function(i) c())
     Scurr[1,1] = 1
     Ecurr[1,1] = length(y)
     Tcurr[[1]] = c(1,1)
     Acurr[[1]] = c()
+    jk  = list()
+    zetas = c()
     
+    ## Main loop
     for(mystep in 1:numsteps){
         print(mystep)
 
@@ -270,10 +267,12 @@ binseg.by.thresh = function(y,k){
         for(ii in 1:sum(!sapply(Tcurr, is.null))){ 
             j = Tcurr[[ii]][1]
             k = Tcurr[[ii]][2]
+            if(Ecurr[j,k]-Scurr[j,k]<=1) next
             cusums = getcusums(s = Scurr[j,k],
                                e = Ecurr[j,k],
                                y = y,
                                returnmax = TRUE)
+
             Bcurr[j, k] = cusums$bmax
             breaking.cusum = cusums$cusum
             
@@ -310,6 +309,7 @@ binseg.by.thresh = function(y,k){
         B[mystep] = Bcurr[jmax,kmax]
         jk[[mystep]] = c(jmax,kmax) 
     }
+    ## END of Main loop
 
     ## trim and return things
     return(list(S = trimlist(S),
@@ -326,8 +326,10 @@ binseg.by.thresh = function(y,k){
 ##' @param b breakpoint index.
 ##' @param e end index.
 ##' @param y data.
+##' @param right.to.left Whether you want right-to-left difference in the cusum calculation. Defaults to TRUE.
+##' @param contrast.vec If TRUE, then the contrast vector v for cusum=v'y is returned.
 
-cusum = function(s,b,e,y, right.to.left = TRUE){
+cusum = function(s,b,e,y, right.to.left = TRUE, contrast.vec = FALSE){
 
     ## Form temporary quantities
     n = e-b+1
@@ -338,6 +340,7 @@ cusum = function(s,b,e,y, right.to.left = TRUE){
     if(s>b) stop("b must be larger than or equal to!")
 
     ## Form contrast
+    v = rep(0,length(y))
     v[s:b] = -1/n1 
     v[(b+1):e]  = 1/n2
     v = v * sqrt(1/((1/n1)+(1/n2)))
