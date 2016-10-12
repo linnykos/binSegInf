@@ -229,59 +229,99 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
 }
 
 ##' Get all cusums, given S and E
-getcusums = function(s,e,y,returnmax = TRUE){
-   cusums =  sapply(s:(e-1), function(b){cusum(s,b,e,y)})
-   if(returnmax){return(list(bmax = which.max(cusums)+s-1, cusum = max(cusums)))}
-   return(cusums)
+getcusums = function(s,e,y){
+
+    if(s<=0 | e<= 0) stop("must enter valid e,s >=1 ")
+
+    ## Get all cusum
+    cusums =  sapply(s:(e-1), function(b){cusum(s,b,e,y)})
+    contrasts =  t(sapply(s:(e-1), function(b){cusum(s,b,e,y, contrast.vec=TRUE)}))
+
+    ## Get signs
+    signs = sign(cusums)
+
+    return(list(bmax = which.max(cusums)+s-1, bmax.cusums = which.max(cusums),
+                cusum = max(cusums), allcusums = cusums, contrasts = contrasts,
+                signs=signs))
 }
 
 
 ##' Function to carry out fixed-number-of-steps binary segmentation.
 ##' @param y numeric vector, data
 ##' @param numsteps desired number of changepoints
+##' @param verbose set to true for algorithm run details. 
 #### ' @import Matrix
 
-binseg.by.thresh = function(y,numsteps){
+binseg.by.size = function(y,numsteps,verbose=FALSE){
 
-    ## initialize things
+## Basic checks
+    if(numsteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
+    
+    ## Initialize things
     require(Matrix)   
-    B = rep(NULL,n) 
-    Bcurr = Scurr = Ecurr =
-        Matrix(0, ncol=2^numsteps, nrow = numsteps, sparse=TRUE)
-    S = E = A = T =
+    B = Z = rep(NA,length(y)) 
+    Bcurr = Zcurr = Scurr = Ecurr =
+        Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
+    S = E = A = Tt =  
         Tcurr = Acurr =
-            lapply(1:n,function(i) c())
+            lapply(1:length(y),function(i) c())
     Scurr[1,1] = 1
     Ecurr[1,1] = length(y)
     Tcurr[[1]] = c(1,1)
     Acurr[[1]] = c()
     jk  = list()
-    zetas = c()
+    zetas = rep(NA,length(y))
+    G = matrix(NA, ncol = length(y), nrow = 2*length(y)*numsteps)
+    Gn = 0 
     
     ## Main loop
     for(mystep in 1:numsteps){
-        print(mystep)
-
-        ## Get all candidate changepoints
+        if(verbose) cat("At step", mystep, " ") ## Get all candidate changepoints
         curr.max=-Inf
+        Gn.beginning.of.step = Gn
         for(ii in 1:sum(!sapply(Tcurr, is.null))){ 
+            Gn.beginning.of.this.node = Gn
             j = Tcurr[[ii]][1]
             k = Tcurr[[ii]][2]
             if(Ecurr[j,k]-Scurr[j,k]<=1) next
             cusums = getcusums(s = Scurr[j,k],
                                e = Ecurr[j,k],
-                               y = y,
-                               returnmax = TRUE)
-
+                               y = y)
+            
+            ## Characterize signs
+            signed.cusummat = (cusums$contrasts) * (cusums$signs)
+            G[(Gn+1):(Gn+nrow(signed.cusummat)),] = signed.cusummat 
+            Gn = Gn+nrow(signed.cusummat)
+            
+            ## Find cusum maximizer
             Bcurr[j, k] = cusums$bmax
+            Zcurr[j, k] = cusums$signs[cusums$bmax.cusums]
             breaking.cusum = cusums$cusum
             
             ## Keep running maximum
             if(curr.max <= breaking.cusum){
                 curr.which.max = c(j,k) 
                 curr.max = breaking.cusum
+                curr.max.signed.row = signed.cusummat[cusums$bmax.cusums,]
+                curr.max.signed.rownum = Gn.beginning.of.this.node + cusums$bmax.cusums
             }
         }
+        
+        ## Record maximizer row and rownum
+        max.signed.row = curr.max.signed.row
+        max.signed.rownum = curr.max.signed.rownum
+        
+        ## Characterize cusum-maximizer
+        this.step.rows=(Gn.beginning.of.step+1):Gn
+        this.step.rows = this.step.rows[this.step.rows!=max.signed.rownum]
+        comparison.cusummat = t(apply(G[this.step.rows,,drop=FALSE], 1, function(myrow){
+            curr.max.signed.row - myrow }))
+        G[(Gn+1):(Gn+nrow(comparison.cusummat)),] = comparison.cusummat
+        Gn = Gn+nrow(comparison.cusummat)
+
+        ## Check characterization (to be continued)
+
+
         
         ## Record knot as CUSUM maximizer
         zetas[mystep] = curr.max
@@ -300,24 +340,42 @@ binseg.by.thresh = function(y,numsteps){
         
         Scurr[jmax+1,2*kmax] = Bcurr[jmax,kmax]+1
         Ecurr[jmax+1,2*kmax] = Ecurr[jmax,kmax]
-
+        
         ## Take snapshot
         S[[mystep]] = trim(Scurr)
         E[[mystep]] = trim(Ecurr)
-        A[[mystep]] = trimlist(Acurr)
-        T[[mystep]] = trimlist(Tcurr)
+        A[[mystep]] = trim(Acurr)
+        Tt[[mystep]] = trim(Tcurr)
         B[mystep] = Bcurr[jmax,kmax]
+        Z[mystep] = Zcurr[jmax,kmax]
         jk[[mystep]] = c(jmax,kmax) 
+        
+        if(verbose) cat("breakpoint", Bcurr[jmax,kmax], "was selected", fill=FALSE)
+        if(verbose) cat("with threshold knot", round(zetas[mystep],3), " !", fill=TRUE)
+        
+        ## Terminate if all terminal nodes are length 2 or smaller.
+        too.short = unlist(lapply(Tt[[mystep]], function(mypair){Ecurr[mypair[1],mypair[2]] - Scurr[mypair[1], mypair[2]] <=1}))
+        if(all(too.short)){
+            if(verbose) cat("Ended early, at step", mystep, fill=TRUE)
+            break;
+        }
     }
     ## END of Main loop
-
+    G = trim(G,"row")
+    
     ## trim and return things
-    return(list(S = trimlist(S),
-                E = trimlist(E),
-                A = trimlist(A),
-                T = trimlist(T),
-                B = trimlist(B)))
-}    
+    return(list(S = trim(S),
+                E = trim(E),
+                A = trim(A),
+                T = trim(Tt),
+                B = trim(B),
+                Z = trim(Z),
+                G = G,
+                u = rep(0,nrow(G)),
+                zetas = trim(zetas),
+                numsteps = mystep
+                ))
+}
 
 
 ##' Computes the CUSUM (cumulative sum) statistic. Note, we calculate this as
@@ -353,18 +411,21 @@ cusum = function(s,b,e,y, right.to.left = TRUE, contrast.vec = FALSE){
 
 
 
-#' Function to obtain contrast
-make.v = function(test.b, bs.output){
+
+##' Function to obtain contrast, given the output of binseg(), the SBS algorithm
+##' with fixed threshold.
+##' @param test.b is the location that we want to test.
+##' @param bs.output list that contains G,u,y,blist,zlist. Manually bundled by
+##'     user.
+make.v.fixed.thresh = function(test.b, bs.output){
 
     ## Extract values
-    G = bs.output$G
-    u = bs.output$u
-    y = bs.output$y
+    y = bs.output$y  ## 
     blist = bs.output$blist
     zlist = bs.output$zlist
 
     ## Basic checks
-    stopifnot(test.b %in% sort(collapse(trim(bs.output$blist))))
+    stopifnot(test.b %in% sort(collapse(trim(blist))))
     stopifnot(all(!is.na(collapse(G))))
     stopifnot(all(!is.na(collapse(u))))
     
@@ -386,6 +447,27 @@ make.v = function(test.b, bs.output){
     
     return(v)
 }
+
+
+##' Function to obtain contrast, given the output of binseg(), the SBS algorithm
+##' with fixed threshold.
+##' @param test.b is the location that we want to test.
+##' @param B vector of breakpoints to be considered
+##' @param Z signs of B, as 
+##' @param n length of contrast 
+make.v = function(test.b,B,Z,n){
+        v = rep(0,n)
+        z = Z[which(test.b == B, arr.ind = T)]
+        ends = c(0,sort(B),n)
+        ind = which(test.b == ends)
+        my.se = ends[c(ind-1, ind+1)]
+        left.b = (my.se[1]+1):(test.b)
+        right.b = (test.b+1):(my.se[2])
+        v[left.b] = -1/length(left.b)
+        v[right.b] = 1/length(right.b)
+        v = v*z
+        return(v)
+    }
 
 
 
@@ -500,7 +582,7 @@ collapse = function(mat){
 
 ##' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
 ##' Returns NULL if mat is all NA's.
-trim = function(mat, type = c("rowcol","row")){
+trim.mat = function(mat, type = c("rowcol","row")){
     type = match.arg(type)
 
     ## If all NA matrix, return NULL.
@@ -516,10 +598,32 @@ trim = function(mat, type = c("rowcol","row")){
     return(mat)
 }
 
-trimlist = function(mylist){
+##' Trims a list by deleting the last consecutive elements that are NULL.
+##' @param mylist Some list.
+trim.list = function(mylist){
     return(mylist[1:(max(which(!sapply(mylist, is.null))))])
 }
 
+##' Trims a list by deleting the last consecutive elements that are NULL.
+##' @param mylist Some list.
+trim.vec = function(myvec){
+    return(myvec[1:(max(which(!sapply(myvec, is.na))))])
+}
+
+
+##' Function to trim matrices, lists or vectors.
+trim = function(mything,...){
+    class.of.my.thing = class(mything)
+    if(class.of.my.thing == "list"){
+        return(trim.list(mything,...))
+    } else if (class.of.my.thing %in% c("matrix","dgCMatrix")){
+        return(trim.mat(mything,...))
+    } else if (class.of.my.thing %in% c("integer", "numeric")){
+        return(trim.vec(mything,...))
+    } else {
+        stop(paste("trim() doesn't know how to trim things of class:", class.of.my.thing))
+    }
+}
 
 #' Calculates a t-statistic for E(v2)-E(v1) given vectors v1 and v2.
 t.statistic = function(v1, v2){
@@ -565,4 +669,23 @@ get.means = function(y, changepoints, ...){
 # Makeshift replacement of all usages of pval.fl1d to poly.pval; 
 pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("gsell","rob"), u = rep(0,nrow(G))){
   return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
+}
+
+
+
+##' Takes a contrast vector v and optionally B & Z, and plots it
+##' @param v Numeric vector containing contrast vector.
+plot.v = function(v, B=NULL, Z=NULL){
+    ## Basic checks
+    if(any(is.na(B))|any(is.na(Z))|length(Z)!=length(B)) stop("Check yo Z and B!")
+    stopifnot(all(abs(v)<=1))
+    stopifnot(all(Z%in%c(-1,1)))
+
+    ## Make plot
+    maxabs = max(abs(v))
+    plot(NA,ylim=c(-1,+1)*maxabs*1.3, xlim = c(0,length(v)))
+    lines(v, type='o', col = 'blue', pch = 16)
+    if(!is.null(B))  abline(v=B, col='grey70', lty=2)
+    if(!is.null(Z)) points(x=B, y=rep(maxabs,length(B)),
+                           pch = sapply(Z,function(myz){if(myz==+1)"+"else"-"}))
 }
