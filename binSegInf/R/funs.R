@@ -164,13 +164,16 @@ getcusums = function(s,e,y){
 
     ## Get all cusum
     cusums =  sapply(s:(e-1), function(b){cusum(s,b,e,y)})
+    names(cusums) = paste("b=",s:(e-1))
     contrasts =  t(sapply(s:(e-1), function(b){cusum(s,b,e,y, contrast.vec=TRUE)}))
 
     ## Get signs
     signs = sign(cusums)
+    ## abs.cusums = abs(cusums)
+    abs.cusums = signs*cusums
 
-    return(list(bmax = which.max(cusums)+s-1, bmax.cusums = which.max(cusums),
-                cusum = max(cusums), allcusums = cusums, contrasts = contrasts,
+    return(list(bmax = which.max(abs.cusums)+s-1, bmax.cusums = which.max(abs.cusums),
+                cusum = max(abs.cusums), allcusums = cusums, contrasts = contrasts,
                 signs=signs))
 }
 

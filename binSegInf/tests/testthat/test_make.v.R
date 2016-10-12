@@ -1,8 +1,5 @@
 context("Test contrast-forming function make.v()")
 
-
-
-
 test_that("Coordinate that is tested is contained in blist", {
     test.b = 5 
     bs.output = list(blist = matrix(1,2,3,4))

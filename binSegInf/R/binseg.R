@@ -1,68 +1,115 @@
-#' The main binary segmentation function. When \code{thresh} is set to zero,
-#' then this can be used to collect the unbalanced haar wavelet basis.
-#' @param s Starting index, in the vector-valued data. Must be an integer larger
-#'     than or equal to 1, and strictly smaller than \code{e}.
-#' @param e Ending index, in the vector-valued data. Must be an integer smaller
-#'     than or equal to \code{n}, and strictly larger than \code{s}.
-#' @param j The depth of the recursion on hand.
-#' @param k The indexing of the node location, from left to right, in the
-#'     \emph{complete} binary tree.
-#' @param thresh Threshold for \deqn{\tilde{X}}. This serves as a stopping rule
-#'     for the recursion.
-#' @param y The original data.
-#' @param n The length of the data \code{y}.
-#' 
-#' @examples
-#' n = 60
-#' sd = .5
-#' mn = c(rep(-3, n/4), rep(2, n/4), rep(-1, n/4), rep(1, n/4))
-#' y = mn + rnorm(n,0,sd)
-#' ## blist are the breaks, and zlist are the associated signs.
-#' blist = zlist = matrix(NA, nrow = n, ncol = 2^8)
-#' thresh = .5
-#' ##binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n) ## check() doesn't like this; not sure why.
-binseg = function(s, e, j, k, thresh, y, n, verbose=F){
-    if(verbose){
-        cat("s,e,j,k",fill=T)
-        cat(s,e,j,k,fill=T)
+##' Main function for binary segmentation for fixed threshold. This is actually
+##' a wrapper for binary segmentation with fixed threshold. It creates an
+##' environment and creates the variables there, then runs
+##' binseg.by.thresh.inner() all in this environment, and returns the relevant
+##' guy
+##' @param s Starting index, in the vector-valued data. Must be an integer
+##'     larger than or equal to 1, and strictly smaller than \code{e}.
+##' @param e Ending index, in the vector-valued data. Must be an integer smaller
+##'     than or equal to \code{n}, and strictly larger than \code{s}.
+##' @param j The depth of the recursion on hand.
+##' @param k The indexing of the node location, from left to right, in the
+##'     \emph{complete} binary tree.
+##' @param thresh Threshold for \deqn{\tilde{X}}. This serves as a stopping rule
+##'     for the recursion.
+##' @param y The original data.
+##' @param verbose Set to true if you'd like to see algorithm progression.
+##' @param return.env Set to true if you'd like to get the environment
+##'     containing the algorithm output, instead of a list.
+
+binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE, return.env=FALSE){
+    n = length(y)
+    if(n > 20) {
+        stop(paste0("You'll use up a /lot/ of memory, so I'm stopping you.",
+                    "This is my fault, not yours. I'm using giant mostly empty matrices. ",
+                    "I'm embarassed. I'll change this soon. Prod me if you need me to do it now."))
+        }
+
+    ## Create new environment |env|
+    env = new.env()
+    env$slist = env$elist = env$blist = env$Blist = env$zlist = env$Zlist =
+        matrix(NA, nrow = n, ncol = 2 ^(n/2))
+    env$y = y
+
+    ## Run binary segmentation on |env|
+    binseg.by.thresh.inner(y, thresh, s, e, j, k, verbose, env=env)
+
+    ## Gather output from |env| and return it.
+    bs.output = list(slist = env$slist,
+                     elist = env$elist,
+                     blist = env$blist,
+                     Blist = env$Blist,
+                     zlist = env$zlist,
+                     Zlist = env$Zlist,
+                     y = y,
+                     thresh = thresh)
+    if(return.env){
+        return(env)
+    } else{
+        return(bs.output)
     }
-    if(e-s<1){
-       if(verbose) cat("terminated because e-s<1", fill=T)
-       slist[j,k] <<- s
-       elist[j,k] <<- e
-       return() 
+}
+
+##' Inner function for binary segmentation with fixed threshold. The wrapper
+##' \code{binseg.by.thresh()} is intended to be used by user. Note, when
+##' \code{thresh} is set to zero, then this can be used to collect the
+##' unbalanced haar wavelet basis.
+##' @param s Starting index, in the vector-valued data. Must be an integer
+##'     larger than or equal to 1, and strictly smaller than \code{e}.
+##' @param e Ending index, in the vector-valued data. Must be an integer smaller
+##'     than or equal to \code{n}, and strictly larger than \code{s}.
+##' @param j The depth of the recursion on hand.
+##' @param k The indexing of the node location, from left to right, in the
+##'     \emph{complete} binary tree.
+##' @param thresh Threshold for \deqn{\tilde{X}}. This serves as a stopping rule
+##'     for the recursion.
+##' @param y The original data.
+##' @param n The length of the data \code{y}.
+
+binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=F, env=NULL){
+    n = length(y)
+    
+    if(e-s<=1){
+        ## if(verbose) cat("terminated because e-s<1", fill=T)
+        env$slist[j,k] <- s
+        env$elist[j,k] <- e
+        return() 
     } else {
+        cat("In the segment",s,":",e, " ")#,fill=TRUE)
         all.bs = (s:(e-1))
         df = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
+        names(df) = all.bs
+        cat("the competing cusums are",fill=TRUE)
+        print(df)
         df = c(rep(NA,s-1),df, rep(NA,n-s))
         sn = sign(df) 
-
+        
         ## Obtain breakpoint and its sign
         b = which.max(abs(df))
         z = sn[b]
-        if(verbose) cat("b is", b, fill=T)
-
+        if(verbose) cat("the changepoint", b, "is selected", fill=T)
+        
         ## Check threshold exceedance, then store
         if(abs(df[b]) < thresh){
-            Blist[j+1,k] <<- b
-            Zlist[j+1,k] <<- z
-            slist[j,k] <<- s
-            elist[j,k] <<- e
-            if(verbose) cat("terminated because biggest gap was",abs(df[b]),fill=T)
-            return()
+            env$Blist[j+1,k] <- b
+            env$Zlist[j+1,k] <- z
+            env$slist[j,k] <- s
+            env$elist[j,k] <- e
+            ## if(verbose) cat("terminated because biggest gap was",abs(df[b]),fill=T)
+            return(env)
         } else { 
-            if(verbose) cat(df[b], fill=T)
-            blist[j+1,k] <<- b
-            Blist[j+1,k] <<- b
-            zlist[j+1,k] <<- z
-            Zlist[j+1,k] <<- z
-            slist[j,k] <<- s
-            elist[j,k] <<- e
+            if(verbose) cat("the biggest cusum was", df[b], "which passed the threshold:", thresh,  fill=T)
+            env$blist[j+1,k] <- b
+            env$Blist[j+1,k] <- b
+            env$zlist[j+1,k] <- z
+            env$Zlist[j+1,k] <- z
+            env$slist[j,k] <- s
+            env$elist[j,k] <- e
         }
-                    
+        
         ## Recurse
-        binseg(s, b, j+1, 2*k-1, thresh, y, n)
-        binseg(b+1, e, j+1, 2*k, thresh, y, n)
+        binseg.by.thresh.inner(y, thresh, s, b, j+1, 2*k-1, verbose, env=env)
+        binseg.by.thresh.inner(y, thresh, b+1, e, j+1, 2*k, verbose, env=env)
     }
 }
 
@@ -78,7 +125,7 @@ binseg = function(s, e, j, k, thresh, y, n, verbose=F){
 
 binseg.by.size = function(y,numsteps,verbose=FALSE){
 
-## Basic checks
+    ## Basic checks
     if(numsteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     
     ## Initialize things
@@ -128,6 +175,7 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
                 curr.max = breaking.cusum
                 curr.max.signed.row = signed.cusummat[cusums$bmax.cusums,]
                 curr.max.signed.rownum = Gn.beginning.of.this.node + cusums$bmax.cusums
+                curr.max.cusums = cusums$allcusums## temporary, for debugging
             }
         }
         
@@ -174,8 +222,11 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
         Z[mystep] = Zcurr[jmax,kmax]
         jk[[mystep]] = c(jmax,kmax) 
         
+        if(verbose) cat("From candidates", Scurr[jmax,kmax],  ":",Ecurr[jmax,kmax], " ")
         if(verbose) cat("breakpoint", Bcurr[jmax,kmax], "was selected", fill=FALSE)
         if(verbose) cat("with threshold knot", round(zetas[mystep],3), " !", fill=TRUE)
+        if(verbose) cat("And the breaking knots were",fill=TRUE)
+        if(verbose) print(curr.max.cusums)
         
         ## Terminate if all terminal nodes are length 2 or smaller.
         too.short = unlist(lapply(Tt[[mystep]], function(mypair){Ecurr[mypair[1],mypair[2]] - Scurr[mypair[1], mypair[2]] <=1}))
