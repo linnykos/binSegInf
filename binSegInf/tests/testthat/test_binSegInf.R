@@ -5,8 +5,8 @@ set.seed(0)
 y = c(rnorm(n/3,0,.5),rnorm(n/3,3,.5), rnorm(n/3,5,.5))
 
 ## Run it two ways
-a = binseg.by.size(y, n-1, verbose=TRUE)
-b = binseg.by.thresh(y, 0,verbose=TRUE)
+a = binseg.by.size(y, n-1, verbose=FALSE)
+b = binseg.by.thresh(y, 0,verbose=FALSE)
 
 ## Compare the output
 test_that("The changepoint sets are the same", {

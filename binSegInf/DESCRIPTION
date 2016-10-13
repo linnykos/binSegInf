@@ -1,15 +1,14 @@
 Package: binSegInf
-Title: What the Package Does (one line, title case)
+Title: Binary Segmentation Inference
 Version: 0.0.0.9000
-Authors@R: person("First", "Last", email = "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+Authors@R: c(person("Sangwon", "Hyun", email = "robohyun66@gmail.com", role = c("aut", "cre")),
+	   person("Kevin", "Lin", email = "klin1234@gmail.com"))
+Description: Binary Segmentation Inference
 Depends:
-    R (>= 3.3.0)
-License: MIT +file LICENSE
-Encoding: UTF-8
+    R (>= 3.3.1),
+    Matrix,
+    pryr,
+    testthat  
+License: What license is it under?
 LazyData: true
-Imports:
-    wbs
-Suggests:
-    testthat
-RoxygenNote: 5.0.1
+RoxygenNote: 5.0.1.9000

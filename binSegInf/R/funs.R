@@ -489,3 +489,73 @@ plot.v = function(v, B=NULL, Z=NULL){
     if(!is.null(Z)) points(x=B, y=rep(maxabs,length(B)),
                            pch = sapply(Z,function(myz){if(myz==+1)"+"else"-"}))
 }
+
+
+##' Binary search an integer vector for goal
+binary.search = function(vec, goal){
+
+    ## Check if vec is all integers
+    stopifnot(all(sapply(vec,function(myentry){round(myentry,0)==myentry})))
+    stopifnot(round(goal,0)==goal)
+
+    ## Conduct binary search.
+    n = length(vec)
+    L = 0
+    R = n-1
+    m = Inf
+    for(ii in 1:length(vec)){
+        if(L>R) stop("Search was unsuccessful")
+        m = floor((L+R)/2)
+        if(vec[m]<goal) L = m+1
+        if(vec[m]>goal) R = m-1
+        if(vec[m]==goal) break
+    }
+    return(m)
+}
+
+
+##' Search in mymat for (j,k) in the first two columns e.g. if j=13 and k = 39,
+##' then it searches for the row (13,39,XXX) in an n by 3 matrix.
+where.jk = function(j, k, mymat){
+    jvec = mymat[,1]
+    kvec = mymat[,2]
+
+    ## Find any thing that matches j
+    one.j.loc = binary.search(jvec, goal=j)
+
+    ## From there, crawl to find /all/ that matches j
+    all.j.loc = crawler(jvec, one.j.loc, j)
+    stopifnot(all(jvec[all.j.loc]==j) & all(jvec[!all.j.loc]!=j) )
+
+    ## From there, crawl to find /all/ that matches j
+    k.loc = min(all.j.loc)-1 + binary.search(kvec[all.j.loc], goal=k)
+        
+    return(k.loc)
+}
+
+
+##' Crawls from myvec[myloc] in either direction and finds the indices of the
+##' entries in myvec that equal mygoal. Must start with a viable location
+##' i.e. myvec[myloc]==mygoal must be true.
+##' @example myvec = c(1:4,rep(5,5),6:10) n = 12 myloc=7 mygoal=5
+##' ## expect_equal(crawler(myvec,myloc,mygoal), c(5,9))
+crawler = function(myvec, myloc, mygoal){
+    
+    stopifnot(myvec[myloc]==mygoal)
+    ii=jj=0
+
+    enough.upwards = FALSE
+    while(!enough.upwards){
+        ii=ii+1
+        enough.upwards = (myvec[myloc+ii]!=mygoal)
+    }
+    up.ind = myloc+ii-1
+
+    enough.downwards = FALSE
+    while(!enough.downwards){
+        jj=jj+1
+        enough.downwards = (myvec[myloc-jj]!=mygoal)
+    }
+    down.ind = myloc-jj+1
+    return(c(down.ind:up.ind))
+}

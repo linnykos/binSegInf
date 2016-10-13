@@ -16,6 +16,7 @@
 ##' @param verbose Set to true if you'd like to see algorithm progression.
 ##' @param return.env Set to true if you'd like to get the environment
 ##'     containing the algorithm output, instead of a list.
+##' @import pryr
 
 binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE, return.env=FALSE){
     n = length(y)
@@ -29,6 +30,7 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
     env = new.env()
     env$slist = env$elist = env$blist = env$Blist = env$zlist = env$Zlist =
         matrix(NA, nrow = n, ncol = 2 ^(n/2))
+        ## matrix(NA,nrow=n,ncol=3)
     env$y = y
 
     ## Run binary segmentation on |env|
@@ -50,6 +52,10 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
     }
 }
 
+
+
+
+
 ##' Inner function for binary segmentation with fixed threshold. The wrapper
 ##' \code{binseg.by.thresh()} is intended to be used by user. Note, when
 ##' \code{thresh} is set to zero, then this can be used to collect the
@@ -67,6 +73,7 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
 ##' @param n The length of the data \code{y}.
 
 binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=F, env=NULL){
+
     n = length(y)
     
     if(e-s<=1){
@@ -75,12 +82,9 @@ binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose
         env$elist[j,k] <- e
         return() 
     } else {
-        cat("In the segment",s,":",e, " ")#,fill=TRUE)
         all.bs = (s:(e-1))
         df = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
         names(df) = all.bs
-        cat("the competing cusums are",fill=TRUE)
-        print(df)
         df = c(rep(NA,s-1),df, rep(NA,n-s))
         sn = sign(df) 
         
@@ -121,7 +125,7 @@ binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose
 ##' @param y numeric vector, data
 ##' @param numsteps desired number of changepoints
 ##' @param verbose set to true for algorithm run details. 
-#### ' @import Matrix
+##' @import Matrix
 
 binseg.by.size = function(y,numsteps,verbose=FALSE){
 
@@ -129,7 +133,6 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     if(numsteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     
     ## Initialize things
-    require(Matrix)   
     B = Z = rep(NA,length(y)) 
     Bcurr = Zcurr = Scurr = Ecurr =
         Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)

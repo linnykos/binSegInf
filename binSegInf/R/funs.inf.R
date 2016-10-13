@@ -127,9 +127,8 @@ tnorm.surv <- function(z, mean, sd, a, b, bits=NULL) {
   return(p)
 }
 
-# Returns Prob(Z>z | Z in [a,b]), where mean cane be a vector, using
-# multi precision floating point calculations thanks to the Rmpfr package
-
+##' Returns Prob(Z>z | Z in [a,b]), where mean can be a vector, using
+##' multi precision floating point calculations thanks to the Rmpfr package
 mpfr.tnorm.surv <- function(z, mean=0, sd=1, a, b, bits=NULL) {
   # If bits is not NULL, then we are supposed to be using Rmpf
   # (note that this was fail if Rmpfr is not installed; but
