@@ -4,17 +4,16 @@ do.one.sim = function(delta,nsim,sigma,numsteps,n=12){
   theta = c(rep(0,n/2), rep(delta,n/2))
   for(isim in 1:nsim){
     y = theta + rnorm(n,0,sigma)
-    a = binSegInf:::binseg.by.size(y, numsteps,verbose=FALSE)
+    a = binseg.by.size(y, numsteps,verbose=FALSE)
     if(a$B[1]==n/2){
-      v = binSegInf:::make.v(a$B[1],a$B,a$Z,n)
-      p[isim]=binSegInf:::poly.pval(y,a$G,a$u,v,sigma)$pv
+      v = make.v(a$B[1],a$B,a$Z,n)
+      p[isim]=poly.pval(y,a$G,a$u,v,sigma)$pv
     }
   }
   return(p)
 }
 
-make.qq.line = function(p, pch='red', pcol=16){
-  lcol.diag = "lightgrey"
+make.qq.line = function(p, pcol='red', pch=16){
   unif.p = runif(sum(!is.na(p)),0,1)
   a = qqplot(x=unif.p, y=p, plot.it=FALSE)
   points(x=a$y, y=a$x, col = pcol, pch=pch)
@@ -39,3 +38,4 @@ make.qqplot.legend = function(deltas,pch=16,pcols=rep("red",length(deltas))){
   title(main=bquote(atop(Segment~test~p-values)))
   
 }
+

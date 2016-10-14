@@ -1,0 +1,93 @@
+---
+title: 'Two-jump simulations'
+author: "Binseginf"
+date: "Oct 13th, 2016"
+---
+  
+  ```{r, echo=FALSE}
+library(knitr) # We need the knitr package to set chunk options
+
+# Set default knitr options for knitting code into the report:
+opts_chunk$set(echo=FALSE,  # change to FALSE to keep code out of the knitted document
+               cache=TRUE, # do not re-run code that has already been run
+               autodep=TRUE, # assure that caching dependencies are updated correctly
+               cache.comments=FALSE, # do not re-run a chunk if only comments are changed
+               message=FALSE, # change to FALSE to keep messages out of the knitted document
+               warning=TRUE  # change to FALSE to keep warnings out of the knitted document
+)
+```
+
+
+```{r Setup}
+library(RColorBrewer) 
+library(parallel)
+options(mc.cores=2L)
+
+## Stuff I need because the binSegInf package won't load.
+source("./twojump-helper.R")
+source("./onejump-helper.R")
+library("Matrix")
+library("pryr")
+source("../binSegInf/R/binseg.R")
+source("../binSegInf/R/funs.inf.R")
+source("../binSegInf/R/funs.R")
+```
+
+
+```{r Simulations}
+## Actual simulations
+delta=3
+nsim=5000
+sims = mcmapply(function(ii){do.one.sim.twojump(delta,nsim,sigma=1,numsteps=ii, nstepmodel=ii)}, 1:2)
+sims.onejump = sims[,1]
+sims.twojump = sims[,2]
+```
+
+
+Objective
+========================
+  * From one-jump generated data, compare the conditional power of *two types of* tests from two-step binary segmentation models.
+     + Observe 1st jump correctly, test that first jump.
+     + Observe 1st & 2nd jump correctly, test the first jump.
+  
+
+Simulation
+========================
+  Generate data from:
+  $$ n = 12 $$ 
+  $$ y \in \mathbb{R}^n $$
+  $$ \theta = (\underbrace{0,\cdots,0}_{n/3},\underbrace{\delta,\cdots,\delta}_{n/3},\underbrace{0,\cdots,0}_{n/3}) \in \mathbb{R}^n $$
+  We will consider single signal size $\delta = 3$.
+
+
+QQ-plots of p-values
+========================
+  
+```{r Plotting, dev='svg',fig.width=4,fig.height=4, fig.align='center',fig.show='hold',out.extra='style="float:left"'}
+opts_chunk$set(cache=FALSE # do not re-run code that has already been run
+               )
+## Make example data plot 
+n=12
+delta=3
+sigma=1
+theta = c(rep(0,n/3), rep(delta,n/3),rep(0,n/3))
+y = theta + rnorm(n,0,sigma)
+plot(y, axes=F, ylim=c(-2,6), pch=16, col='grey50')
+axis(1);axis(2)
+lines(theta, col = 'red', lwd=2, lty = (if(delta==3)1 else 2))
+abline(v=c(n/3,2*n/3), col='grey', lty=2)
+
+
+## Make QQ plot
+make.qqplot.background()
+make.qq.line(sims.onejump,'red',16) 
+make.qq.line(sims.twojump,'blue',16) 
+title(paste(nsim, "simulations each"))
+legend("bottomright",pch=c(16,16),col=c("red","blue"),legend=c("one-step","two-step"))
+```
+
+
+* **Simulation results**
+    + One-step models: There are `r sum(!is.na(sims.onejump))` out of `r nsim` simulations whose one-step model that hit $n/3=$ `r n/3`.
+    + Two-step models: There are `r sum(!is.na(sims.twojump))` out of `r nsim` simulations whose two-step model hit $n/3=$ `r n/3` and $2n/3=$ `r 2*n/3`.
+    

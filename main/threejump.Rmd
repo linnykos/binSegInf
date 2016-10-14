@@ -1,0 +1,104 @@
+---
+title: 'More simulations'
+author: "Binseginf"
+date: "Oct 13th, 2016"
+---
+  
+  ```{r, echo=FALSE}
+library(knitr) # We need the knitr package to set chunk options
+
+# Set default knitr options for knitting code into the report:
+opts_chunk$set(echo=FALSE,  # change to FALSE to keep code out of the knitted document
+               cache=TRUE, # do not re-run code that has already been run
+               autodep=TRUE, # assure that caching dependencies are updated correctly
+               cache.comments=FALSE, # do not re-run a chunk if only comments are changed
+               message=FALSE, # change to FALSE to keep messages out of the knitted document
+               warning=TRUE  # change to FALSE to keep warnings out of the knitted document
+)
+```
+
+
+```{r Setup}
+library(RColorBrewer) 
+library(parallel)
+options(mc.cores=2L)
+
+## Stuff I need because the binSegInf package won't load.
+source("./threejump-helper.R")
+source("./onejump-helper.R")
+library("Matrix")
+library("pryr")
+source("../binSegInf/R/binseg.R")
+source("../binSegInf/R/funs.inf.R")
+source("../binSegInf/R/funs.R")
+```
+
+
+```{r Simulations}
+## Actual simulations
+deltas=c(0,1,2,3)
+nsim=1000
+delta=3
+locs = matrix(NA,ncol=length(deltas), nrow=nsim)
+for(ii in 1:length(deltas)){
+  locs[,ii]=do.one.sim.threejump(deltas[ii],nsim,sigma=1,numsteps=1)
+}
+#locs = mcmapply(function(delta){do.one.sim.threejump(delta,nsim,sigma=1,numsteps=1)},deltas)
+```
+
+
+Objective
+========================
+  * From one-jump generated data, compare the conditional power of *two types of* tests from two-step binary segmentation models.
+     + See how many times binary segmentation is `confused', in a simulation setting.
+     + 
+  
+
+Simulation
+========================
+  Generate data from:
+  $$ n = 16 $$ 
+  $$ y \in \mathbb{R}^n $$
+  $$ \theta = (\underbrace{0,\cdots,0}_{n/4},\underbrace{\delta,\cdots,\delta}_{n/4},\underbrace{\delta,\cdots,\delta}_{n/4},\underbrace{0,\cdots,0}_{n/4}) \in \mathbb{R}^n $$
+  We will consider single signal size $\delta = 3$.
+  
+Data example
+========================
+  
+```{r Plotting data, dev='svg',fig.width=4, height=4}
+opts_chunk$set(cache=FALSE # do not re-run code that has already been run
+               )
+## Make example data plot 
+n=16
+delta=3
+sigma=1
+theta = c(rep(0,n/4), 
+          rep(delta,n/4),
+          rep(-delta,n/4),
+          rep(0,n/4))
+correct.locs = c(n/4, n/2, 3*n/4)
+y = theta + rnorm(n,0,sigma)
+plot(y, axes=F, ylim=c(-8,8), pch=16, col='grey50')
+axis(1);axis(2)
+lines(theta, col = 'red', lwd=2, lty = (if(delta==3)1 else 2))
+abline(v=correct.locs, col='grey', lty=2)
+```
+
+
+Where are the first changepoints?
+===========================
+The first changepoints are distributed as (y value is frequency, out of 1):
+
+```{r Plotting histograms, dev='svg',fig.width=4, height=4 }
+### Make a histogram of recovered locations
+for(ii in 1:length(deltas)){
+  freqs=table(locs[,ii])/nsim
+  plot(NA,xlim=c(0,n),ylim=c(0,1))
+  points(y=freqs,x=names(freqs), col='grey', pch=17)
+  abline(v=correct.locs, col='grey', lty=2)
+  title(bquote(delta==.(deltas[ii])))
+}
+
+```
+
+In an scenario where the data is generated from an `adverse' setting, we'd like to see how confused binary segmentation can be. We plot a histogram of the first recovered changepoints.
