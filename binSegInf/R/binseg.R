@@ -227,9 +227,7 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
         
         if(verbose) cat("From candidates", Scurr[jmax,kmax],  ":",Ecurr[jmax,kmax], " ")
         if(verbose) cat("breakpoint", Bcurr[jmax,kmax], "was selected", fill=FALSE)
-        if(verbose) cat("with threshold knot", round(zetas[mystep],3), " !", fill=TRUE)
-        if(verbose) cat("And the breaking knots were",fill=TRUE)
-        if(verbose) print(curr.max.cusums)
+        if(verbose) cat(" with threshold knot", round(zetas[mystep],3), " !", fill=TRUE)
         
         ## Terminate if all terminal nodes are length 2 or smaller.
         too.short = unlist(lapply(Tt[[mystep]], function(mypair){Ecurr[mypair[1],mypair[2]] - Scurr[mypair[1], mypair[2]] <=1}))
