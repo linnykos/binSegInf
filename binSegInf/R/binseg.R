@@ -37,12 +37,12 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
     binseg.by.thresh.inner(y, thresh, s, e, j, k, verbose, env=env)
 
     ## Gather output from |env| and return it.
-    bs.output = list(slist = env$slist,
-                     elist = env$elist,
-                     blist = env$blist,
-                     Blist = env$Blist,
-                     zlist = env$zlist,
-                     Zlist = env$Zlist,
+    bs.output = list(slist = trim(env$slist),
+                     elist = trim(env$elist),
+                     blist = trim(env$blist),
+                     Blist = trim(env$Blist),
+                     zlist = trim(env$zlist),
+                     Zlist = trim(env$Zlist),
                      y = y,
                      thresh = thresh)
     if(return.env){
@@ -76,39 +76,39 @@ binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose
 
     n = length(y)
     
+    ## If segment is 2-lengthed, terminate
     if(e-s<=1){
-        ## if(verbose) cat("terminated because e-s<1", fill=T)
-        env$slist[j,k] <- s
-        env$elist[j,k] <- e
+        env$slist = add(env$slist,j,k,s)
+        env$elist = add(env$elist,j,k,e)
         return() 
+    ## Otherwise, calculate CUSUMs
     } else {
         all.bs = (s:(e-1))
-        df = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
-        names(df) = all.bs
-        df = c(rep(NA,s-1),df, rep(NA,n-s))
-        sn = sign(df) 
+        all.cusums = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
+        names(all.cusums) = all.bs
+        all.cusums = c(rep(NA,s-1),all.cusums, rep(NA,n-s))
+        sn = sign(all.cusums) 
         
         ## Obtain breakpoint and its sign
-        b = which.max(abs(df))
+        b = which.max(abs(all.cusums))
         z = sn[b]
         if(verbose) cat("the changepoint", b, "is selected", fill=T)
         
         ## Check threshold exceedance, then store
-        if(abs(df[b]) < thresh){
-            env$Blist[j+1,k] <- b
-            env$Zlist[j+1,k] <- z
-            env$slist[j,k] <- s
-            env$elist[j,k] <- e
-            ## if(verbose) cat("terminated because biggest gap was",abs(df[b]),fill=T)
+        if(abs(all.cusums[b]) < thresh){
+            env$Blist = add(env$Blist,j+1,k,b)
+            env$Zlist = add(env$Zlist,j+1,k,z)
+            env$slist = add(env$slist,j,  k,s)
+            env$elist = add(env$elist,j,  k,e)
             return(env)
         } else { 
-            if(verbose) cat("the biggest cusum was", df[b], "which passed the threshold:", thresh,  fill=T)
-            env$blist[j+1,k] <- b
-            env$Blist[j+1,k] <- b
-            env$zlist[j+1,k] <- z
-            env$Zlist[j+1,k] <- z
-            env$slist[j,k] <- s
-            env$elist[j,k] <- e
+            if(verbose) cat("the biggest cusum was", all.cusums[b], "which passed the threshold:", thresh,  fill=T)
+            env$blist = add(env$blist, j+1,k, b)
+            env$Blist = add(env$Blist, j+1,k, b)
+            env$zlist = add(env$zlist, j+1,k, z)
+            env$Zlist = add(env$Zlist, j+1,k, z)
+            env$slist = add(env$slist, j  ,k, s)
+            env$elist = add(env$elist, j  ,k, e)
         }
         
         ## Recurse
@@ -135,12 +135,13 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     ## Initialize things
     B = Z = rep(NA,length(y)) 
     Bcurr = Zcurr = Scurr = Ecurr =
-        Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
+        ## Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
+        cplist(numsteps+1)
     S = E = A = Tt =  
         Tcurr = Acurr =
             lapply(1:length(y),function(i) c())
-    Scurr[1,1] = 1
-    Ecurr[1,1] = length(y)
+    Scurr = add(Scurr,1,1,1)
+    Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
     Acurr[[1]] = c()
     jk  = list()
@@ -160,6 +161,11 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
             if(Ecurr[j,k]-Scurr[j,k]<=1) next
             cusums = getcusums(s = Scurr[j,k],
                                e = Ecurr[j,k],
+                               y = y)
+
+            extract(Scurr,j,k)
+            cusums = getcusums(s = Scurr[which.jk(Scurr,j,k),3],
+                               e = Ecurr[which.jk(j,k],
                                y = y)
             
             ## Characterize signs
@@ -193,9 +199,6 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
             curr.max.signed.row - myrow }))
         G[(Gn+1):(Gn+nrow(comparison.cusummat)),] = comparison.cusummat
         Gn = Gn+nrow(comparison.cusummat)
-
-        ## Check characterization (to be continued)
-
 
         
         ## Record knot as CUSUM maximizer
