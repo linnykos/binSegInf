@@ -29,20 +29,23 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
     ## Create new environment |env|
     env = new.env()
     env$slist = env$elist = env$blist = env$Blist = env$zlist = env$Zlist =
-        matrix(NA, nrow = n, ncol = 2 ^(n/2))
+        ## matrix(NA, nrow = n, ncol = 2 ^(n/2))
         ## matrix(NA,nrow=n,ncol=3)
+        cplist(n)
     env$y = y
 
     ## Run binary segmentation on |env|
     binseg.by.thresh.inner(y, thresh, s, e, j, k, verbose, env=env)
 
     ## Gather output from |env| and return it.
-    bs.output = list(slist = trim(env$slist),
-                     elist = trim(env$elist),
-                     blist = trim(env$blist),
-                     Blist = trim(env$Blist),
-                     zlist = trim(env$zlist),
-                     Zlist = trim(env$Zlist),
+    bs.output = list(slist = trim.cplist(env$slist),
+                     elist = trim.cplist(env$elist),
+                     blist = trim.cplist(env$blist),
+                     Blist = trim.cplist(env$Blist),
+                     zlist = trim.cplist(env$zlist),
+                     Zlist = trim.cplist(env$Zlist),
+                     cp = trim(env$blist$mat[,3]),
+                     cp.sign = trim(env$zlist$mat[,3]),
                      y = y,
                      thresh = thresh)
     if(return.env){
@@ -72,14 +75,14 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
 ##' @param y The original data.
 ##' @param n The length of the data \code{y}.
 
-binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=F, env=NULL){
+binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=F, env=NULL){
 
     n = length(y)
     
     ## If segment is 2-lengthed, terminate
     if(e-s<=1){
-        env$slist = add(env$slist,j,k,s)
-        env$elist = add(env$elist,j,k,e)
+        env$slist = add.cplist(env$slist,j,k,s)
+        env$elist = add.cplist(env$elist,j,k,e)
         return() 
     ## Otherwise, calculate CUSUMs
     } else {
@@ -96,19 +99,20 @@ binseg.by.thresh.inner = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose
         
         ## Check threshold exceedance, then store
         if(abs(all.cusums[b]) < thresh){
-            env$Blist = add(env$Blist,j+1,k,b)
-            env$Zlist = add(env$Zlist,j+1,k,z)
-            env$slist = add(env$slist,j,  k,s)
-            env$elist = add(env$elist,j,  k,e)
+            env$Blist = add.cplist(env$Blist,j+1,k,b)
+            env$Zlist = add.cplist(env$Zlist,j+1,k,z)
+            env$slist = add.cplist(env$slist,j,  k,s)
+            env$elist = add.cplist(env$elist,j,  k,e)
             return(env)
         } else { 
             if(verbose) cat("the biggest cusum was", all.cusums[b], "which passed the threshold:", thresh,  fill=T)
-            env$blist = add(env$blist, j+1,k, b)
-            env$Blist = add(env$Blist, j+1,k, b)
-            env$zlist = add(env$zlist, j+1,k, z)
-            env$Zlist = add(env$Zlist, j+1,k, z)
-            env$slist = add(env$slist, j  ,k, s)
-            env$elist = add(env$elist, j  ,k, e)
+
+            env$blist = add.cplist(env$blist, j+1,k, b)
+            env$Blist = add.cplist(env$Blist, j+1,k, b)
+            env$zlist = add.cplist(env$zlist, j+1,k, z)
+            env$Zlist = add.cplist(env$Zlist, j+1,k, z)
+            env$slist = add.cplist(env$slist, j  ,k, s)
+            env$elist = add.cplist(env$elist, j  ,k, e)
         }
         
         ## Recurse
@@ -135,13 +139,15 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     ## Initialize things
     B = Z = rep(NA,length(y)) 
     Bcurr = Zcurr = Scurr = Ecurr =
-        ## Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
-        cplist(numsteps+1)
+       Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
+        ## cplist(numsteps+1)
     S = E = A = Tt =  
         Tcurr = Acurr =
             lapply(1:length(y),function(i) c())
-    Scurr = add(Scurr,1,1,1)
-    Ecurr = add(Ecurr,1,1,length(y))
+    Scurr[1,1] = 1
+    Ecurr[1,1] = length(y)
+    ## Scurr = add.cplist(Scurr,1,1,1)
+    ## Ecurr = add.cplist(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
     Acurr[[1]] = c()
     jk  = list()
@@ -163,11 +169,14 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
                                e = Ecurr[j,k],
                                y = y)
 
-            extract(Scurr,j,k)
-            cusums = getcusums(s = Scurr[which.jk(Scurr,j,k),3],
-                               e = Ecurr[which.jk(j,k],
-                               y = y)
-            
+            ## extract(Scurr,j,k)
+            ## cusums = getcusums(s = Scurr[which.jk(Scurr,j,k),3],
+            ##                    e = Ecurr[which.jk(,k],
+            ##                    y = y)
+            ## cusums = getcusums(s = extract.cplist(Scurr,j,k),
+            ##                    e = extract.cplist(Ecurr,j,k),
+            ##                    y = y)
+
             ## Characterize signs
             signed.cusummat = (cusums$contrasts) * (cusums$signs)
             G[(Gn+1):(Gn+nrow(signed.cusummat)),] = signed.cusummat 
@@ -177,6 +186,9 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
             Bcurr[j, k] = cusums$bmax
             Zcurr[j, k] = cusums$signs[cusums$bmax.cusums]
             breaking.cusum = cusums$cusum
+
+            print(breaking.cusum)
+            print(curr.max)
             
             ## Keep running maximum
             if(curr.max <= breaking.cusum){
@@ -241,8 +253,8 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     }
     ## END of Main loop
     G = trim(G,"row")
-    
-    ## trim and return things
+
+    ## Trim and return things
     return(list(S = trim(S),
                 E = trim(E),
                 A = trim(A),

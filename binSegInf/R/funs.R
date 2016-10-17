@@ -416,7 +416,7 @@ trim = function(mything,...){
     class.of.my.thing = class(mything)
     if(class.of.my.thing == "list"){
         return(trim.list(mything,...))
-    } else if (class.of.my.thing %in% c("matrix","dgCMatrix")){
+    } else if (class.of.my.thing %in% c("matrix","dgCMatrix", "dgeMatrix")){
         return(trim.mat(mything,...))
     } else if (class.of.my.thing %in% c("integer", "numeric")){
         return(trim.vec(mything,...))
@@ -491,46 +491,37 @@ plot.v = function(v, B=NULL, Z=NULL){
 }
 
 
-##' Binary search an integer vector for goal
-binary.search = function(vec, goal){
+##' Binary search an integer vector for goal Returns index of goal, in the
+##' vector.
+binary_search = function(vec, goal, verbose=FALSE){
 
     ## Check if vec is all integers
     stopifnot(all(sapply(vec,function(myentry){round(myentry,0)==myentry})))
     stopifnot(round(goal,0)==goal)
 
+    ## If there is only one element, just check it
+    if(length(vec)==1){
+        if(vec==goal) return(1)
+        else return()
+    }
+    
+
     ## Conduct binary search.
     n = length(vec)
-    L = 0
+    L = 0 
     R = n-1
     m = Inf
-    for(ii in 1:length(vec)){
-        if(L>R) stop("Search was unsuccessful")
+    for(ii in 1:(length(vec))){
+        if(L>R){
+            if(verbose) print("Search was unsuccessful")
+            return()
+        }
         m = floor((L+R)/2)
-        if(vec[m]<goal) L = m+1
-        if(vec[m]>goal) R = m-1
-        if(vec[m]==goal) break
+        if(vec[m+1]<goal) L = m+1
+        if(vec[m+1]>goal) R = m-1
+        if(vec[m+1]==goal) break
     }
-    return(m)
-}
-
-
-##' Search in mymat for (j,k) in the first two columns e.g. if j=13 and k = 39,
-##' then it searches for the row (13,39,XXX) in an n by 3 matrix.
-where.jk = function(j, k, mymat){
-    jvec = mymat[,1]
-    kvec = mymat[,2]
-
-    ## Find any thing that matches j
-    one.j.loc = binary.search(jvec, goal=j)
-
-    ## From there, crawl to find /all/ that matches j
-    all.j.loc = crawler(jvec, one.j.loc, j)
-    stopifnot(all(jvec[all.j.loc]==j) & all(jvec[!all.j.loc]!=j) )
-
-    ## From there, crawl to find /all/ that matches j
-    k.loc = min(all.j.loc)-1 + binary.search(kvec[all.j.loc], goal=k)
-        
-    return(k.loc)
+    return(m+1)
 }
 
 
@@ -544,18 +535,37 @@ crawler = function(myvec, myloc, mygoal){
     stopifnot(myvec[myloc]==mygoal)
     ii=jj=0
 
+    ## Search in the upward direction from myloc
     enough.upwards = FALSE
     while(!enough.upwards){
         ii=ii+1
-        enough.upwards = (myvec[myloc+ii]!=mygoal)
+        if(length(myvec[myloc-jj]) == 0){
+            enough.upwards=TRUE
+        } else if(is.na(myvec[myloc+ii])){
+            enough.upwards=TRUE
+        } else if(myvec[myloc+ii]!=mygoal){
+            enough.upwards=TRUE
+        } else {
+            enough.upwards=FALSE
+        }
     }
     up.ind = myloc+ii-1
 
+    ## Search in the downward direction from myloc
     enough.downwards = FALSE
     while(!enough.downwards){
         jj=jj+1
-        enough.downwards = (myvec[myloc-jj]!=mygoal)
+        if(length(myvec[myloc-jj]) == 0){
+            enough.downwards=TRUE
+        } else if(is.na(myvec[myloc-jj])){
+            enough.downwards=TRUE
+        } else if(myvec[myloc-jj]!=mygoal){
+            enough.downwards=TRUE
+        } else {
+            enough.downwards=FALSE
+        }
     }
     down.ind = myloc-jj+1
     return(c(down.ind:up.ind))
 }
+
