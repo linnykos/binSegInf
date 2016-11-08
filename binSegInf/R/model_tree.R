@@ -11,3 +11,10 @@
   
   node
 }
+
+.get_leaves_names <- function(tree){
+  leaves <- tree$leaves
+  vec <- sapply(leaves, function(x){x$name})
+  names(vec) <- NULL
+  sort(vec)
+}
