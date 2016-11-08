@@ -11,6 +11,11 @@ test_that(".create_node errors if start is larger than end", {
   res <- expect_error(.create_node(5,2))
 })
 
+test_that(".create_node creates the right name", {
+  res <- .create_node(2, 5)
+  expect_true(res$name == "2-5")
+})
+
 ##########################
 
 ## .get_leaves_names is correct
