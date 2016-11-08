@@ -1,9 +1,11 @@
 language: r
 
+before_install:
+ - cd binSegInf
+
 cache: packages
 
 r_binary_packages:
-    - wbs
     - covr
 
 after_success:
