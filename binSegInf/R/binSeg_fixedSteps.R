@@ -19,16 +19,9 @@
 #   structure(list(tree = tree, numSteps = numSteps))
 # }
 
-.find_leadingBreakpoint <- function(tree){
-  leaves.names <- .get_leaves_names(tree)
-  cusum.vec <- sapply(leaves.names, function(x){
-    tree$FindNode(x)$cusum
-  })
-  leaves.names[which.max(cusum.vec)]
-}
-
 .find_breakpoint <- function(y, start, end){
-  if(start >= end) stop("start must be smaller than end")
+  if(start > end) stop("start must be smaller than or equal to end")
+  if(start == end) return(list(breakpoint = start, cusum = 0))
   
   idx <- seq(from = start, to = end - 1, by = 1)
   cusum.vec <- sapply(idx, .cusum, y = y, start = start, end = end)

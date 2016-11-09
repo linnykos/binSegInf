@@ -39,14 +39,13 @@ test_that(".find_breakpoint is correct", {
   expect_true(res$breakpoint == 5)
 })
 
-#############################
-
-## .find_leadingBreakpoint is correct
-
-test_that(".find_leadingBreakpoint will work if there is only one leaf", {
-  tree <- .create_node(1, 10)
-  tree$cusum <- 10
+test_that(".find_breakpoint reports 0 if start = end", {
+  y <- c(rep(0,5), rep(1,5))
+  res <- .find_breakpoint(y, 4, 4)
   
-  res <- .find_leadingBreakpoint(tree)
-  expect_true(res == "1-10")
+  expect_true(length(res) == 2)
+  expect_true(res$breakpoint == 4)
+  expect_true(res$cusum == 0)
 })
+
+#############################

@@ -26,3 +26,30 @@ test_that(".get_leaves_names works", {
   expect_true(all(res == c("Go agile", "New Accounting Standards", "New Labs",
     "New Product Line", "New Software", "Outsource", "Switch to R")))
 })
+
+###############################
+
+## .find_leadingBreakpoint is correct
+
+test_that(".find_leadingBreakpoint will work if there is only one leaf", {
+  tree <- .create_node(1, 10)
+  tree$cusum <- 10
+  
+  res <- .find_leadingBreakpoint(tree)
+  expect_true(res == "1-10")
+})
+
+#####################################
+
+## .split_node is correct
+
+test_that(".split_node correctly returns left and right", {
+  tree <- .create_node(1, 10, 5)
+  res <- .split_node(tree)
+  
+  expect_true(length(res) == 2)
+  expect_true(res$left$start == 1)
+  expect_true(res$left$end == 5)
+  expect_true(res$right$start == 6)
+  expect_true(res$right$end == 10)
+})
