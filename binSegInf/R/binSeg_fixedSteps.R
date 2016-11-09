@@ -37,7 +37,7 @@ binSeg_fixedSteps <- function(y, numSteps){
 
 .cusum <- function(y, start, idx, end){
   v <- .cusum_contrast(start, idx, end)
-  v %*% y
+  v %*% y[start:end]
 }
 
 #n1 is denoted as start to idx (inclusive)

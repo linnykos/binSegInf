@@ -36,3 +36,7 @@
   
   list(left = left, right = right)
 }
+
+.enumerate_splits <- function(tree){
+  names(sort(tree$Get("active")))
+}

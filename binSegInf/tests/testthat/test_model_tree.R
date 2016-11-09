@@ -53,3 +53,14 @@ test_that(".split_node correctly returns left and right", {
   expect_true(res$right$start == 6)
   expect_true(res$right$end == 10)
 })
+
+#######################################
+
+## .enumerate_splits is correct
+
+test_that(".enumerate_splits is correct", {
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  res <- binSeg_fixedSteps(y, 2)
+  
+  expect_true(all(.enumerate_splits(res$tree) == c("1-20", "11-20")))
+})
