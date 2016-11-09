@@ -61,3 +61,11 @@ test_that("binSeg_fixedSteps works on one jump", {
   expect_true(class(res$tree)[1] == "Node")
   expect_true(res$tree$breakpoint == 10)
 })
+
+test_that("the isValid function works", {
+  y <- c(rep(0, 10), rep(1, 10))
+  res <- binSeg_fixedSteps(y, 1)
+  
+  expect_true(isValid(res))
+})
+

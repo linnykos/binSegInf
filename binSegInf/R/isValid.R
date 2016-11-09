@@ -15,3 +15,10 @@ isValid.Node <- function(obj){
   
   TRUE
 }
+
+isValid.bsFs <- function(obj){
+  if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
+  if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
+  
+  TRUE
+}
