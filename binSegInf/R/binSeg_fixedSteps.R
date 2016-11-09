@@ -1,22 +1,32 @@
 # binSeg_fixedSteps <- function(y, numSteps){
-#   
+# 
 #   #initialization
 #   n <- length(y); tree <- .create_node(1, n)
-#   
+# 
 #   for(steps in 1:numSteps){
 #     leaves.names <- .get_leaves_names(tree)
 #     for(i in 1:length(leaves)){
-#       res <- .find_breakpoint(y, population$FindNode(i)$start, 
-#         population$FindNode(i)$end)
-#       
-#       population$FindNode(i)$breakpoint <- res$breakpoint
-#       population$FindNode(i)$cusum <- res$cusum
+#       res <- .find_breakpoint(y, tree$FindNode(leaves.names[i])$start, 
+#         tree$FindNode(leaves.names[i])$end)
+# 
+#       tree$FindNode(leaves.names[i])$breakpoint <- res$breakpoint
+#       tree$FindNode(leaves.names[i])$cusum <- res$cusum
 #     }
+#     
+#     node.name <- .find_leadingBreakpoint(tree)
 #   }
-#   
+# 
 #   structure(list(tree = tree, numSteps = numSteps))
 # }
-# 
+
+.find_leadingBreakpoint <- function(tree){
+  leaves.names <- .get_leaves_names(tree)
+  cusum.vec <- sapply(leaves.names, function(x){
+    tree$FindNode(x)$cusum
+  })
+  leaves.names[which.max(cusum.vec)]
+}
+
 .find_breakpoint <- function(y, start, end){
   if(start >= end) stop("start must be smaller than end")
   
