@@ -17,10 +17,15 @@
 #   structure(list(tree = tree, numSteps = numSteps))
 # }
 # 
-# .find_breakpoint <- function(y, start, end){
-#   
-# }
-# 
+.find_breakpoint <- function(y, start, end){
+  if(start >= end) stop("start must be smaller than end")
+  
+  idx <- seq(from = start, to = end - 1, by = 1)
+  cusum.vec <- sapply(idx, .cusum, y = y, start = start, end = end)
+  
+  list(breakpoint = idx[which.max(cusum.vec)], cusum = max(cusum.vec))
+}
+
 .cusum <- function(y, start, idx, end){
   v <- .cusum_contrast(start, idx, end)
   v %*% y
@@ -34,5 +39,5 @@
   n1 <- idx - start + 1
   n2 <- end - idx
   
-  c(rep(-1/n1, n1), rep(1/n2, n2))
+  c(rep(-1/n1, n1), rep(1/n2, n2)) * sqrt(1/((1/n1) + (1/n2)))
 }
