@@ -49,3 +49,15 @@ test_that(".find_breakpoint reports 0 if start = end", {
 })
 
 #############################
+
+## binSeg_fixedSteps is correct
+
+test_that("binSeg_fixedSteps works on one jump", {
+  y <- c(rep(0, 10), rep(1, 10))
+  res <- binSeg_fixedSteps(y, 1)
+  
+  expect_true(length(res) == 2)
+  expect_true(class(res) == "bsFs")
+  expect_true(class(res$tree)[1] == "Node")
+  expect_true(res$tree$breakpoint == 10)
+})

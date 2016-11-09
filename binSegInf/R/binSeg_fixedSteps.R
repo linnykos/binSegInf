@@ -22,7 +22,7 @@ binSeg_fixedSteps <- function(y, numSteps){
     node.selected$AddChildNode(node.pairs$right)
   }
 
-  structure(list(tree = tree, numSteps = numSteps))
+  structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
 }
 
 .find_breakpoint <- function(y, start, end){
