@@ -7,11 +7,12 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   gamma.row.lis <- vector("list", numSteps)
   
   for(i in 1:numSteps){
-    gamma.row.lis <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
+    gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
       comp.lis[[i]]$losing, n, y)
   }
   
-  do.call(rbind, gamma.row.lis)
+  mat <- do.call(rbind, gamma.row.lis)
+  polyhedra(gamma = mat, u = rep(0, nrow(mat)))
 }
 
 .gammaRows_from_comparisons <- function(vec, mat, n, y){

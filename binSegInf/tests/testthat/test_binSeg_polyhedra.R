@@ -5,6 +5,14 @@ context("Test binSeg_polyhedra")
 test_that("form_polyhedra.bsFs works", {
   y <- c(rep(0, 10), rep(10, 5), rep(5, 5))
   obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- form_polyhedra(obj, y)
+  
+  expect_true(class(res) == "polyhedra")
+  expect_true(length(res) == 2)
+  expect_true(all(res$u == 0))
+  
+  expect_true(all(res$gamma %*% y >= res$u))
 })
 
 ###############################
@@ -60,3 +68,6 @@ test_that(".gammaRow_from_comparisons is fulfilled by y", {
   
   expect_true(all(res %*% y >= 0))
 })
+
+###########################################
+
