@@ -1,3 +1,5 @@
+context("Test comparison_matrix")
+
 ## .comparison_mat is correct
 
 test_that(".comparison_mat enforces winning and losing requirements", {
@@ -118,4 +120,13 @@ test_that(".form_comparison works", {
   expect_true(nrow(res$losing) == (40 - 21 - 1) + (20 - 1))
   
   expect_true(length(intersect(which(res$losing[,1] == 21), which(res$losing[,2] == 30))) == 0)
+})
+
+test_that(".form_comparison still works when there is no leaf", {
+  tree <-  .create_node(1, 10)
+  res <- .form_comparison(tree, "1-10", 5)
+  
+  expect_true(nrow(res$losing) == 8)
+  mat <- cbind(1, c(1:9)[-5], 10)
+  expect_true(all(res$losing == mat))
 })

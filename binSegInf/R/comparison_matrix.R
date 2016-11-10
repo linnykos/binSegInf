@@ -19,9 +19,10 @@
 
   leaves.mat <- .get_leaves_matrix_excluding(tree, nodeName)
 
-  losing <- do.call(rbind, .threeColumnMatrix_from_nodeMatrix(leaves.mat))
-  losing <- rbind(losing, .threeColumnMatrix_from_nodeVec(nodeNumeric, breakpoint))
-
+  losing <- .threeColumnMatrix_from_nodeVec(nodeNumeric, breakpoint)
+  if(!any(is.na(leaves.mat))) losing <- rbind(losing, do.call(rbind, 
+      .threeColumnMatrix_from_nodeMatrix(leaves.mat)))
+  
   .comparison_mat(winning, losing)
 }
 
