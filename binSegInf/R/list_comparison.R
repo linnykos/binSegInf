@@ -32,16 +32,18 @@
 #   comp.lis
 # }
 
-# .form_comparison <- function(tree, nodeName, breakpoint){
-#   winning <- numeric(3)
-#   winning[c(1,3)] <- .extract_startEnd(nodeName); winning[3] <- breakpoint
-#   
-#   leaves.mat <- .get_leaves_matrix_excluding(tree, nodeName)
-#   
-#   losing <- do.call(rbind, .threeColumnMatrix_from_nodeMatrix(leaves.mat))
-#   
-#   
-# }
+.form_comparison <- function(tree, nodeName, breakpoint){
+  winning <- numeric(3)
+  nodeNumeric <- .extract_startEnd(nodeName)
+  winning[c(1,3)] <- nodeNumeric; winning[2] <- breakpoint
+
+  leaves.mat <- .get_leaves_matrix_excluding(tree, nodeName)
+
+  losing <- do.call(rbind, .threeColumnMatrix_from_nodeMatrix(leaves.mat))
+  losing <- rbind(losing, .threeColumnMatrix_from_nodeVec(nodeNumeric, breakpoint))
+
+  .comparison_mat(winning, losing)
+}
 
 .threeColumnMatrix_from_nodeMatrix <- function(mat){
   plyr::alply(mat, 2, .threeColumnMatrix_from_nodeVec)
@@ -62,11 +64,15 @@
 }
 
 .get_leaves_matrix_excluding <- function(tree, nodeName){
-  leaves.names <- .enumerate_splits(tree)
+  leaves.names <- .get_leaves_names(tree)
   stopifnot(nodeName %in% leaves.names)
   leaves.names <- leaves.names[leaves.names != nodeName]
   
-  sapply(leaves.names, .extract_startEnd)
+  if(length(leaves.names) == 0){
+    return(NA)
+  } else {
+    sapply(leaves.names, .extract_startEnd)
+  }
 }
 
 .extract_startEnd <- function(nodeName){
