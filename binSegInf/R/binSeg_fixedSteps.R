@@ -41,7 +41,7 @@ isValid.bsFs <- function(obj){
   idx <- seq(from = start, to = end - 1, by = 1)
   cusum.vec <- sapply(idx, .cusum, y = y, start = start, end = end)
   
-  list(breakpoint = idx[which.max(cusum.vec)], cusum = max(cusum.vec))
+  list(breakpoint = idx[which.max(abs(cusum.vec))], cusum = max(abs(cusum.vec)))
 }
 
 .cusum <- function(y, start, idx, end){

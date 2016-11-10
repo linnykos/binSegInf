@@ -25,8 +25,12 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   sign.winning <- as.numeric(sign(winning.contrast %*% y))
   signs.losing <- as.numeric(sign(losing.contrast %*% y))
   
-  .vector_matrix_signedDiff(winning.contrast, losing.contrast, sign.winning,
+  # add inequalities to compare winning split to all other splits
+  res <- .vector_matrix_signedDiff(winning.contrast, losing.contrast, sign.winning,
     signs.losing)
+  
+  # add inequalities to compare splits to 0 (ensure correct sign)
+  rbind(res, sign.winning * winning.contrast, signs.losing * losing.contrast)
 }
 
 .vector_matrix_signedDiff <- function(vec, mat, sign.vec, sign.mat){

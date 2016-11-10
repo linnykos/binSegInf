@@ -2,10 +2,10 @@ context("Test binSeg_polyhedra")
 
 ## form_polyhedra.bsFs is correct
 
-# test_that("form_polyhedra.bsFs works", {
-#   y <- c(rep(0, 10), rep(10, 5), rep(5, 5))
-#   obj <- binSeg_fixedSteps(y, 2)
-# })
+test_that("form_polyhedra.bsFs works", {
+  y <- c(rep(0, 10), rep(10, 5), rep(5, 5))
+  obj <- binSeg_fixedSteps(y, 2)
+})
 
 ###############################
 
@@ -44,5 +44,19 @@ test_that(".gammaRows_from_comparisons works", {
   
   res <- .gammaRows_from_comparisons(vec, mat, 10, y)
   
-  expect_true(all(dim(res) == c(8, 10)))
+  expect_true(all(dim(res) == c(17, 10)))
+})
+
+test_that(".gammaRow_from_comparisons is fulfilled by y", {
+  y <- c(rep(0, 5), rep(10,4), -9)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  expect_true(obj$tree$breakpoint == 9)
+  
+  vec <- matrix(c(1,9,10), ncol = 3)
+  mat <- cbind(1, 1:8, 10)
+  
+  res <- .gammaRows_from_comparisons(vec, mat, 10, y)
+  
+  expect_true(all(res %*% y >= 0))
 })

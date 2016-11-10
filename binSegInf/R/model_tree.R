@@ -32,6 +32,7 @@ isValid.Node <- function(obj){
   cusum.vec <- sapply(leaves.names, function(x){
     tree$FindNode(x)$cusum
   })
+  
   leaves.names[which.max(abs(cusum.vec))]
 }
 

@@ -48,6 +48,19 @@ test_that(".find_breakpoint reports 0 if start = end", {
   expect_true(res$cusum == 0)
 })
 
+test_that(".find_breakpoint splits at the best location", {
+  y <- c(rep(0, 5), rep(10,4), -9)
+  
+  mat <- cbind(1, 1:9, 10)
+  cusum.vec <- apply(mat, 1, function(x){
+    .cusum(y, x[1], x[2], x[3])
+  })
+  
+  res <- .find_breakpoint(y, 1, 10)
+  
+  expect_true(max(abs(cusum.vec)) == res$cusum)
+})
+
 #############################
 
 ## binSeg_fixedSteps is correct
@@ -75,6 +88,20 @@ test_that("the isValid function works", {
   res <- binSeg_fixedSteps(y, 1)
   
   expect_true(isValid(res))
+})
+
+test_that("binSeg splits at the best location", {
+  y <- c(rep(0, 5), rep(10,4), -9)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  breakpoint <- obj$tree$breakpoint
+  
+  mat <- cbind(1, 1:9, 10)
+  cusum.vec <- apply(mat, 1, function(x){
+    .cusum(y, x[1], x[2], x[3])
+  })
+  
+  expect_true(all(abs(cusum.vec[breakpoint]) >= abs(cusum.vec)))
 })
 
 #################################
