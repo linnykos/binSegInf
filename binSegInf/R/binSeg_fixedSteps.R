@@ -25,6 +25,15 @@ binSeg_fixedSteps <- function(y, numSteps){
   structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
 }
 
+isValid.bsFs <- function(obj){
+  if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
+  if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
+  if(length(.enumerate_splits(obj$tree)) != obj$numSteps) 
+    stop("obj$tree and obj$numSteps disagree")
+  
+  TRUE
+}
+
 .find_breakpoint <- function(y, start, end){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))

@@ -12,6 +12,14 @@
   node
 }
 
+isValid.Node <- function(obj){
+  if(obj$start > obj$end) stop("the start must be less or equal to end")
+  if(!is.na(obj$breakpoint) & (obj$start > obj$breakpoint & obj$end < obj$breakpoint))
+    stop("breakpoint must be between start and end (inclusive)")
+  
+  TRUE
+}
+
 .get_leaves_names <- function(tree){
   leaves <- tree$leaves
   vec <- sapply(leaves, function(x){x$name})
