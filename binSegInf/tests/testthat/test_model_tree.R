@@ -65,6 +65,15 @@ test_that(".enumerate_splits is correct", {
   expect_true(all(.enumerate_splits(res$tree) == c("1-20", "11-20")))
 })
 
+test_that("the first split is always the full vector", {
+  set.seed(10)
+  y <- rnorm(100)
+  obj <- binSeg_fixedSteps(y, 10)
+  res <- .enumerate_splits(obj$tree)
+  
+  expect_true(res[1] == "1-100")
+})
+
 ###################################
 
 ## .isValid.bsFs is correct

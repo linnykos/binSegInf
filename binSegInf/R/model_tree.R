@@ -40,3 +40,4 @@
 .enumerate_splits <- function(tree){
   names(sort(tree$Get("active")))
 }
+

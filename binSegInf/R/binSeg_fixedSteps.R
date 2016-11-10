@@ -1,27 +1,27 @@
 binSeg_fixedSteps <- function(y, numSteps){
-
+    
   #initialization
   n <- length(y); tree <- .create_node(1, n)
-
+    
   for(steps in 1:numSteps){
     leaves.names <- .get_leaves_names(tree)
     for(i in 1:length(leaves.names)){
       leaf <- tree$FindNode(leaves.names[i])
       
       res <- .find_breakpoint(y, leaf$start, leaf$end)
-
+      
       leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
     }
-
+    
     node.name <- .find_leadingBreakpoint(tree)
     node.selected <- tree$FindNode(node.name)
     node.selected$active <- steps
-    
+     
     node.pairs <- .split_node(node.selected)
     node.selected$AddChildNode(node.pairs$left)
     node.selected$AddChildNode(node.pairs$right)
-  }
-
+   }
+    
   structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
 }
 
