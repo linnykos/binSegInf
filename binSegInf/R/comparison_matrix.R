@@ -13,7 +13,7 @@
 
 
 .form_comparison <- function(tree, nodeName, breakpoint){
-  winning <- numeric(3)
+  winning <- matrix(NA, ncol = 3, nrow = 1)
   nodeNumeric <- .extract_startEnd(nodeName)
   winning[c(1,3)] <- nodeNumeric; winning[2] <- breakpoint
 
@@ -63,4 +63,14 @@
   stopifnot(length(res) == 2, is.numeric(res))
   
   res
+}
+
+.get_comparisonSigns <- function(y, mat){
+  stopifnot(is.matrix(mat), ncol(mat) == 3)
+  
+  values <- apply(mat, 1, function(x){
+    .cusum(y, x[1], x[2], x[3])
+  })
+  
+  sign(values)
 }

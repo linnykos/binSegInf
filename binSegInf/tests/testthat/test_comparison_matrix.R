@@ -100,7 +100,7 @@ test_that(".threeColumnMatrix_from_nodeMatrix works", {
 
 #############################################
 
-## .form_comparison works
+## .form_comparison is correct
 
 test_that(".form_comparison works", {
   y <- c(rep(0, 20), rep(5, 10), rep(6, 10))
@@ -129,4 +129,16 @@ test_that(".form_comparison still works when there is no leaf", {
   expect_true(nrow(res$losing) == 8)
   mat <- cbind(1, c(1:9)[-5], 10)
   expect_true(all(res$losing == mat))
+})
+
+###################################
+
+## .get_comparisonSigns is correct
+
+test_that(".get_comparisonSigns works", {
+  y <- c(rep(0, 5), rep(1, 5), rep(-1, 5))
+  mat <- matrix(c(1, 5, 10, 6, 10, 15), ncol = 3, nrow = 2, byrow = T)
+  
+  res <- .get_comparisonSigns(y, mat)
+  expect_true(all(res == c(1, -1)))
 })

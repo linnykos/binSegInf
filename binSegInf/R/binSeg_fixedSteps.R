@@ -59,3 +59,10 @@ isValid.bsFs <- function(obj){
   
   c(rep(-1/n1, n1), rep(1/n2, n2)) * sqrt(1/((1/n1) + (1/n2)))
 }
+
+.cusum_contrast_full <- function(start, idx, end, n){
+  res <- rep(0, n)
+  res[start:end] <- .cusum_contrast(start, idx, end)
+  
+  res
+}

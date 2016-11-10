@@ -78,3 +78,13 @@ test_that("the isValid function works", {
 })
 
 #################################
+
+## .cusum_contrast_full is correct
+
+test_that(".cusum_contrast_full works", {
+  res <- .cusum_contrast_full(3, 7, 10, 15)
+  
+  expect_true(length(res) == 15)
+  expect_true(all(res[-c(3:10)] == 0))
+  expect_true(all(res[3:10] != 0))
+})
