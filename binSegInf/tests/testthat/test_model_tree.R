@@ -64,3 +64,16 @@ test_that(".enumerate_splits is correct", {
   
   expect_true(all(.enumerate_splits(res$tree) == c("1-20", "11-20")))
 })
+
+###################################
+
+## .isValid.bsFs is correct
+
+test_that(".isValid matches the tree and numSteps", {
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  res <- binSeg_fixedSteps(y, 2)
+  
+  res$numSteps <- 3
+  
+  expect_error(isValid(res))
+})

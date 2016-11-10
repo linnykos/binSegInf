@@ -19,6 +19,8 @@ isValid.Node <- function(obj){
 isValid.bsFs <- function(obj){
   if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
   if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
+  if(length(.enumerate_splits(obj$tree)) != obj$numSteps) 
+    stop("obj$tree and obj$numSteps disagree")
   
   TRUE
 }
