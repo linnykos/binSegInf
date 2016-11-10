@@ -3,7 +3,8 @@ context("Test binSeg_polyhedra")
 ## form_polyhedra.bsFs is correct
 
 test_that("form_polyhedra.bsFs works", {
-  y <- c(rep(0, 10), rep(10, 5), rep(5, 5))
+  set.seed(10)
+  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- form_polyhedra(obj, y)
