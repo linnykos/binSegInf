@@ -24,3 +24,9 @@ isValid.bsFs <- function(obj){
   
   TRUE
 }
+
+isValid.polyhedra <- function(obj){
+  if(nrow(obj$gamma) != length(obj$u)) stop("nrow(gamma) does not match length(u)")
+  
+  TRUE
+}
