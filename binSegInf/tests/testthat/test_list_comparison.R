@@ -28,3 +28,12 @@ test_that(".comparison_mat enforces ordering on losing", {
   mat3[3,3] <- 4
   expect_error(.comparison_mat(1:3, mat3))
 })
+
+####################################
+
+## .extract_startEnd is correct
+
+test_that(".extract_startEnd works", {
+  res <- .extract_startEnd("1-10")
+  expect_true(all(res == c(1,10)))
+})

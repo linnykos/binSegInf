@@ -31,3 +31,16 @@
 #   
 #   comp.lis
 # }
+
+# .form_comparison <- function(tree, nodeName, breakpoint){
+#   
+# }
+
+.extract_startEnd <- function(nodeName){
+  stopifnot(length(nodeName) == 1, is.character(nodeName), grep("-", nodeName) == 1)
+  
+  res <- as.numeric(strsplit(nodeName, split = "-")[[1]])
+  stopifnot(length(res) == 2, is.numeric(res))
+  
+  res
+}
