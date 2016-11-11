@@ -44,7 +44,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
       #z <- Rmpfr::mpfr((value-mu)/sigma, precBits = 10)
       a <- (a-mu)/sigma
       b <- (b-mu)/sigma
-      z <- (z-mu)/sigma      
+      z <- (value-mu)/sigma      
 
       #denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
       denom <- stats::pnorm(b) - stats::pnorm(a)
