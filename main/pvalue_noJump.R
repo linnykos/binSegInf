@@ -6,13 +6,11 @@ num.loc <- 4
 n <- 20
 cores <- 20
 
-jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
-jump.loc <- seq(0, 1, length.out = num.loc)[2:(num.loc-1)]
-paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
+paramMat <- as.matrix(0)
 
 rule_bsFs_closure <- function(n){
-  function(vec){
-    y <- CpVector(n, vec[1:2], vec[3])$data
+  function(void){
+    y <- CpVector(n, 0, NA)$data
     
     obj <- binSeg_fixedSteps(y, 1)
   
@@ -29,8 +27,8 @@ rule_bsFs_closure <- function(n){
 rule_bsFs <- rule_bsFs_closure(n)
 criterion <- function(x, vec){x}
 
-bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
+bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, NA)
 
-save.image(file = paste0("res/pvalue_oneJump_bsFs_", Sys.Date(), ".RData"))
+save.image(file = paste0("res/pvalue_noJump_bsFs_", Sys.Date(), ".RData"))
 quit(save = "no")
