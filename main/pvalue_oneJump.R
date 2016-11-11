@@ -17,13 +17,12 @@ rule_bsFs_closure <- function(n){
     poly <- form_polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
-    pvalue(y, poly, contrast)
+    res <- pvalue(y, poly, contrast)
+    c(res, get_jumps(obj))
   }
 }
 
-
 ############################
-
 
 rule_bsFs <- rule_bsFs_closure(n)
 criterion <- function(x, vec){x}
@@ -32,4 +31,3 @@ bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, NA)
 
 save.image(file = paste0("res/pvalue_oneJump_bsFs_", Sys.Date(), ".RData"))
-quit()
