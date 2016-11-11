@@ -14,7 +14,7 @@
 
 .form_comparison <- function(tree, nodeName, breakpoint){
   winning <- matrix(NA, ncol = 3, nrow = 1)
-  nodeNumeric <- .extract_startEnd(nodeName)
+  nodeNumeric <- .get_startEnd(nodeName)
   winning[c(1,3)] <- nodeNumeric; winning[2] <- breakpoint
 
   leaves.mat <- .get_leaves_matrix_excluding(tree, nodeName)
@@ -52,11 +52,11 @@
   if(length(leaves.names) == 0){
     return(NA)
   } else {
-    sapply(leaves.names, .extract_startEnd)
+    sapply(leaves.names, .get_startEnd)
   }
 }
 
-.extract_startEnd <- function(nodeName){
+.get_startEnd <- function(nodeName){
   stopifnot(length(nodeName) == 1, is.character(nodeName), grep("-", nodeName) == 1)
   
   res <- as.numeric(strsplit(nodeName, split = "-")[[1]])

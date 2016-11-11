@@ -12,5 +12,7 @@ form_polyhedra <- function(obj, ...) UseMethod("form_polyhedra")
 
 get_jumps <- function(get_jumps, ...) UseMethod("get_jumps")
 
+contrast_vector <- function(obj, ...) UseMethod("contrast_vector")
+
 .list_comparison <- function(obj) UseMethod(".list_comparison")
 

@@ -31,10 +31,10 @@ test_that(".comparison_mat enforces ordering on losing", {
 
 ####################################
 
-## .extract_startEnd is correct
+## .get_startEnd is correct
 
-test_that(".extract_startEnd works", {
-  res <- .extract_startEnd("1-10")
+test_that(".get_startEnd works", {
+  res <- .get_startEnd("1-10")
   expect_true(all(res == c(1,10)))
 })
 

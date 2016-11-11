@@ -1,7 +1,7 @@
 form_polyhedra.bsFs <- function(obj, y, ...){
   isValid(obj)
   
-  n <- .extract_startEnd(obj$tree$name)[2]
+  n <- .get_startEnd(obj$tree$name)[2]
   numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
   gamma.row.lis <- vector("list", numSteps)
