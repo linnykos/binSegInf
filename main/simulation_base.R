@@ -1,12 +1,3 @@
-#library(devtools)
-#install_github("linnylin92/binSegInf", ref = "kevin", subdir = "binSegInf")
-
-library(binSegInf)
-library(wbs)
-library(genlasso)
-library(foreach)
-library(doMC)
-
 simulationGenerator <- function(rule, paramMat, criterion, trials, 
  cores = NA){
 

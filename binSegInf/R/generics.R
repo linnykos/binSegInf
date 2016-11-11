@@ -19,7 +19,7 @@ form_polyhedra <- function(obj, ...) {UseMethod("form_polyhedra")}
 
 #' Generic function to count the number of jumps
 #'
-#' @param get_jumps object
+#' @param obj object
 #' @param ... additional parameters
 #'
 #' @return vector of jumps

@@ -4,14 +4,14 @@
 #' @param polyhedra polyhedra object
 #' @param contrast contrast numeric vector
 #' @param sigma numeric to denote the sd of the residuals
-#' @param value the null-hypothesis mean to test against
+#' @param null_mean the null-hypothesis mean to test against
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
-pvalue <- function(y, polyhedra, contrast, sigma = 1, value = 0){
+pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
-  sapply(value, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
+  sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
     sigma = terms$sigma, a = terms$a, b = terms$b)})
 }
 
@@ -32,7 +32,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, value = 0){
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-4){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5){
   sapply(value, function(x){
     if(x <= a) { 
       0
@@ -42,7 +42,10 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, value = 0){
       a <- Rmpfr::mpfr((a-mu)/sigma, precBits = 10)
       b <- Rmpfr::mpfr((b-mu)/sigma, precBits = 10)
       z <- Rmpfr::mpfr((value-mu)/sigma, precBits = 10)
-      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/(Rmpfr::pnorm(b) - Rmpfr::pnorm(a)))
+      
+      denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
+      if(denom < tol) denom <- tol
+      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
     }
   })
 }

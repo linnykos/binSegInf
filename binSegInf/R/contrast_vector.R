@@ -1,5 +1,15 @@
+#' Generate contrast bector
+#'
+#' @param obj bsFs object
+#' @param jump.idx index among the list of jumps to jump at
+#' @param sorted boolean on whether or not jumps should be sorted
+#' @param type segment or spike
+#' @param ... not used
+#'
+#' @return numeric vector
+#' @export
 contrast_vector.bsFs <- function(obj, jump.idx, sorted = F, 
-  type = c("segment", "spike")){
+  type = c("segment", "spike"), ...){
   if(!is.character(type[1])) stop("type must be character")
   if(!type[1] %in% c("segment", "spike")) stop("type must be either segment or spike")
   type <- type[1]

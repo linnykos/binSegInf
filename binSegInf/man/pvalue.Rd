@@ -4,7 +4,7 @@
 \alias{pvalue}
 \title{P-values for post-selection inference}
 \usage{
-pvalue(y, polyhedra, contrast, sigma = 1, value = 0)
+pvalue(y, polyhedra, contrast, sigma = 1, null_mean = 0)
 }
 \arguments{
 \item{y}{numeric vector}
@@ -15,7 +15,7 @@ pvalue(y, polyhedra, contrast, sigma = 1, value = 0)
 
 \item{sigma}{numeric to denote the sd of the residuals}
 
-\item{value}{the null-hypothesis mean to test against}
+\item{null_mean}{the null-hypothesis mean to test against}
 }
 \value{
 a numeric p-value between 0 and 1

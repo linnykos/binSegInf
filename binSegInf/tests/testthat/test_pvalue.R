@@ -45,3 +45,12 @@ test_that("p value are roughly uniform", {
   expect_true(sum(abs(quantile(pvalue_null.vec, probs = quant, na.rm = T) - quant))
     < sum(abs(quantile(pvalue_alt.vec, probs = quant, na.rm = T) - quant)))
 })
+
+############################
+
+## .truncated_gauss_cdf is correct
+
+test_that(".truncated_gauss_cdf does not give Nan", {
+  res <- .truncated_gauss_cdf(10, 0, 1, 9.8, Inf)
+  expect_true(res == 0)
+})

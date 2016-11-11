@@ -7,9 +7,9 @@
 get_jumps(obj, ...)
 }
 \arguments{
-\item{...}{additional parameters}
+\item{obj}{object}
 
-\item{get_jumps}{object}
+\item{...}{additional parameters}
 }
 \value{
 vector of jumps
