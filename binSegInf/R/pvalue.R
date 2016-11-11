@@ -39,18 +39,13 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
     } else if(x >= b){
       1
     } else {
-      #a <- Rmpfr::mpfr((a-mu)/sigma, precBits = 10)
-      #b <- Rmpfr::mpfr((b-mu)/sigma, precBits = 10)
-      #z <- Rmpfr::mpfr((value-mu)/sigma, precBits = 10)
-      a <- (a-mu)/sigma
-      b <- (b-mu)/sigma
-      z <- (value-mu)/sigma      
+      a <- Rmpfr::mpfr((a-mu)/sigma, precBits = 10)
+      b <- Rmpfr::mpfr((b-mu)/sigma, precBits = 10)
+      z <- Rmpfr::mpfr((value-mu)/sigma, precBits = 10)   
 
-      #denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
-      denom <- stats::pnorm(b) - stats::pnorm(a)
+      denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
       if(denom < tol) denom <- tol
-      #as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
-      (stats::pnorm(b) - stats::pnorm(z))/denom
+      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
     }
   })
 }

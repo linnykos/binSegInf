@@ -24,9 +24,7 @@ simulationGenerator <- function(rule, paramMat, criterion, trials,
   len <- sapply(lis, length)
   if(length(unique(len)) != 1) return(lis)
 
-  ncol <- length(unique(len))
-  if(ncol == 1) return(as.numeric(unlist(lis)))
- 
-  vec <- as.numeric(unlist(lis))
-  matrix(vec, ncol = ncol, byrow = T)
+  ncol <- unique(len)
+  if(length(ncol) == 1 && ncol == 1) return(as.numeric(unlist(lis)))
+  do.call(cbind, lis)
 }
