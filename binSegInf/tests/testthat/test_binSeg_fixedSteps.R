@@ -115,3 +115,16 @@ test_that(".cusum_contrast_full works", {
   expect_true(all(res[-c(3:10)] == 0))
   expect_true(all(res[3:10] != 0))
 })
+
+############################
+
+## get_jumps.bsFs is correct
+
+test_that("get_jumps.bsFs works", {
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- get_jumps(obj)
+  
+  expect_true(all(res == c(10, 15)))
+})

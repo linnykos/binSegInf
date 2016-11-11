@@ -99,3 +99,12 @@ test_that("get_jumps.tree is correct", {
   
   expect_true(all(res == c(10, 5)))
 })
+
+test_that("get_jumps.tree can sort", {
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- get_jumps(obj$tree, sorted = T)
+  
+  expect_true(all(res == c(5, 10)))
+})

@@ -34,8 +34,8 @@ isValid.bsFs <- function(obj){
   TRUE
 }
 
-get_jumps.bsFs <- function(obj){
-  get_jumps(obj$tree)
+get_jumps.bsFs <- function(obj, sorted = F, ...){
+  get_jumps(obj$tree, sorted)
 }
 
 .find_breakpoint <- function(y, start, end){
