@@ -12,6 +12,12 @@
   node
 }
 
+#' Check whether tree is valid or not
+#'
+#' @param obj The tree (of class Node)
+#'
+#' @return TRUE if valid
+#' @export
 isValid.Node <- function(obj){
   if(obj$start > obj$end) stop("the start must be less or equal to end")
   if(!is.na(obj$breakpoint) & (obj$start > obj$breakpoint & obj$end < obj$breakpoint))
@@ -20,6 +26,18 @@ isValid.Node <- function(obj){
   TRUE
 }
 
+#' Get jumps from a tree
+#'
+#' Enumerates the jumps. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#' 
+#' @param obj object of class Node
+#' @param sorted boolean
+#' @param ... not used
+#'
+#' @return vector of jumps
+#' @export
 get_jumps.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   

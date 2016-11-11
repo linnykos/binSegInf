@@ -1,3 +1,10 @@
+#' Binary segmentation with fixed steps
+#'
+#' @param y numeric vector to contain data
+#' @param numSteps numeric of number of steps
+#'
+#' @return a bsFs object
+#' @export
 binSeg_fixedSteps <- function(y, numSteps){
     
   #initialization
@@ -25,6 +32,12 @@ binSeg_fixedSteps <- function(y, numSteps){
   structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
 }
 
+#' isValid for bsFs
+#'
+#' @param obj bsFs object
+#'
+#' @return TRUE if valid
+#' @export
 isValid.bsFs <- function(obj){
   if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
   if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
@@ -34,6 +47,18 @@ isValid.bsFs <- function(obj){
   TRUE
 }
 
+#' Get jumps from bsFs objects
+#' 
+#' Enumerates the jumps. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj bsFs object
+#' @param sorted boolean
+#' @param ... not used
+#'
+#' @return vector of jumps
+#' @export
 get_jumps.bsFs <- function(obj, sorted = F, ...){
   get_jumps(obj$tree, sorted)
 }

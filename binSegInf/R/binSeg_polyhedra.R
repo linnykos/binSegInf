@@ -1,3 +1,13 @@
+#' Generate polyhedra matrix from bsFs object
+#' 
+#' Forms both Gamma matrix and u vector
+#'
+#' @param obj bsFs object
+#' @param y numeric vector to represent data
+#' @param ... not used
+#'
+#' @return An object of class polyhedra
+#' @export
 form_polyhedra.bsFs <- function(obj, y, ...){
   isValid(obj)
   

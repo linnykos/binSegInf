@@ -1,3 +1,13 @@
+#' P-values for post-selection inference
+#'
+#' @param y numeric vector
+#' @param polyhedra polyhedra object
+#' @param contrast contrast numeric vector
+#' @param sigma numeric to denote the sd of the residuals
+#' @param value the null-hypothesis mean to test against
+#'
+#' @return a numeric p-value between 0 and 1
+#' @export
 pvalue <- function(y, polyhedra, contrast, sigma = 1, value = 0){
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   

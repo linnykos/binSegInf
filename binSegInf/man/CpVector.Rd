@@ -4,7 +4,7 @@
 \alias{CpVector}
 \title{CpVector Class Constructor}
 \usage{
-CpVector(n, jump.height, jump.loc, func = stats::rnorm, ...)
+CpVector(n, jump.height = 0, jump.loc = NA, func = stats::rnorm, ...)
 }
 \arguments{
 \item{n}{the number of realizations}
