@@ -86,3 +86,16 @@ test_that(".isValid matches the tree and numSteps", {
   
   expect_error(isValid(res))
 })
+
+########################################
+
+## get_jumps.tree is correct
+
+test_that("get_jumps.tree is correct", {
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- get_jumps(obj$tree)
+  
+  expect_true(all(res == c(10, 5)))
+})

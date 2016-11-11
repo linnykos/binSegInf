@@ -10,5 +10,7 @@ isValid <- function(obj) UseMethod("isValid")
 
 form_polyhedra <- function(obj, ...) UseMethod("form_polyhedra")
 
+get_jumps <- function(get_jumps, ...) UseMethod("get_jumps")
+
 .list_comparison <- function(obj) UseMethod(".list_comparison")
 

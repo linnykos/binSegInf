@@ -20,6 +20,12 @@ isValid.Node <- function(obj){
   TRUE
 }
 
+get_jumps.Node <- function(obj){
+  leaves <- .enumerate_splits(obj)
+  
+  sapply(leaves, function(x){obj$FindNode(x)$breakpoint})
+}
+
 .get_leaves_names <- function(tree){
   leaves <- tree$leaves
   vec <- sapply(leaves, function(x){x$name})

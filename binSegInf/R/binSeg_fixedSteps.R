@@ -34,6 +34,10 @@ isValid.bsFs <- function(obj){
   TRUE
 }
 
+get_jumps.bsFs <- function(obj){
+  get_jumps(obj$tree)
+}
+
 .find_breakpoint <- function(y, start, end){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
