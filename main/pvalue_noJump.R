@@ -26,7 +26,7 @@ rule_bsFs <- rule_bsFs_closure(n)
 criterion <- function(x, vec){x}
 
 bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
-  trials, NA)
+  trials, cores)
 
 save.image(file = paste0("res/pvalue_noJump_bsFs_", Sys.Date(), ".RData"))
 quit(save = "no")
