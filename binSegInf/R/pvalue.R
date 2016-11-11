@@ -1,5 +1,8 @@
 pvalue <- function(y, polyhedra, contrast, value = 0, sigma = 1){
-  z <- contrast %*% y
+  z <- as.numeric(contrast %*% y)
+  
+  if(z > 0) contrast <- -contrast; z <- as.numeric(contrast %*% y)
+  
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))
   
