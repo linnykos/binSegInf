@@ -1,9 +1,7 @@
 source("simulation_header.R")
 
-trials <- 3
-num.height <- 4
-num.loc <- 4
-n <- 20
+trials <- 250
+n <- 100
 cores <- 20
 
 paramMat <- as.matrix(0)
