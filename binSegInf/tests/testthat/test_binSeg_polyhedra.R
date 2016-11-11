@@ -51,7 +51,7 @@ test_that(".gammaRows_from_comparisons works", {
   vec <- matrix(c(1,5,10), ncol = 3)
   mat <- cbind(1, c(1:9)[-5], 10)
   
-  res <- .gammaRows_from_comparisons(vec, mat, 10, y)
+  res <- .gammaRows_from_comparisons(vec, mat, y)
   
   expect_true(all(dim(res) == c(17, 10)))
 })
@@ -65,10 +65,34 @@ test_that(".gammaRow_from_comparisons is fulfilled by y", {
   vec <- matrix(c(1,9,10), ncol = 3)
   mat <- cbind(1, 1:8, 10)
   
-  res <- .gammaRows_from_comparisons(vec, mat, 10, y)
+  res <- .gammaRows_from_comparisons(vec, mat, y)
   
   expect_true(all(res %*% y >= 0))
 })
 
 ###########################################
 
+## .get_nodesFromHash is correct
+
+test_that(".get_nodesFromHash works", {
+  h <- hash::hash("1-5-10" = 1, "5-7-10" = 1)
+  mat <- cbind(1, 1:9, 10)
+  
+  res <- .get_nodesFromHash(mat, h)
+  expect_true(all(res == c(1:9)[-5]))
+})
+
+############################################
+
+## .update_hash is correct
+
+test_that(".update_hash works", {
+  h <- hash::hash("1-5-10" = 1, "5-7-10" = 1)
+  mat <- cbind(1, 1:4, 10)
+  
+  res <- .update_hash(mat, h)
+  key.vec <- sort(hash::keys(res))
+  
+  expect_true(all(key.vec == c("1-1-10", "1-2-10", "1-3-10", "1-4-10", 
+    "1-5-10", "5-7-10")))
+})

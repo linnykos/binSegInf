@@ -6,32 +6,58 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   comp.lis <- .list_comparison(obj)
   gamma.row.lis <- vector("list", numSteps)
   
+  hash_nodes <- hash::hash()
+  
   for(i in 1:numSteps){
+    losing.mat <- comp.lis[[i]]$losing
+    
+    losing.idx <- .get_nodesFromHash(losing.mat, hash_nodes)
+    hash_nodes <- .update_hash(losing.mat[-losing.idx,], hash_nodes)
+    
     gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
-      comp.lis[[i]]$losing, n, y)
+      losing.mat, y)
   }
   
   mat <- do.call(rbind, gamma.row.lis)
   polyhedra(gamma = mat, u = rep(0, nrow(mat)))
 }
 
-.gammaRows_from_comparisons <- function(vec, mat, n, y){
+.get_nodesFromHash <- function(mat, hash_nodes){
+  res <- apply(mat, 1, function(x){
+    if(is.null(hash_nodes[[paste0(x, collapse = "-")]])) TRUE else FALSE
+  })
+  
+  which(res)
+}
+
+.update_hash <- function(mat, hash_nodes){
+  if(length(mat) == 0) return(hash_nodes)
+  
+  for(i in 1:nrow(mat)){
+    hash_nodes[[paste0(mat[i,], collapse = "-")]] <- 1
+  }
+  
+  hash_nodes
+}
+
+
+.gammaRows_from_comparisons <- function(vec, mat, y, idx = 1:nrow(mat)){
   stopifnot(length(vec) == 3, ncol(mat) == 3)
 
-  winning.contrast <- .cusum_contrast_full(vec[1], vec[2], vec[3], n)
-  losing.contrast <- t(apply(mat, 1, function(x){
+  n <- length(y)
+  win.contrast <- .cusum_contrast_full(vec[1], vec[2], vec[3], n)
+  lose.contrast <- t(apply(mat, 1, function(x){
     .cusum_contrast_full(x[1], x[2], x[3], n)
   }))
   
-  sign.winning <- as.numeric(sign(winning.contrast %*% y))
-  signs.losing <- as.numeric(sign(losing.contrast %*% y))
+  sign.win <- as.numeric(sign(win.contrast %*% y))
+  signs.lose <- as.numeric(sign(lose.contrast %*% y))
   
   # add inequalities to compare winning split to all other splits
-  res <- .vector_matrix_signedDiff(winning.contrast, losing.contrast, sign.winning,
-    signs.losing)
+  res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, signs.lose)
   
   # add inequalities to compare splits to 0 (ensure correct sign)
-  rbind(res, sign.winning * winning.contrast, signs.losing * losing.contrast)
+  rbind(res, sign.win * win.contrast, signs.lose[idx] * lose.contrast[idx,])
 }
 
 .vector_matrix_signedDiff <- function(vec, mat, sign.vec, sign.mat){
