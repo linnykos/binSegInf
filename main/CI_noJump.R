@@ -1,6 +1,6 @@
 source("simulation_header.R")
 
-trials <- 250
+trials <- 1000
 n <- 100
 cores <- 20
 
