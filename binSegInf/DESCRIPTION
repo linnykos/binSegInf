@@ -11,8 +11,7 @@ LazyData: true
 Imports:
     plyr,
     data.tree,
-    hash,
-    Rmpfr
+    hash
 Suggests:
     testthat
 RoxygenNote: 5.0.1
