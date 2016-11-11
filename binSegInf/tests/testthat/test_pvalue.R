@@ -11,7 +11,7 @@ test_that("p value is high power for correct changepoint", {
   contrast <- contrast_vector(obj, 1)
   
   res <- pvalue(y, poly, contrast)
-  expect_true(res == 1)
+  expect_true(res < .1)
 })
 
 test_that("p value are roughly uniform", {
@@ -42,6 +42,6 @@ test_that("p value are roughly uniform", {
   }
   
   quant <- c(0, 0.25, 0.5, 0.75, 1)
-  expect_true(sum(abs(quantile(pvalue_null.vec, probs = quant) - quant))
-    < sum(abs(quantile(pvalue_alt.vec, probs = quant) - quant)))
+  expect_true(sum(abs(quantile(pvalue_null.vec, probs = quant, na.rm = T) - quant))
+    < sum(abs(quantile(pvalue_alt.vec, probs = quant, na.rm = T) - quant)))
 })

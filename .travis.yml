@@ -9,6 +9,8 @@ r_binary_packages:
     - covr
     - data.tree
     - plyr
+    - hash
+    - Rmpfr
 
 after_success:
   - Rscript -e 'library(covr); codecov()'
