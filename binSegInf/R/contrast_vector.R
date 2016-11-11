@@ -18,7 +18,7 @@ contrast_vector.bsFs <- function(obj, jump.idx, sorted = F,
 .contrast_vector_segment <- function(obj, jump, n){
   jumpSorted.vec <- c(1, get_jumps(obj, T), n)
   
-  idx <- which(jumpSorted.vec == jump)
+  idx <- which(jumpSorted.vec == jump)[1]
   if(idx == 1) idx <- 2
   
   start <- jumpSorted.vec[idx-1]; split <- jump; end <- jumpSorted.vec[idx+1]
