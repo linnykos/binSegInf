@@ -2,6 +2,8 @@ language: r
 
 before_install:
  - cd binSegInf
+ - sudo apt-get update -qq
+ - sudo apt-get install -y libmp3-dev
 
 cache: packages
 
