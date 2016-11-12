@@ -63,19 +63,28 @@ get_jumps.bsFs <- function(obj, sorted = F, ...){
   get_jumps(obj$tree, sorted)
 }
 
+get_jump_cusum.bsFs <- function(obj, sorted = F, ...){
+  get_jump_cusum(obj$tree, sorted)
+}
+
+summary.bsFs <- function(object, ...){
+  summary(object$tree)
+}
+
 .find_breakpoint <- function(y, start, end){
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   
-  idx <- seq(from = start, to = end - 1, by = 1)
-  cusum.vec <- sapply(idx, .cusum, y = y, start = start, end = end)
+  breakpoint <- seq(from = start, to = end - 1, by = 1)
+  cusum.vec <- sapply(breakpoint, .cusum, y = y, start = start, end = end)
   
-  list(breakpoint = idx[which.max(abs(cusum.vec))], cusum = max(abs(cusum.vec)))
+  idx <- which.max(abs(cusum.vec))
+  list(breakpoint = breakpoint[idx], cusum = cusum.vec[idx])
 }
 
 .cusum <- function(y, start, idx, end){
   v <- .cusum_contrast(start, idx, end)
-  v %*% y[start:end]
+  as.numeric(v %*% y[start:end])
 }
 
 #n1 is denoted as start to idx (inclusive)

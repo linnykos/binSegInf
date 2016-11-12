@@ -27,6 +27,12 @@ test_that(".cusum returns 0 for the flat vector", {
   expect_true(res == 0)
 })
 
+test_that(".cusum returns negatives", {
+  res <- .cusum(c(rep(0,5), rep(-5, 5)), 1, 5, 10)
+  
+  expect_true(res < 0)
+})
+
 #######################
 
 ## .find_breakpoint is correct
@@ -58,7 +64,17 @@ test_that(".find_breakpoint splits at the best location", {
   
   res <- .find_breakpoint(y, 1, 10)
   
-  expect_true(max(abs(cusum.vec)) == res$cusum)
+  idx <- which.max(abs(cusum.vec))
+  
+  expect_true(cusum.vec[idx] == res$cusum)
+})
+
+test_that(".find_breakpoint reports negatives", {
+   y <- c(rep(0, 5), rep(-10, 5))
+   
+   res <- .find_breakpoint(y, 1, 10)
+   
+   expect_true(res$cusum < 0)
 })
 
 #############################
@@ -127,4 +143,27 @@ test_that("get_jumps.bsFs works", {
   res <- get_jumps(obj)
   
   expect_true(all(res == c(10, 15)))
+})
+
+#################################
+
+## get_jumps_cusum.bsFs is correct
+
+test_that("get_jumps_cusum.bsFs works", {
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- get_jump_cusum(obj)
+  
+  expect_true(length(res) == 2)
+  expect_true(all(res > 0))
+})
+
+test_that("get_jumps_cusum.bsFs reports negative values",{
+  y <- c(rep(0, 10), rep(-5, 5), rep(-10, 5))
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- get_jump_cusum(obj)
+  
+  expect_true(all(res < 0))
 })

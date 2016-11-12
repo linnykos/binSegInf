@@ -35,5 +35,7 @@ get_jumps <- function(obj, ...) {UseMethod("get_jumps")}
 #' @export
 contrast_vector <- function(obj, ...) {UseMethod("contrast_vector")}
 
+get_jump_cusum <- function(obj, ...) {UseMethod("get_jump_cusum")}
+
 .list_comparison <- function(obj) UseMethod(".list_comparison")
 

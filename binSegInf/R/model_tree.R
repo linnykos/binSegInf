@@ -45,6 +45,33 @@ get_jumps.Node <- function(obj, sorted = F, ...){
   if(sorted) sort(res) else res
 }
 
+get_jump_cusum.Node <- function(obj, sorted = F, ...){
+  leaves <- .enumerate_splits(obj)
+  
+  res <- sapply(leaves, function(x){obj$FindNode(x)$cusum})
+  
+  if(sorted){
+    jumps <- get_jumps(obj, sorted = T)
+    idx <- order(jumps)
+    res[idx]
+  } else {
+    res
+  }
+}
+
+summary.Node <- function(object, ...){
+  leaves <- .enumerate_splits(object)
+  jumps <- get_jumps(object)
+  cusum <- get_jump_cusum(object)
+  
+  mat <- t(sapply(leaves, .get_startEnd))
+  dat <- data.frame("Split_Number" = 1:length(leaves), "Start" = mat[,1], 
+    "End" = mat[,2], "Breakpoint" = jumps, "Cusum" = cusum)
+  rownames(dat) <- NULL
+  
+  dat
+}
+
 .get_leaves_names <- function(tree){
   leaves <- tree$leaves
   vec <- sapply(leaves, function(x){x$name})
