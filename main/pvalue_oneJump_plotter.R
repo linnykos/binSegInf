@@ -1,7 +1,7 @@
 rm(list=ls())
-load("../main/res/noJump-2016-09-11.RData")
+load("../main/res/pvalue_oneJump_bsFs_2016-11-11.RData")
 
-res <- resFl1Jump
+res <- bsFs_1JumpPValue
 n <- 100
 alpha <- 0.05
 
@@ -22,9 +22,9 @@ samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
   which(bool.vec)
 }
 
-for (i in 1:length (res)){
+for (i in 1:length(res)){
   idx <- samp.selector(res[i])
-  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/length(ncol(res[[i]]))
+  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/ncol(res[[i]][,idx])
 }
 
 image(.rotate(mat), zlim = c(0,1))

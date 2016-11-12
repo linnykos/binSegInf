@@ -1,9 +1,8 @@
 rm(list=ls())
-load("../main/res/pvalue_noJump_bsFs_2016-11-11.RData")
+load("../main/res/CI_noJump_bsFs_2016-11-11.RData")
 
-res <- bsFs_0JumpPValue
+res <- bsFs_0JumpCI
 n <- 100
-alpha <- 0.05
 .rotate <- function(mat){t(mat)[,nrow(mat):1]}
 
 samp.selector <- function(lis, type = NA, func = function(x){x}){

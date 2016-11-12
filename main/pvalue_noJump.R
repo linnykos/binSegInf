@@ -1,6 +1,6 @@
 source("simulation_header.R")
 
-trials <- 1000
+trials <- 500
 n <- 100
 cores <- 20
 
@@ -14,6 +14,8 @@ rule_bsFs_closure <- function(n){
   
     poly <- form_polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
+    
+    if(any(poly$gamma %*% y < poly$u)) stop()
   
     res <- pvalue(y, poly, contrast)
     c(res, get_jumps(obj))

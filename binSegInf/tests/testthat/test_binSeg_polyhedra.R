@@ -16,6 +16,19 @@ test_that("form_polyhedra.bsFs works", {
   expect_true(all(res$gamma %*% y >= res$u))
 })
 
+test_that("it is invalid if a few inequalities are flipped",{
+  set.seed(10)
+  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- form_polyhedra(obj, y)
+  gamma <- res$gamma
+  idx <- sample(1:nrow(gamma), 5)
+  gamma[idx,] <- -gamma[idx,]
+  
+  expect_true(any(gamma %*% y < res$u))
+})
+
 ###############################
 
 ## .vector_matrix_signedDiff is correct
