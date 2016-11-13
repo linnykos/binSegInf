@@ -13,7 +13,8 @@ samp.selector <- function(lis, type = NA, func = function(x){x}){
 }
 
 idx <- samp.selector(res[1])
-hist(res[[1]][1,idx], main = "P-values", col = "gray")
 
-idx <- samp.selector(res[1], type = T, func = function(x){if(abs(x-50)<=25) TRUE else FALSE})
-hist(res[[1]][1,idx], main = "P-values", col = "gray")
+coverage.vec <- apply(res[[1]][,idx], 2, function(x){
+  if(x[1] >= x[2] & x[1] <= x[3]) TRUE else FALSE
+})
+sum(coverage.vec)/ncol(res[[1]][,idx])
