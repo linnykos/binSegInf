@@ -7,7 +7,7 @@ test_that("p value is high power for correct changepoint", {
   y <- c(rep(0, 10), rep(50, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj, y)
+  poly <- form_polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- pvalue(y, poly, contrast)
@@ -24,7 +24,7 @@ test_that("p value are roughly uniform", {
     y <- rnorm(20)
     obj <- binSeg_fixedSteps(y, 1)
     
-    poly <- form_polyhedra(obj, y)
+    poly <- form_polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
     pvalue_null.vec[i] <- pvalue(y, poly, contrast)
@@ -35,7 +35,7 @@ test_that("p value are roughly uniform", {
     y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
     obj <- binSeg_fixedSteps(y, 1)
     
-    poly <- form_polyhedra(obj, y)
+    poly <- form_polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
     pvalue_alt.vec[i] <- pvalue(y, poly, contrast)
@@ -53,4 +53,31 @@ test_that("p value are roughly uniform", {
 test_that(".truncated_gauss_cdf does not give Nan", {
   res <- .truncated_gauss_cdf(10, 0, 1, 9.8, Inf)
   expect_true(res == 0)
+})
+
+###################################
+
+## .compute_truncGaus_terms is correct
+
+test_that(".compute_truncGaus_terms preserves vlo and vup correctly", {
+  set.seed(5)
+  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  obj <- binSeg_fixedSteps(y,2)
+
+  poly <- form_polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- .compute_truncGaus_terms(y, poly, contrast, 1)
+  expect_true(res$a <= contrast%*%y & res$b >= contrast%*%y)
+  
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
+    
+    bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    expect_true(bool1 == bool2)
+  }
 })

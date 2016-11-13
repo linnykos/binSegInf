@@ -4,12 +4,10 @@
 \alias{form_polyhedra.bsFs}
 \title{Generate polyhedra matrix from bsFs object}
 \usage{
-\method{form_polyhedra}{bsFs}(obj, y, ...)
+\method{form_polyhedra}{bsFs}(obj, ...)
 }
 \arguments{
 \item{obj}{bsFs object}
-
-\item{y}{numeric vector to represent data}
 
 \item{...}{not used}
 }
