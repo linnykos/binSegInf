@@ -58,12 +58,26 @@ test_that(".truncated_gauss_cdf does not give Nan", {
 ###################################
 
 ## .compute_truncGaus_terms is correct
-# 
-# test_that(".compute_truncGaus_terms preserves vlo correctly", {
-#   set.seed(10)
-#   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
-#   obj <- binSeg_fixedSteps(y,2)
-#   
-#   poly <- form_polyhedra(obj)
-#   contrast <- contrast_vector(obj, 1)
-# })
+
+test_that(".compute_truncGaus_terms preserves vlo and vup correctly", {
+  set.seed(5)
+  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  obj <- binSeg_fixedSteps(y,2)
+
+  poly <- form_polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- .compute_truncGaus_terms(y, poly, contrast, 1)
+  expect_true(res$a <= contrast%*%y & res$b >= contrast%*%y)
+  
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
+    
+    bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    expect_true(bool1 == bool2)
+  }
+})
