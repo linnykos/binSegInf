@@ -3,43 +3,37 @@
 #' Forms both Gamma matrix and u vector
 #'
 #' @param obj bsFs object
-#' @param y numeric vector to represent data
 #' @param ... not used
 #'
 #' @return An object of class polyhedra
 #' @export
-form_polyhedra.bsFs <- function(obj, y, ...){
-  if(.get_startEnd(obj$tree$name)[2] != length(y)) stop("obj does not match y")
-  isValid(obj)
+form_polyhedra.bsFs <- function(obj, ...){
+ isValid(obj)
   
-  n <- length(y)
+  n <- .get_startEnd(obj$tree$name)[2] 
   numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
+  sign.vec <- sign(get_jump_cusum(obj))
   gamma.row.lis <- vector("list", numSteps)
-  
-  hash_nodes <- hash::hash()
-  
+
   for(i in 1:numSteps){
     losing.mat <- comp.lis[[i]]$losing
     
     gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
-      losing.mat, y)
+      losing.mat, sign.vec[i], n)
   }
   
   mat <- do.call(rbind, gamma.row.lis)
   polyhedra(gamma = mat, u = rep(0, nrow(mat)))
 }
 
-.gammaRows_from_comparisons <- function(vec, mat, y){
+.gammaRows_from_comparisons <- function(vec, mat, sign.win, n){
   stopifnot(length(vec) == 3, ncol(mat) == 3)
 
-  n <- length(y)
   win.contrast <- .cusum_contrast_full(vec[1], vec[2], vec[3], n)
   lose.contrast <- t(apply(mat, 1, function(x){
     .cusum_contrast_full(x[1], x[2], x[3], n)
   }))
-  
-  sign.win <- as.numeric(sign(win.contrast %*% y))
   
   # add inequalities to compare winning split to all other splits
   res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, 

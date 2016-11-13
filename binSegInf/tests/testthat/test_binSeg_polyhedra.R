@@ -7,7 +7,7 @@ test_that("form_polyhedra.bsFs works", {
   y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- form_polyhedra(obj, y)
+  res <- form_polyhedra(obj)
   
   expect_true(class(res) == "polyhedra")
   expect_true(length(res) == 2)
@@ -21,7 +21,7 @@ test_that("it is invalid if a few inequalities are flipped",{
   y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- form_polyhedra(obj, y)
+  res <- form_polyhedra(obj)
   gamma <- res$gamma
   idx <- sample(1:nrow(gamma), 5)
   gamma[idx,] <- -gamma[idx,]
@@ -36,7 +36,34 @@ test_that("having the same model if and only if the inequalities are satisfied",
 
   model.jumps <- get_jumps(obj)
   model.sign <- sign(get_jump_cusum(obj))
-  poly <- form_polyhedra(obj, y)
+  poly <- form_polyhedra(obj)
+
+  expect_true(all(poly$gamma %*% y >= poly$u))
+
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    obj.tmp <- binSeg_fixedSteps(y.tmp,2)
+
+    model.jumps.tmp <- get_jumps(obj.tmp)
+    model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
+
+    bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+
+    expect_true(bool1 == bool2)
+  }
+})
+
+test_that("same model iff the inequalities are satisfied for no signal model", {
+  set.seed(5)
+  y <- rnorm(10)
+  obj <- binSeg_fixedSteps(y,2)
+
+  model.jumps <- get_jumps(obj)
+  model.sign <- sign(get_jump_cusum(obj))
+  poly <- form_polyhedra(obj)
 
   expect_true(all(poly$gamma %*% y >= poly$u))
 
@@ -91,7 +118,7 @@ test_that(".gammaRows_from_comparisons works", {
   vec <- matrix(c(1,5,10), ncol = 3)
   mat <- cbind(1, c(1:9)[-5], 10)
   
-  res <- .gammaRows_from_comparisons(vec, mat, y)
+  res <- .gammaRows_from_comparisons(vec, mat, 1, 10)
   
   expect_true(all(dim(res) == c(17, 10)))
 })
@@ -105,7 +132,7 @@ test_that(".gammaRow_from_comparisons is fulfilled by y", {
   vec <- matrix(c(1,9,10), ncol = 3)
   mat <- cbind(1, 1:8, 10)
   
-  res <- .gammaRows_from_comparisons(vec, mat, y)
+  res <- .gammaRows_from_comparisons(vec, mat, sign(obj$tree$cusum), 10)
   
   expect_true(all(res %*% y >= 0))
 })

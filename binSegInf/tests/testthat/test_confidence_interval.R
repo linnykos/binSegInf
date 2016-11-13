@@ -7,7 +7,7 @@ test_that("confidence_interval has the right coverage zero", {
   y <- rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj, y)
+  poly <- form_polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- confidence_interval(y, poly, contrast, gridsize = 100)
@@ -20,7 +20,7 @@ test_that("confidence_interval has right coverage non-zero", {
   y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj, y)
+  poly <- form_polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- confidence_interval(y, poly, contrast, gridsize = 100)
