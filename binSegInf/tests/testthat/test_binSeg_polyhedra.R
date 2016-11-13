@@ -29,6 +29,33 @@ test_that("it is invalid if a few inequalities are flipped",{
   expect_true(any(gamma %*% y < res$u))
 })
 
+# test_that("having the same model if and only if the inequalities are satisfied", {
+#   set.seed(5)
+#   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+#   obj <- binSeg_fixedSteps(y,2)
+# 
+#   model.jumps <- get_jumps(obj)
+#   model.sign <- sign(get_jump_cusum(obj))
+#   poly <- form_polyhedra(obj, y)
+# 
+#   expect_true(all(poly$gamma %*% y >= poly$u))
+# 
+#   trials <- 100
+#   for(i in 1:trials){
+#     set.seed(i*10)
+#     y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+#     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
+# 
+#     model.jumps.tmp <- get_jumps(obj.tmp)
+#     model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
+# 
+#     bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
+#     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+# 
+#     expect_true(bool1 == bool2)
+#   }
+# })
+
 ###############################
 
 ## .vector_matrix_signedDiff is correct

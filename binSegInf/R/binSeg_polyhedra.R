@@ -9,9 +9,10 @@
 #' @return An object of class polyhedra
 #' @export
 form_polyhedra.bsFs <- function(obj, y, ...){
+  if(.get_startEnd(obj$tree$name)[2] != length(y)) stop("obj does not match y")
   isValid(obj)
   
-  n <- .get_startEnd(obj$tree$name)[2]
+  n <- length(y)
   numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
   gamma.row.lis <- vector("list", numSteps)
@@ -25,7 +26,7 @@ form_polyhedra.bsFs <- function(obj, y, ...){
     hash_nodes <- .update_hash(losing.mat[-losing.idx,], hash_nodes)
     
     gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
-      losing.mat, y)
+      losing.mat, y, losing.idx)
   }
   
   mat <- do.call(rbind, gamma.row.lis)
@@ -49,7 +50,6 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   
   hash_nodes
 }
-
 
 .gammaRows_from_comparisons <- function(vec, mat, y, idx = 1:nrow(mat)){
   stopifnot(length(vec) == 3, ncol(mat) == 3)
