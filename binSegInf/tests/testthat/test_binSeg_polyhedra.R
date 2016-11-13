@@ -29,32 +29,32 @@ test_that("it is invalid if a few inequalities are flipped",{
   expect_true(any(gamma %*% y < res$u))
 })
 
-# test_that("having the same model if and only if the inequalities are satisfied", {
-#   set.seed(5)
-#   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
-#   obj <- binSeg_fixedSteps(y,2)
-# 
-#   model.jumps <- get_jumps(obj)
-#   model.sign <- sign(get_jump_cusum(obj))
-#   poly <- form_polyhedra(obj, y)
-# 
-#   expect_true(all(poly$gamma %*% y >= poly$u))
-# 
-#   trials <- 100
-#   for(i in 1:trials){
-#     set.seed(i*10)
-#     y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
-#     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
-# 
-#     model.jumps.tmp <- get_jumps(obj.tmp)
-#     model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
-# 
-#     bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
-#     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
-# 
-#     expect_true(bool1 == bool2)
-#   }
-# })
+test_that("having the same model if and only if the inequalities are satisfied", {
+  set.seed(5)
+  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  obj <- binSeg_fixedSteps(y,2)
+
+  model.jumps <- get_jumps(obj)
+  model.sign <- sign(get_jump_cusum(obj))
+  poly <- form_polyhedra(obj, y)
+
+  expect_true(all(poly$gamma %*% y >= poly$u))
+
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    obj.tmp <- binSeg_fixedSteps(y.tmp,2)
+
+    model.jumps.tmp <- get_jumps(obj.tmp)
+    model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
+
+    bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+
+    expect_true(bool1 == bool2)
+  }
+})
 
 ###############################
 
@@ -108,31 +108,4 @@ test_that(".gammaRow_from_comparisons is fulfilled by y", {
   res <- .gammaRows_from_comparisons(vec, mat, y)
   
   expect_true(all(res %*% y >= 0))
-})
-
-###########################################
-
-## .get_nodesFromHash is correct
-
-test_that(".get_nodesFromHash works", {
-  h <- hash::hash("1-5-10" = 1, "5-7-10" = 1)
-  mat <- cbind(1, 1:9, 10)
-  
-  res <- .get_nodesFromHash(mat, h)
-  expect_true(all(res == c(1:9)[-5]))
-})
-
-############################################
-
-## .update_hash is correct
-
-test_that(".update_hash works", {
-  h <- hash::hash("1-5-10" = 1, "5-7-10" = 1)
-  mat <- cbind(1, 1:4, 10)
-  
-  res <- .update_hash(mat, h)
-  key.vec <- sort(hash::keys(res))
-  
-  expect_true(all(key.vec == c("1-1-10", "1-2-10", "1-3-10", "1-4-10", 
-    "1-5-10", "5-7-10")))
 })

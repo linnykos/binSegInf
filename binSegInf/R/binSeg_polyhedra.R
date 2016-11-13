@@ -22,36 +22,15 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   for(i in 1:numSteps){
     losing.mat <- comp.lis[[i]]$losing
     
-    losing.idx <- .get_nodesFromHash(losing.mat, hash_nodes)
-    hash_nodes <- .update_hash(losing.mat[-losing.idx,], hash_nodes)
-    
     gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
-      losing.mat, y, losing.idx)
+      losing.mat, y)
   }
   
   mat <- do.call(rbind, gamma.row.lis)
   polyhedra(gamma = mat, u = rep(0, nrow(mat)))
 }
 
-.get_nodesFromHash <- function(mat, hash_nodes){
-  res <- apply(mat, 1, function(x){
-    if(is.null(hash_nodes[[paste0(x, collapse = "-")]])) TRUE else FALSE
-  })
-  
-  which(res)
-}
-
-.update_hash <- function(mat, hash_nodes){
-  if(length(mat) == 0) return(hash_nodes)
-  
-  for(i in 1:nrow(mat)){
-    hash_nodes[[paste0(mat[i,], collapse = "-")]] <- 1
-  }
-  
-  hash_nodes
-}
-
-.gammaRows_from_comparisons <- function(vec, mat, y, idx = 1:nrow(mat)){
+.gammaRows_from_comparisons <- function(vec, mat, y){
   stopifnot(length(vec) == 3, ncol(mat) == 3)
 
   n <- length(y)
@@ -61,13 +40,15 @@ form_polyhedra.bsFs <- function(obj, y, ...){
   }))
   
   sign.win <- as.numeric(sign(win.contrast %*% y))
-  signs.lose <- as.numeric(sign(lose.contrast %*% y))
   
   # add inequalities to compare winning split to all other splits
-  res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, signs.lose)
+  res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, 
+    rep(1, nrow(lose.contrast)))
+  res2 <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, 
+    -rep(1, nrow(lose.contrast)))
   
   # add inequalities to compare splits to 0 (ensure correct sign)
-  rbind(res, sign.win * win.contrast, signs.lose[idx] * lose.contrast[idx,])
+  rbind(res, res2, sign.win * win.contrast)
 }
 
 .vector_matrix_signedDiff <- function(vec, mat, sign.vec, sign.mat){
