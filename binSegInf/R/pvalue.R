@@ -5,14 +5,21 @@
 #' @param contrast contrast numeric vector
 #' @param sigma numeric to denote the sd of the residuals
 #' @param null_mean the null-hypothesis mean to test against
+#' @param alternative string of either "one.sided" or "two.sided" for the 
+#' alternative. If one.sided, the alternative means the test statistic is positive.
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
-pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
+pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
+  alternative = c("one.sided", "two.sided")){
+  alternative <- match.arg(alternative, c("one.sided", "two.sided"))
+  
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
-  sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
+  res <- sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
     sigma = terms$sigma, a = terms$a, b = terms$b)})
+  
+  if(alternative == "one.sided") res else 2*min(res, 1-res)
 }
 
 .compute_truncGaus_terms <- function(y, polyhedra, contrast, sigma){
@@ -31,6 +38,8 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
 }
 
 .truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5){
+  if(b < a) stop("b must be greater or equal to a")
+  
   sapply(value, function(x){
     if(x <= a) { 
       0
@@ -43,7 +52,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0){
 
       denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
       if(denom < tol) denom <- tol
-      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
+      1 - as.numeric((Rmpfr::pnorm(z) - Rmpfr::pnorm(a))/denom)
     }
   })
 }

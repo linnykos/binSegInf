@@ -4,7 +4,8 @@
 \alias{pvalue}
 \title{P-values for post-selection inference}
 \usage{
-pvalue(y, polyhedra, contrast, sigma = 1, null_mean = 0)
+pvalue(y, polyhedra, contrast, sigma = 1, null_mean = 0,
+  alternative = c("one.sided", "two.sided"))
 }
 \arguments{
 \item{y}{numeric vector}
@@ -16,6 +17,9 @@ pvalue(y, polyhedra, contrast, sigma = 1, null_mean = 0)
 \item{sigma}{numeric to denote the sd of the residuals}
 
 \item{null_mean}{the null-hypothesis mean to test against}
+
+\item{alternative}{string of either "one.sided" or "two.sided" for the 
+alternative. If one.sided, the alternative means the test statistic is positive.}
 }
 \value{
 a numeric p-value between 0 and 1

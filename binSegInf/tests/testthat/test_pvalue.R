@@ -46,13 +46,30 @@ test_that("p value are roughly uniform", {
     < sum(abs(quantile(pvalue_alt.vec, probs = quant, na.rm = T) - quant)))
 })
 
+test_that("p value one-sided and two-sided are related", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(0.1, 10)) + rnorm(20)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  poly <- form_polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res.pos.onesided <- pvalue(y, poly, contrast)
+  res.two.sided <- pvalue(y, poly, contrast, alternative = "two.sided")
+  res.neg.onesided <- pvalue(y, poly, -contrast)
+  
+  expect_true(-contrast%*%y < 0)
+  expect_true(res.neg.onesided > res.pos.onesided)
+  expect_true(abs(res.pos.onesided*2 - res.two.sided) < 1e-4)
+})
+
 ############################
 
 ## .truncated_gauss_cdf is correct
 
-test_that(".truncated_gauss_cdf does not give Nan", {
+test_that(".truncated_gauss_cdf gives 1 when out of bounds", {
   res <- .truncated_gauss_cdf(10, 0, 1, 9.8, Inf)
-  expect_true(res == 0)
+  expect_true(res == 1)
 })
 
 ###################################
