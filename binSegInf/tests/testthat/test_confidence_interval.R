@@ -27,3 +27,24 @@ test_that("confidence_interval has right coverage non-zero", {
   expect_true(3 >= res[1]-.5)
   expect_true(3 <= res[2]+.5)
 })
+
+test_that("confidence interval one and two-sided are related", {
+  set.seed(10)
+  y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  poly <- form_polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res.twosided <- confidence_interval(y, poly, contrast, gridsize = 50)
+  res.pos.onesided <- confidence_interval(y, poly, contrast, gridsize = 50, 
+    alternative = "one.sided")
+  res.neg.onesided <- confidence_interval(y, poly, -contrast, gridsize = 50, 
+    alternative = "one.sided")
+  
+  expect_true(res.twosided[1] >= res.pos.onesided[1])
+  expect_true(res.pos.onesided[1] >= res.neg.onesided[1])
+  expect_true(res.neg.onesided[1] <= 0.5)
+  expect_true(res.pos.onesided[2] == Inf)
+  expect_true(res.neg.onesided[2] == Inf)
+})

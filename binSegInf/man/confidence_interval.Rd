@@ -5,7 +5,7 @@
 \title{Confidence interval from post-selection inference}
 \usage{
 confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
-  gridsize = 250)
+  gridsize = 250, alternative = c("two.sided", "one.sided"))
 }
 \arguments{
 \item{y}{numeric vector}
@@ -20,6 +20,9 @@ confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
 
 \item{gridsize}{numeric to denote how fine of a grid to invert the hypothesis
 test}
+
+\item{alternative}{string of either "one.sided" or "two.sided" for the 
+alternative. If one.sided, the alternative means the test statistic is positive.}
 }
 \value{
 a vector of two numbers, the lower and upper end of the confidence interval
