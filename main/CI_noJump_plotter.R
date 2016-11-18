@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/CI_noJump_bsFs_2016-11-13.RData")
+load("../results/CI_noJump_bsFs_2016-11-17.RData")
 
 res <- bsFs_0JumpCI
 n <- 100
@@ -18,3 +18,6 @@ coverage.vec <- apply(res[[1]][,idx], 2, function(x){
   if(0 >= x[2] & 0 <= x[3]) TRUE else FALSE
 })
 sum(coverage.vec)/ncol(res[[1]][,idx])
+
+dist.diff <- apply(res[[1]], 2, function(x){x[3]-x[2]})
+quantile(dist.diff)

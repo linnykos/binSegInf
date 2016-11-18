@@ -29,7 +29,7 @@ confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
 }
   
 .select_index <- function(vec, alpha, lower = T){
-  idx <- which.min(abs(vec - alpha))
+  idx <- ifelse(lower, min(which(vec >= alpha)), max(which(vec <= alpha)))
   if(lower & vec[idx] > alpha & idx > 1) idx <- idx - 1
   if(!lower & vec[idx] < alpha & idx < length(vec)) idx <- idx + 1
   
