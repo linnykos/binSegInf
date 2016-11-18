@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/pvalue_noJump_bsFs_2016-11-17.RData")
+load("../results/pvalue_noJump_bsFs_2016-11-18.RData")
 
 res <- bsFs_0JumpPValue
 n <- 100
@@ -14,6 +14,8 @@ samp.selector <- function(lis, type = NA, func = function(x){x}){
 }
 
 idx <- samp.selector(res[1])
-hist(res[[1]][1,idx], main = "P-values", col = "gray")
+hist(res[[1]][1,idx], freq = F, main = "P-values", col = "gray", breaks = 20)
+lines(density(res[[1]][1,idx], cut = 0), col = "red", lwd = 2)
 
 qqplot(res[[1]][1,], seq(0, 1, length.out = ncol(res[[1]])), pch = 16)
+lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)
