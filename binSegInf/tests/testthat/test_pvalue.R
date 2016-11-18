@@ -63,14 +63,28 @@ test_that("p value one-sided and two-sided are related", {
   expect_true(abs(res.pos.onesided*2 - res.two.sided) < 1e-4)
 })
 
+test_that("pvalue is not 1 when the signal is extremely large", {
+  set.seed(1)
+  y <- CpVector(100, c(0,5), 0.5)$data
+  
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  poly <- form_polyhedra(obj, y)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- pvalue(y, poly, contrast)
+  expect_true(res < 1e-4)
+})
+
 ############################
 
 ## .truncated_gauss_cdf is correct
 
 test_that(".truncated_gauss_cdf gives 1 when out of bounds", {
-  res <- .truncated_gauss_cdf(10, 0, 1, 9.8, Inf)
+  res <- .truncated_gauss_cdf(10, 0, 1, 0, 9)
   expect_true(res == 1)
 })
+
 
 ###################################
 
