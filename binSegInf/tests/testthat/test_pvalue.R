@@ -85,6 +85,10 @@ test_that(".truncated_gauss_cdf gives 1 when out of bounds", {
   expect_true(res == 1)
 })
 
+test_that(".truncated_gauss_cdf returns 0 for extreme values", {
+  res <- .truncated_gauss_cdf(10, 0, 1, 5, Inf)
+  expect_true(res == 0)
+})
 
 ###################################
 

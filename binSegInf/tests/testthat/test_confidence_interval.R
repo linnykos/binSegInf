@@ -64,3 +64,40 @@ test_that("confidence interval is not a point", {
   
   expect_true(abs(res[1]-res[2]) > 1e-4)
 })
+
+test_that("confidence int. should give a left point less than right", {
+  set.seed(1)
+  dat <- CpVector(100, 0, NA)
+  y <- dat$data
+  
+  obj <- binSeg_fixedSteps(y, 1)
+
+  poly <- form_polyhedra(obj, y)
+  contrast <- contrast_vector(obj, 1)
+
+  res <- confidence_interval(y, poly, contrast, gridsize = 50)
+  
+  expect_true(res[1] <= res[2])
+})
+
+#####################################
+
+## .select_index is correct
+
+test_that(".select_index selects the correct left index", {
+  vec <- dnorm(seq(-3, 3, length.out = 50))
+  vec[40] <- 0.05
+  
+  res <- .select_index(vec, 0.05)
+  expect_true(res != 40)
+  expect_true(all(vec[1:res] <= 0.05))
+})
+
+test_that(".select_index selects the correct right index", {
+  vec <- pnorm(seq(-3, 3, length.out = 50))
+  vec[30] <- 0.95
+  
+  res <- .select_index(vec, 0.95, F)
+  expect_true(res != 30)
+  expect_true(all(vec[res:50] >= 0.95))
+})
