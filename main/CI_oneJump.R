@@ -20,10 +20,15 @@ rule_bsFs_closure <- function(n, gridsize = 100){
     poly <- form_polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
-    res <- confidence_interval(y, poly, contrast, gridsize = gridsize)
+    res <- tryCatch({
+      c(confidence_interval(y, poly, contrast, gridsize = gridsize), 0)
+    }, warning = function(w){
+      c(-Inf, Inf, -1)
+    })
     
     truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
-    c(abs(contrast %*% y), abs(contrast %*% truth), res, get_jumps(obj))
+    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], get_jumps(obj),
+      res[3])
   }
 }
 

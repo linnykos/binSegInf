@@ -9,15 +9,17 @@
 #' test
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
+#' @param precBits the number of bits used to compute the p value
 #'
 #' @return a vector of two numbers, the lower and upper end of the confidence interval
 #' @export
 confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
-  gridsize = 250, alternative = c("two.sided", "one.sided")){
+  gridsize = 250, alternative = c("two.sided", "one.sided"), precBits = 10){
   alternative <- match.arg(alternative, c("two.sided", "one.sided"))
   
   seq.val <- seq(-2*max(abs(y)), 2*max(abs(y)), length.out = gridsize)
-  pvalue <- pvalue(y, polyhedra, contrast, sigma, null_mean = seq.val)
+  pvalue <- pvalue(y, polyhedra, contrast, sigma, null_mean = seq.val,
+    precBits = precBits)
   
   if(alternative == "two.sided"){
     idx <- c(.select_index(pvalue, alpha/2, T), .select_index(pvalue, 1-alpha/2, F))
@@ -30,6 +32,11 @@ confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
   
 .select_index <- function(vec, alpha, lower = T){
   idx <- ifelse(lower, min(which(vec >= alpha)), max(which(vec <= alpha)))
+  if(length(idx) == 0 | is.na(idx) | is.infinite(idx)){
+    warning("Numeric precision suspected to be too low")
+    if(lower) return(1) else return(length(vec))
+  }
+
   if(lower & vec[idx] > alpha & idx > 1) idx <- idx - 1
   if(!lower & vec[idx] < alpha & idx < length(vec)) idx <- idx + 1
   
