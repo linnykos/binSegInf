@@ -48,3 +48,19 @@ test_that("confidence interval one and two-sided are related", {
   expect_true(res.pos.onesided[2] == Inf)
   expect_true(res.neg.onesided[2] == Inf)
 })
+
+test_that("confidence interval is not a point", {
+  set.seed(14)
+  
+  dat <- CpVector(100, 0, NA)
+  y <- dat$data
+  
+  obj <- binSeg_fixedSteps(y, 1)
+
+  poly <- form_polyhedra(obj, y)
+  contrast <- contrast_vector(obj, 1)
+
+  res <- confidence_interval(y, poly, contrast, gridsize = 100)
+  
+  expect_true(abs(res[1]-res[2]) > 1e-4)
+})
