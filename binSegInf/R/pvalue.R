@@ -7,17 +7,18 @@
 #' @param null_mean the null-hypothesis mean to test against
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
+#' @param precBits the number of bits used to compute the p value
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
 pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
-  alternative = c("one.sided", "two.sided")){
+  alternative = c("one.sided", "two.sided"), precBits = 10){
   alternative <- match.arg(alternative, c("one.sided", "two.sided"))
   
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
   res <- sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
-    sigma = terms$sigma, a = terms$a, b = terms$b)})
+    sigma = terms$sigma, a = terms$a, b = terms$b, precBits = precBits)})
   
   if(alternative == "one.sided") res else 2*min(res, 1-res)
 }
@@ -37,7 +38,8 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5, 
+  precBits = 10){
   if(b < a) stop("b must be greater or equal to a")
   
   sapply(value, function(x){
@@ -46,9 +48,9 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
     } else if(x >= b){
       1
     } else {
-      a <- Rmpfr::mpfr((a-mu)/sigma, precBits = 10)
-      b <- Rmpfr::mpfr((b-mu)/sigma, precBits = 10)
-      z <- Rmpfr::mpfr((value-mu)/sigma, precBits = 10)  
+      a <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
+      b <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
+      z <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
 
       denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
       if(denom < tol) denom <- tol
