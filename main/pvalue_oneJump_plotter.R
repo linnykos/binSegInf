@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../main/res/pvalue_oneJump_bsFs_2016-11-11.RData")
+load("../results/pvalue_oneJump_bsFs_2016-11-13.RData")
 
 res <- bsFs_1JumpPValue
 n <- 100
@@ -24,8 +24,9 @@ samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
 
 for (i in 1:length(res)){
   idx <- samp.selector(res[i])
-  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/ncol(res[[i]][,idx])
+  two.sided <- sapply(res[[i]][1,], function(x){2*min(x, 1-x)})
+  mat[i] <- length(which(two.sided <= alpha))/ncol(res[[i]][,idx])
 }
 
 image(.rotate(mat), zlim = c(0,1))
-
+contour(.rotate(mat), add = T, levels = 0.95, lwd = 3)
