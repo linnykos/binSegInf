@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/CI_noJump_bsFs_2016-11-17.RData")
+load("../results/CI_noJump_bsFs_2016-11-18.RData")
 
 res <- bsFs_0JumpCI
 n <- 100
@@ -15,9 +15,9 @@ samp.selector <- function(lis, type = NA, func = function(x){TRUE}){
 idx <- samp.selector(res[1])
 
 coverage.vec <- apply(res[[1]][,idx], 2, function(x){
+  if(x[5] != 0) return(NA)
   if(0 >= x[2] & 0 <= x[3]) TRUE else FALSE
 })
-sum(coverage.vec)/ncol(res[[1]][,idx])
 
-dist.diff <- apply(res[[1]], 2, function(x){x[3]-x[2]})
-quantile(dist.diff)
+coverage.vec <- coverage.vec[!is.na(coverage.vec)]
+sum(coverage.vec)/length(coverage.vec)
