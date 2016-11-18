@@ -16,9 +16,13 @@ rule_bsFs_closure <- function(n, gridsize = 100){
     poly <- form_polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
-    res <- confidence_interval(y, poly, contrast, gridsize = gridsize)
+    res <- tryCatch({
+      c(confidence_interval(y, poly, contrast, gridsize = gridsize), 0)
+    }, warning = function(w){
+      c(-Inf, Inf, -1)
+    })
     
-    c(abs(contrast %*% y), res, get_jumps(obj))
+    c(abs(contrast %*% y), res[1:2], get_jumps(obj), res[3])
   }
 }
 
