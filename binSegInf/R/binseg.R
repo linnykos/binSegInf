@@ -20,7 +20,8 @@
 
 binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE, return.env=FALSE){
     n = length(y)
-    if(n > 20) {
+    if(n > 20) 
+{
         stop(paste0("You'll use up a /lot/ of memory, so I'm stopping you.",
                     "This is my fault, not yours. I'm using giant mostly empty matrices. ",
                     "I'm embarassed. I'll change this soon. Prod me if you need me to do it now."))
@@ -38,12 +39,12 @@ binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE
     binseg.by.thresh.inner(y, thresh, s, e, j, k, verbose, env=env)
 
     ## Gather output from |env| and return it.
-    bs.output = list(slist = trim.cplist(env$slist),
-                     elist = trim.cplist(env$elist),
-                     blist = trim.cplist(env$blist),
-                     Blist = trim.cplist(env$Blist),
-                     zlist = trim.cplist(env$zlist),
-                     Zlist = trim.cplist(env$Zlist),
+    bs.output = list(slist = trim(env$slist),
+                     elist = trim(env$elist),
+                     blist = trim(env$blist),
+                     Blist = trim(env$Blist),
+                     zlist = trim(env$zlist),
+                     Zlist = trim(env$Zlist),
                      cp = trim(env$blist$mat[,3]),
                      cp.sign = trim(env$zlist$mat[,3]),
                      y = y,
@@ -81,8 +82,8 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
     
     ## If segment is 2-lengthed, terminate
     if(e-s<=1){
-        env$slist = add.cplist(env$slist,j,k,s)
-        env$elist = add.cplist(env$elist,j,k,e)
+        env$slist = add(env$slist,j,k,s)
+        env$elist = add(env$elist,j,k,e)
         return() 
     ## Otherwise, calculate CUSUMs
     } else {
@@ -99,20 +100,20 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
         
         ## Check threshold exceedance, then store
         if(abs(all.cusums[b]) < thresh){
-            env$Blist = add.cplist(env$Blist,j+1,k,b)
-            env$Zlist = add.cplist(env$Zlist,j+1,k,z)
-            env$slist = add.cplist(env$slist,j,  k,s)
-            env$elist = add.cplist(env$elist,j,  k,e)
+            env$Blist = add(env$Blist,j+1,k,b)
+            env$Zlist = add(env$Zlist,j+1,k,z)
+            env$slist = add(env$slist,j,  k,s)
+            env$elist = add(env$elist,j,  k,e)
             return(env)
         } else { 
             if(verbose) cat("the biggest cusum was", all.cusums[b], "which passed the threshold:", thresh,  fill=T)
 
-            env$blist = add.cplist(env$blist, j+1,k, b)
-            env$Blist = add.cplist(env$Blist, j+1,k, b)
-            env$zlist = add.cplist(env$zlist, j+1,k, z)
-            env$Zlist = add.cplist(env$Zlist, j+1,k, z)
-            env$slist = add.cplist(env$slist, j  ,k, s)
-            env$elist = add.cplist(env$elist, j  ,k, e)
+            env$blist = add(env$blist, j+1,k, b)
+            env$Blist = add(env$Blist, j+1,k, b)
+            env$zlist = add(env$zlist, j+1,k, z)
+            env$Zlist = add(env$Zlist, j+1,k, z)
+            env$slist = add(env$slist, j  ,k, s)
+            env$elist = add(env$elist, j  ,k, e)
         }
         
         ## Recurse
@@ -122,14 +123,12 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
 }
 
 
-
-
-
 ##' Function to carry out fixed-number-of-steps binary segmentation.
 ##' @param y numeric vector, data
 ##' @param numsteps desired number of changepoints
 ##' @param verbose set to true for algorithm run details. 
 ##' @import Matrix
+##' @export
 
 binseg.by.size = function(y,numsteps,verbose=FALSE){
 
@@ -138,114 +137,109 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     
     ## Initialize things
     B = Z = rep(NA,length(y)) 
-    Bcurr = Zcurr = Scurr = Ecurr =
-       Matrix(0, ncol=2^(numsteps+1), nrow = numsteps+1, sparse=TRUE)
-        ## cplist(numsteps+1)
-    S = E = A = Tt =  
-        Tcurr = Acurr =
-            lapply(1:length(y),function(i) c())
-    Scurr[1,1] = 1
-    Ecurr[1,1] = length(y)
-    ## Scurr = add.cplist(Scurr,1,1,1)
-    ## Ecurr = add.cplist(Ecurr,1,1,length(y))
+    Bcurr = Ccurr = Zcurr = Scurr = Ecurr = cplist(numsteps+1)
+
+    S = E = A = Tt = Tcurr = Acurr = lapply(1:length(y),function(i) c())
+    Scurr = add(Scurr,1,1,1)
+    Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
     Acurr[[1]] = c()
+    
     jk  = list()
-    zetas = rep(NA,length(y))
     G = matrix(NA, ncol = length(y), nrow = 2*length(y)*numsteps)
+    G.jk = cplist(numsteps+1) ## G.jk will store the row numbers corresponding
+                              ## to the sign characterizers of (b,j,k) over all
+                              ## b, for each (j,k)
     Gn = 0 
+
+    Tcurr.which.new = 1
     
     ## Main loop
     for(mystep in 1:numsteps){
-        if(verbose) cat("At step", mystep, " ") ## Get all candidate changepoints
-        curr.max=-Inf
+        if(verbose) cat("At step", mystep, " ", fill=TRUE)
+
+        ## Get all candidate changepoints
         Gn.beginning.of.step = Gn
-        for(ii in 1:sum(!sapply(Tcurr, is.null))){ 
-            Gn.beginning.of.this.node = Gn
+
+        ## Go through non-null terminal nodes, but only calculate new things in Tcurr!
+        for(ii in Tcurr.which.new){
             j = Tcurr[[ii]][1]
             k = Tcurr[[ii]][2]
-            if(Ecurr[j,k]-Scurr[j,k]<=1) next
-            cusums = getcusums(s = Scurr[j,k],
-                               e = Ecurr[j,k],
+
+            cusums = getcusums(s = extract(Scurr,j,k),
+                               e = extract(Ecurr,j,k),
                                y = y)
-
-            ## extract(Scurr,j,k)
-            ## cusums = getcusums(s = Scurr[which.jk(Scurr,j,k),3],
-            ##                    e = Ecurr[which.jk(,k],
-            ##                    y = y)
-            ## cusums = getcusums(s = extract.cplist(Scurr,j,k),
-            ##                    e = extract.cplist(Ecurr,j,k),
-            ##                    y = y)
-
             ## Characterize signs
             signed.cusummat = (cusums$contrasts) * (cusums$signs)
             G[(Gn+1):(Gn+nrow(signed.cusummat)),] = signed.cusummat 
+            G.jk = add(G.jk, j, k, paste0(Gn+1,":",Gn+nrow(signed.cusummat)))
             Gn = Gn+nrow(signed.cusummat)
-            
-            ## Find cusum maximizer
-            Bcurr[j, k] = cusums$bmax
-            Zcurr[j, k] = cusums$signs[cusums$bmax.cusums]
-            breaking.cusum = cusums$cusum
 
-            print(breaking.cusum)
-            print(curr.max)
-            
-            ## Keep running maximum
-            if(curr.max <= breaking.cusum){
-                curr.which.max = c(j,k) 
-                curr.max = breaking.cusum
-                curr.max.signed.row = signed.cusummat[cusums$bmax.cusums,]
-                curr.max.signed.rownum = Gn.beginning.of.this.node + cusums$bmax.cusums
-                curr.max.cusums = cusums$allcusums## temporary, for debugging
-            }
+            ## Find cusum maximizer
+            Bcurr = add(Bcurr,j,k,cusums$bmax)
+            Ccurr = add(Ccurr,j,k,cusums$cusum)
+            Zcurr = add(Zcurr,j,k,cusums$signs[cusums$bmax.cusums])
         }
+
+        ## Get all maximizers of each block (Note: one /block/ of indices per node)
+        all.rownums.this.step = unlist(lapply(rid.null(Tcurr),function(jk){mydeparse(extract(G.jk, jk[1], jk[2]))}))
+        all.cusums.this.step = lapply(rid.null(Tcurr),function(jk){extract(Ccurr, jk[1], jk[2])})
+        all.cusums.this.step = unlist(all.cusums.this.step)
+        max.jk.this.step = rid.null(Tcurr)[[which.max(all.cusums.this.step)]]
+
+        ## Get the block that contains the maximizer, and find the maximum from that block
+        max.block.rownums = mydeparse(extract(G.jk, max.jk.this.step[1], max.jk.this.step[2]))
+        max.block.cusums = G[max.block.rownums,]%*% cbind(y)
+        max.rownum = max.block.rownums[which.max(max.block.cusums)]
         
-        ## Record maximizer row and rownum
-        max.signed.row = curr.max.signed.row
-        max.signed.rownum = curr.max.signed.rownum
-        
-        ## Characterize cusum-maximizer
-        this.step.rows=(Gn.beginning.of.step+1):Gn
-        this.step.rows = this.step.rows[this.step.rows!=max.signed.rownum]
-        comparison.cusummat = t(apply(G[this.step.rows,,drop=FALSE], 1, function(myrow){
-            curr.max.signed.row - myrow }))
+        ## Characterize cusum-maximizing rows /of this step/
+        all.rownums.this.step = all.rownums.this.step[all.rownums.this.step!=max.rownum]  
+        all.rownums.this.step = unlist(lapply(rid.null(Tcurr),function(jk){mydeparse(extract(G.jk, jk[1], jk[2]))}))
+        this.step.G = G[all.rownums.this.step[all.rownums.this.step != max.rownum],,drop=FALSE]
+        comparison.cusummat = t(apply(this.step.G, 1, function(myrow){ G[max.rownum,,drop=FALSE] - myrow}))
+
+        ## Add it to G
         G[(Gn+1):(Gn+nrow(comparison.cusummat)),] = comparison.cusummat
         Gn = Gn+nrow(comparison.cusummat)
 
-        
         ## Record knot as CUSUM maximizer
-        zetas[mystep] = curr.max
-        jmax = curr.which.max[1]
-        kmax = curr.which.max[2]
+        jmax = max.jk.this.step[1]
+        kmax = max.jk.this.step[2]
         
         ## Update terminal and active node set
         which.duplicate = which(sapply(Tcurr, function(myjk){all.equal(myjk, c(jmax, kmax))==TRUE}))
         Tcurr[[which.duplicate]] <- c(jmax + 1, 2*kmax - 1)
         Tcurr[[mystep+1]] <- c(jmax + 1, 2*kmax)
+        Tcurr.which.new = c(which.duplicate, mystep+1)
         Acurr[[mystep+1]] <- c(jmax,kmax)
         
         ## Update Scurr and Ecurr for the /new/ nodes
-        Scurr[jmax+1,2*kmax-1] = Scurr[jmax,kmax]
-        Ecurr[jmax+1,2*kmax-1] = Bcurr[jmax,kmax]
-        
-        Scurr[jmax+1,2*kmax] = Bcurr[jmax,kmax]+1
-        Ecurr[jmax+1,2*kmax] = Ecurr[jmax,kmax]
+        ## if(mystep==6) browser()
+        Scurr = add(Scurr, jmax+1, 2*kmax-1, extract(Scurr,jmax,kmax))
+        Ecurr = add(Ecurr, jmax+1, 2*kmax-1, extract(Bcurr,jmax,kmax))
+        Scurr = add(Scurr, jmax+1, 2*kmax, extract(Bcurr,jmax,kmax) + 1)
+        Ecurr = add(Ecurr, jmax+1, 2*kmax, extract(Ecurr,jmax,kmax))
+
+        ## Rid Tcurr of all nodes that represent 2-length segments
+        riddance.of.short.segments = rid_jk_nicely_from_Tcurr(Tcurr, Scurr, Ecurr, Tcurr.which.new)
+        Tcurr = riddance.of.short.segments$Tcurr
+        Tcurr.which.new = riddance.of.short.segments$Tcurr.which.new
         
         ## Take snapshot
         S[[mystep]] = trim(Scurr)
         E[[mystep]] = trim(Ecurr)
         A[[mystep]] = trim(Acurr)
-        Tt[[mystep]] = trim(Tcurr)
-        B[mystep] = Bcurr[jmax,kmax]
-        Z[mystep] = Zcurr[jmax,kmax]
+        Tt[[mystep]] = rid.null(Tcurr)
+        B[mystep] = extract(Bcurr, jmax, kmax)
+        Z[mystep] = extract(Zcurr, jmax, kmax)
         jk[[mystep]] = c(jmax,kmax) 
         
-        if(verbose) cat("From candidates", Scurr[jmax,kmax],  ":",Ecurr[jmax,kmax], " ")
-        if(verbose) cat("breakpoint", Bcurr[jmax,kmax], "was selected", fill=FALSE)
-        if(verbose) cat(" with threshold knot", round(zetas[mystep],3), " !", fill=TRUE)
+        if(verbose) cat("From candidates", extract(Scurr,jmax,kmax),  ":",extract(Ecurr, jmax, kmax), " ")
+        if(verbose) cat("breakpoint", extract(Bcurr,jmax,kmax), "was selected", fill=TRUE)
         
         ## Terminate if all terminal nodes are length 2 or smaller.
-        too.short = unlist(lapply(Tt[[mystep]], function(mypair){Ecurr[mypair[1],mypair[2]] - Scurr[mypair[1], mypair[2]] <=1}))
+        too.short = unlist(lapply(Tt[[mystep]], function(mypair){extract(Ecurr, mypair[1],mypair[2]) -
+                                                                     extract(Scurr, mypair[1], mypair[2]) <=1}))
         if(all(too.short)){
             if(verbose) cat("Ended early, at step", mystep, fill=TRUE)
             break;
@@ -263,8 +257,6 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
                 Z = trim(Z),
                 G = G,
                 u = rep(0,nrow(G)),
-                zetas = trim(zetas),
                 numsteps = mystep
                 ))
 }
-

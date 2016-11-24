@@ -40,7 +40,12 @@ nsims = c(12000,  3500,  1500,  1000)
 sims=mcmapply(function(delta,nsim){ do.one.sim(delta,nsim,sigma=1,numsteps=1)}, deltas, nsims)
 ```
 
-
+```{r}
+## Actual simulations for 1d fused lasso
+deltas = c(0,1,2,3)
+nsims = c(12000,  3500,  1500,  1000)
+sims=mcmapply(function(delta,nsim){ do.one.sim.fl(delta,nsim,sigma=1,numsteps=1)}, deltas, nsims)
+```
 
 Objective
 ========================

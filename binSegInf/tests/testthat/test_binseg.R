@@ -1,6 +1,12 @@
-context("Test the basic standard binary segmentation function binseg()")
+context("Test the functions binseg.OOO()")
 require(wbs)
 
+
+test_that("No NAs are returned from the cusum() function.", {
+    y = rnorm(n,0,sigma)
+    cusums = cusum(s=1,e=n,b=5,y=y,contrast=TRUE)
+    expect_equal(any(is.na(cusums))==FALSE)
+})
 
 ## test_that("Changepoints match with those from wbs::sbs()", {
 

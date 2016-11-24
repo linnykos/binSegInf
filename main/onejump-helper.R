@@ -1,4 +1,5 @@
-## Define some helper functions
+##' Run simulations for a single setting for SBS, for the one-jump
+##' signal.
 do.one.sim = function(delta,nsim,sigma,numsteps,n=12){
   p = rep(NA,nsim)
   theta = c(rep(0,n/2), rep(delta,n/2))
@@ -13,29 +14,28 @@ do.one.sim = function(delta,nsim,sigma,numsteps,n=12){
   return(p)
 }
 
-make.qq.line = function(p, pcol='red', pch=16){
-  unif.p = runif(sum(!is.na(p)),0,1)
-  a = qqplot(x=unif.p, y=p, plot.it=FALSE)
-  points(x=a$y, y=a$x, col = pcol, pch=pch)
-}
 
-make.qqplot.background = function(){
-  lcol.diag = "lightgrey"
-  plot(NA,ylim=c(0,1),xlim=c(0,1), axes=F,  xlab="", ylab="")
-  axis(1);axis(2)
-  
-  mtext("Observed",2,padj=-4)
-  mtext("Expected",1,padj=4)
-  abline(0,1,col=lcol.diag)
-}
+##' Run simulations for a single setting for 1d fused lasso, for the
+##' one-jump signal.
+do.one.sim.1dfl = function(delta,nsim,sigma,numsteps,n=12){
+  p = rep(NA,nsim)
+  theta = c(rep(0,n/2), rep(delta,n/2))
+  for(isim in 1:nsim){
+    y = theta + rnorm(n,0,sigma)
+    path   = dualpathSvd2(y, dual1d_Dmat(n), maxsteps = numsteps, approx = TRUE)
+    G      = path$Gammat[1:path$nk[1],]
+    d      = getdvec(obj=path, y=y0, k=1, usage = "dualpathSvd", type=testtype, matchstep=TRUE)
+    if(path$pathobj$B[1] == n/2){
+        pvals.correct[jj] = pval.fl1d(y=y0, G=G, dik=d, sigma=sigma, approx=TRUE, threshold=TRUE, approxtype="rob")
+        jj = jj + 1
+        if(verbose) cat("\r", jj, "of", nsim)
+      }
 
-make.qqplot.legend = function(deltas,pch=16,pcols=rep("red",length(deltas))){
-  legend("bottomright", col=pcols, pch=rep(pch,2),
-         legend = sapply(c(bquote(delta == .(deltas[1])), 
-                           bquote(delta == .(deltas[2])),
-                           bquote(delta == .(deltas[3])),
-                           bquote(delta == .(deltas[4]))), as.expression))
-  title(main=bquote(atop(Segment~test~p-values)))
-  
-}
 
+    if(a$B[1]==n/2){
+      v = make.v(a$B[1],a$B,a$Z,n)
+      p[isim]=poly.pval(y,a$G,a$u,v,sigma)$pv
+    }
+  }
+  return(p)
+}

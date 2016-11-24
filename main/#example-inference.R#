@@ -1,0 +1,75 @@
+## Setup
+outputdir = "output"
+library(RColorBrewer)
+library(igraph)
+library(stringdist)
+library(BinSegInf)
+
+## ## Load R package
+rpackage_dir = "~/repos/binSegInf/binSegInf"
+setwd(rpackage_dir)
+library(devtools)
+load_all()
+
+## Source in the p-value functions from the selectiveInference package 
+# Replacement of all usages of pval.fl1d to poly.pval; 
+pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("gsell","rob"), u = rep(0,nrow(G))){
+  return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
+}
+
+## Setting 1
+## n = 4
+## set.seed(0)
+## y = c(rep(0,n/2),rep(5,n/2)) + rnorm(n,0,1)
+## thresh = .1
+
+## Setting 2
+## n = 60
+## sd = .5
+## mn = c(rep(-3, n/4), rep(2, n/4), rep(-1, n/4), rep(1, n/4))
+## set.seed(1)
+## y = mn + rnorm(n,0,sd)
+
+## Setting 3
+n = 30 
+set.seed(0)
+sigma=1
+lev1=0
+lev2=3
+y = c(rep(lev1,n/2),rep(lev2,n/2)) + rnorm(n,0,sigma)
+thresh = 0.5
+slist = elist = blist = Blist = zlist = Zlist = matrix(NA, nrow = n, ncol = 2^8)
+
+## Do Binary Segmentation
+binseg(s = 1, e = n, j = 0, k = 1, thresh = thresh, y = y, n = n)
+
+## Bundle into one thing
+s.output = list(slist = slist, elist = elist, blist = blist, Blist = Blist,
+                 zlist = zlist, Zlist = Zlist, y = y, thresh = thresh)
+
+## Get Gamma matrix
+Gu = get.polyhedron(bs.output, verbose=F)
+G = Gu$G
+u = Gu$u
+
+## Make conditional contrasts
+test.b.list = sort(collapse(blist))
+pvals = rep(NA,n)
+length(test.b.list)
+for(test.b in test.b.list){
+    v = make.v(test.b, bs.output)
+    pvals[test.b] = pval.fl1d(y = y,
+                              G = G,
+                              dik = v,
+                              sigma = sigma,
+                              u = u)
+}
+names(pvals) = 1:n
+print(pvals)
+
+
+## Things to address:
+## 1. What is a good complexity measure for BS? 1 jump each is /not/.
+## 2. What is 
+
+

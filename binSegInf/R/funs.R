@@ -144,7 +144,7 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
             G[newrowinds,] = newrows
             u[newrowinds] = newconst 
             
-            ## Updates for loop
+           ## Updates for loop
             nrow.G = nrow.G + nrow(newrows)
             ii = ii + 1
         }
@@ -163,17 +163,19 @@ getcusums = function(s,e,y){
     if(s<=0 | e<= 0) stop("must enter valid e,s >=1 ")
 
     ## Get all cusum
-    cusums =  sapply(s:(e-1), function(b){cusum(s,b,e,y)})
+    cusums =  sapply(s:(e-1), function(b){ cusum(s,b,e,y) })
     names(cusums) = paste("b=",s:(e-1))
     contrasts =  t(sapply(s:(e-1), function(b){cusum(s,b,e,y, contrast.vec=TRUE)}))
 
     ## Get signs
     signs = sign(cusums)
-    ## abs.cusums = abs(cusums)
     abs.cusums = signs*cusums
 
-    return(list(bmax = which.max(abs.cusums)+s-1, bmax.cusums = which.max(abs.cusums),
-                cusum = max(abs.cusums), allcusums = cusums, contrasts = contrasts,
+    return(list(bmax = which.max(abs.cusums)+s-1,
+                bmax.cusums = which.max(abs.cusums),
+                cusum = max(abs.cusums),
+                allcusums = cusums,
+                contrasts = contrasts,
                 signs=signs))
 }
 
@@ -235,7 +237,7 @@ make.v.fixed.thresh = function(test.b, bs.output){
     z = zlist[which(test.b == blist, arr.ind = T)]
     ends = c(0,sort(blist),n)
     ind = which(test.b == ends)
-    my.se = ends[c(ind-1, ind+1)]
+    mi/reid..se = ends[c(ind-1, ind+1)]
     left.b = (my.se[1]+1):(test.b)
     right.b = (test.b+1):(my.se[2])
     v[left.b] = -1/length(left.b)
@@ -266,6 +268,21 @@ make.v = function(test.b,B,Z,n){
         v[left.b] = -1/length(left.b)
         v[right.b] = 1/length(right.b)
         v = v*z
+        return(v)
+    }
+
+
+
+##' Simpler version of make.v
+##' with fixed threshold.
+##' @param b is the location that we want to test.
+make.v.simple = function(b, s, e, n,dir){
+        v = rep(0,n)
+        left.b = (s):(b)
+        right.b = (b+1):(e)
+        v[left.b] = -1/length(left.b)
+        v[right.b] = 1/length(right.b)
+        v = v*dir
         return(v)
     }
 
@@ -400,7 +417,7 @@ trim.mat = function(mat, type = c("rowcol","row")){
 
 ##' Trims a list by deleting the last consecutive elements that are NULL.
 ##' @param mylist Some list.
-trim.list = function(mylist){
+trim.list = function(mylist, rid.null=FALSE){
     return(mylist[1:(max(which(!sapply(mylist, is.null))))])
 }
 
@@ -420,6 +437,8 @@ trim = function(mything,...){
         return(trim.mat(mything,...))
     } else if (class.of.my.thing %in% c("integer", "numeric")){
         return(trim.vec(mything,...))
+    } else if (class.of.my.thing %in% c("cplist")){
+        return(trim.cplist(mything))
     } else {
         stop(paste("trim() doesn't know how to trim things of class:", class.of.my.thing))
     }
@@ -525,47 +544,70 @@ binary_search = function(vec, goal, verbose=FALSE){
 }
 
 
-##' Crawls from myvec[myloc] in either direction and finds the indices of the
-##' entries in myvec that equal mygoal. Must start with a viable location
-##' i.e. myvec[myloc]==mygoal must be true.
-##' @example myvec = c(1:4,rep(5,5),6:10) n = 12 myloc=7 mygoal=5
-##' ## expect_equal(crawler(myvec,myloc,mygoal), c(5,9))
-crawler = function(myvec, myloc, mygoal){
-    
-    stopifnot(myvec[myloc]==mygoal)
-    ii=jj=0
 
-    ## Search in the upward direction from myloc
-    enough.upwards = FALSE
-    while(!enough.upwards){
-        ii=ii+1
-        if(length(myvec[myloc-jj]) == 0){
-            enough.upwards=TRUE
-        } else if(is.na(myvec[myloc+ii])){
-            enough.upwards=TRUE
-        } else if(myvec[myloc+ii]!=mygoal){
-            enough.upwards=TRUE
-        } else {
-            enough.upwards=FALSE
-        }
-    }
-    up.ind = myloc+ii-1
 
-    ## Search in the downward direction from myloc
-    enough.downwards = FALSE
-    while(!enough.downwards){
-        jj=jj+1
-        if(length(myvec[myloc-jj]) == 0){
-            enough.downwards=TRUE
-        } else if(is.na(myvec[myloc-jj])){
-            enough.downwards=TRUE
-        } else if(myvec[myloc-jj]!=mygoal){
-            enough.downwards=TRUE
-        } else {
-            enough.downwards=FALSE
-        }
-    }
-    down.ind = myloc-jj+1
-    return(c(down.ind:up.ind))
+##' A function I use for debugging.
+myprint = function(v1){
+    print(paste(deparse(substitute(v1)),"is:"))
+    print(v1)
 }
 
+##' Gets rid of the entries in the terminal node list Tcurr nicely,
+##' @examples
+##'   Tcurr = list(c(1,1),c(1,2),NULL,NULL)
+##'   Ecurr = Scurr = cplist(10)
+##'   Ecurr = add(Ecurr, 1,1,7)
+##'   Scurr = add(Scurr, 1,1,8)
+##'   Ecurr = add(Ecurr, 1,2,11)
+##'   Scurr = add(Scurr, 1,2,13)
+##'   ## rid.jk.nicely(Tcurr,Ecurr,Scurr) ==  list(c(1,2),NULL,NULL,NULL)
+
+rid_jk_nicely_from_Tcurr= function(Tcurr, Scurr, Ecurr, Tcurr.which.new){
+
+    if(all(sapply(Tcurr, is.null)))return(Tcurr)
+
+    Tcurr.copy = Tcurr
+    check_if_one_apart = function(jk){
+        if(is.null(jk)) return(FALSE)
+        return(extract(Ecurr,jk[1], jk[2]) - extract(Scurr, jk[1], jk[2]) <=1 )
+    }
+
+    ## Find the nodes whose segments are too short
+    which.rid.jklist = which(sapply(Tcurr, check_if_one_apart))
+    for(which.rid.jk in which.rid.jklist){
+        Tcurr.copy[which.rid.jk] <- list(NULL)
+    }
+
+    ## Get rid of it from the ones to be scanned, too.
+    Tcurr.which.new.copy = Tcurr.which.new[!(Tcurr.which.new %in% which.rid.jklist)]
+    
+    return(list(Tcurr=Tcurr.copy, Tcurr.which.new = Tcurr.which.new.copy))
+}
+
+##' Get's rid of null elements in a list
+##' @param mylist Some list that is suspected to contain some elements equal to NULL.
+##' @examples
+##' mylist = list(c(1,1),NULL,c(3,2),NULL,NULL)
+##' mylist = rid.null(mylist)
+rid.null = function(mylist){
+    return(mylist[!sapply(mylist,is.null)])
+}
+
+
+
+##' Gets ni random intervals whose intervals are sampled from 1:n.
+get.intervals = function(n,ni){
+    intervals = matrix(NA,nrow=ni, ncol=2) 
+    jj = 1
+    all.found = FALSE
+    while(!all.found){
+        start = sample(1:n,1)  
+        end = sample(1:n,1)
+        if(start<end){
+            intervals[jj,1:2] = c(start,end)
+            if(jj == ni) all.found = TRUE
+            jj = jj+1
+        }
+    }
+    return(intervals)
+}
