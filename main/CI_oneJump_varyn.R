@@ -26,7 +26,7 @@ rule_bsFs_closure <- function(gridsize = 100){
       c(-Inf, Inf, -1)
     })
     
-    truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
+    truth <- binSegInf:::.formMeanVec(vec[4], dat$jump.height, dat$jump.idx)
     c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], get_jumps(obj),
       res[3])
   }

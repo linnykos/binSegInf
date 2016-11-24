@@ -10,8 +10,8 @@ colnames(mat) <- as.character(jump.loc)
 rownames(mat) <- as.character(jump.height)
 
 .detangle_matrix <- function(mat){
-  x = as.numeric(colnames(mat))#[rep(c(1:ncol(mat)), each = nrow(mat))]
-  y = as.numeric(rownames(mat))#[rep(c(1:nrow(mat)), times = ncol(mat))]
+  x = as.numeric(colnames(mat))
+  y = as.numeric(rownames(mat))
   z = t(mat)
   
   list(x = x, y = y, z = z)
