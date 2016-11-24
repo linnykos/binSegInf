@@ -586,9 +586,6 @@ rid_jk_nicely_from_Tcurr= function(Tcurr, Scurr, Ecurr, Tcurr.which.new){
 
 ##' Get's rid of null elements in a list
 ##' @param mylist Some list that is suspected to contain some elements equal to NULL.
-##' @examples
-##' mylist = list(c(1,1),NULL,c(3,2),NULL,NULL)
-##' mylist = rid.null(mylist)
 rid.null = function(mylist){
     return(mylist[!sapply(mylist,is.null)])
 }

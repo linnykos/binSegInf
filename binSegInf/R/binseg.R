@@ -20,12 +20,12 @@
 
 binseg.by.thresh = function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=FALSE, return.env=FALSE){
     n = length(y)
-    if(n > 20) 
-{
-        stop(paste0("You'll use up a /lot/ of memory, so I'm stopping you.",
-                    "This is my fault, not yours. I'm using giant mostly empty matrices. ",
-                    "I'm embarassed. I'll change this soon. Prod me if you need me to do it now."))
-        }
+    ## if(n > 20) 
+    ## {
+    ##     stop(paste0("You'll use up a /lot/ of memory, so I'm stopping you.",
+    ##                 "This is my fault, not yours. I'm using giant mostly empty matrices. ",
+    ##                 "I'm embarassed. I'll change this soon. Prod me if you need me to do it now."))
+    ##     }
 
     ## Create new environment |env|
     env = new.env()
