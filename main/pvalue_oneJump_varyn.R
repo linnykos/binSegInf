@@ -8,7 +8,7 @@ cores <- 20
 jump.height <- 0.5
 jump.loc <- 0.5
 n.vec <- exp(seq(log(10), log(5000), length.out = 10))
-paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, n.vec))
+paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, round(n.vec)))
 
 rule_bsFs_closure <- function(){
   function(vec){
