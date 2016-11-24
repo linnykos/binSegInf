@@ -1,13 +1,13 @@
 source("simulation_header.R")
 
-trials <- 100
+trials <- 1000
 num.height <- 21
 num.loc <- 11
 cores <- 20
 
-jump.height <- 0.5
+jump.height <- 0.25
 jump.loc <- 0.5
-n.vec <- exp(seq(log(10), log(5000), length.out = 10))
+n.vec <- exp(seq(log(10), log(5000), length.out = 20))
 paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, round(n.vec)))
 
 rule_bsFs_closure <- function(){
