@@ -63,10 +63,29 @@ get_jumps.bsFs <- function(obj, sorted = F, ...){
   get_jumps(obj$tree, sorted)
 }
 
+#' Get the cusum for jumps for bsFs objects
+#'
+#' Enumerates the cusum for each jump. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj  bsFs object
+#' @param sorted  boolean
+#' @param ... not used
+#'
+#' @return vector of cusum numerics
+#' @export
 get_jump_cusum.bsFs <- function(obj, sorted = F, ...){
   get_jump_cusum(obj$tree, sorted)
 }
 
+#' Summary of bsFs object
+#'
+#' @param object  bsFs object
+#' @param ... not used
+#'
+#' @return matrix of summary statistics
+#' @export
 summary.bsFs <- function(object, ...){
   summary(object$tree)
 }

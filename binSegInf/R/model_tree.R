@@ -45,6 +45,18 @@ get_jumps.Node <- function(obj, sorted = F, ...){
   if(sorted) sort(res) else res
 }
 
+#' Get the cusum for jumps for Node objects
+#'
+#' Enumerates the cusum for each jump. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj  Node object
+#' @param sorted  boolean
+#' @param ... not used
+#'
+#' @return vector of cusum numerics
+#' @export
 get_jump_cusum.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
@@ -59,6 +71,13 @@ get_jump_cusum.Node <- function(obj, sorted = F, ...){
   }
 }
 
+#' Summary of Node object
+#'
+#' @param object Node object
+#' @param ... not used
+#'
+#' @return matrix of summary statistics
+#' @export
 summary.Node <- function(object, ...){
   leaves <- .enumerate_splits(object)
   jumps <- get_jumps(object)
