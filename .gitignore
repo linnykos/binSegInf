@@ -6,7 +6,7 @@
 *.Rd
 *.tar.gz
 
-*NAMESPACE*
+NAMESPACE
 
 *figures*
 *cache*

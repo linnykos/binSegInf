@@ -111,14 +111,14 @@ rid.cplist = function(cplist, j=NULL, k=NULL, jklist=NULL){
     newcplist = cplist
     ## If j and k are both empty, use jklist
     if(!is.null(j) & !is.null(k)){
-        newcplist$mat = cplist$mat[-which_jk(cplist, j , k),]
+        newcplist$mat = cplist$mat[-where_jk(cplist, j , k),]
         newcplist$last.row = cplist$last.row - 1
 
     ## If jklist is empty, use j and k
     } else if(!is.null(jklist)){
         if(length(jklist)==1) break 
         for(jk in jklist){
-            newcplist$mat = cplist$mat[-which_jk(cplist, jk[1] , jk[2]),]
+            newcplist$mat = cplist$mat[-where_jk(cplist, jk[1] , jk[2]),]
             newcplist$last.row = newcplist$last.row - 1
         }
     } else {

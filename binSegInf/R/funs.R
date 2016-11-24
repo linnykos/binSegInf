@@ -20,7 +20,7 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     ii = 0
 
     ## CUSUM comparison (s,b,e)
-    v.this = cusum(s=s, b=b, e=e, n=n, contrast.vec=TRUE, right.to.left=TRUE)
+    v.this = cusum(s=s, b=b, e=e, y=y, contrast.vec=TRUE, right.to.left=TRUE)
     z.this = sign(sum(v.this * y))
     vz.this = v.this * z.this
 
@@ -41,7 +41,7 @@ halfspaces = function(s, b, e, thresh, n, y, is.terminal.node=F , verbose=F){
     } else {
         for(other.b in other.bs){
            ## Sqrt mean difference of (s,other.b,e)
-            v.other = cusum(s=s, b=other.b, e=e, n=n, contrast.vec=T,
+            v.other = cusum(s=s, b=other.b, e=e, y=y, contrast.vec=T,
                             right.to.left=T)
             z.other = sign(sum(v.other * y))
             vz.other = v.other * z.other
@@ -101,6 +101,7 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
     Zlist = binseg.results$Zlist
     y = binseg.results$y
     thresh = binseg.results$thresh
+    n = length(y)
 
     ## Initialize G and u
     ii = 1
@@ -228,8 +229,6 @@ make.v.fixed.thresh = function(test.b, bs.output){
 
     ## Basic checks
     stopifnot(test.b %in% sort(collapse(trim(blist))))
-    stopifnot(all(!is.na(collapse(G))))
-    stopifnot(all(!is.na(collapse(u))))
     
     ## Make contrast vector
     n = length(bs.output$y)
@@ -472,8 +471,9 @@ perm.t.test = function(vec1, vec2, nsim=1000){
 ##' Gets underlying means for changepoints in y.  Wrote this because plot.sbs
 ##' function doesn't work properly.
 ##' Example doesn't work now, but here it is: EXAMPLES/get.mean.example.R
+##' @export
 get.means = function(y, changepoints, ...){
-    cps = c(0, sort(changepoints), n)
+    cps = c(0, sort(changepoints), length(y))
     mns = rep(NA, length(y))
     for(ii in 1:(length(cps)-1) ){
         inds = (cps[ii]+1):(cps[ii+1])

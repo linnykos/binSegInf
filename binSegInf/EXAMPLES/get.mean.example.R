@@ -20,4 +20,4 @@ plot(y, col = pt.col, pch = pt.pch, axes=FALSE)
 axis(1);axis(2)
 cps = changepoints(sbs(y) , Kmax=2)$cpt.th
 cps = unlist(cps)
-## lines(get.means(y, cps), col = lcol.mn, lwd = lwd.mn)
+lines(get.means(y, cps), col = lcol.mn, lwd = lwd.mn)

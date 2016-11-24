@@ -1,0 +1,89 @@
+---
+title: 'One-jump simulations'
+author: ""
+date: "Oct 13th, 2016"
+---
+
+```{r, echo=FALSE}
+library(knitr) # We need the knitr package to set chunk options
+
+# Set default knitr options for knitting code into the report:
+opts_chunk$set(echo=FALSE,  # change to FALSE to keep code out of the knitted document
+               cache=TRUE, # do not re-run code that has already been run
+               autodep=TRUE, # assure that caching dependencies are updated correctly
+               cache.comments=FALSE, # do not re-run a chunk if only comments are changed
+               message=FALSE, # change to FALSE to keep messages out of the knitted document
+               warning=TRUE  # change to FALSE to keep warnings out of the knitted document
+               )
+```
+
+
+```{r}
+library(RColorBrewer)
+library(parallel)
+options(mc.cores=2L)
+
+## Stuff I need because the binSegInf package won't load.
+source("./onejump-helper.R")
+library("Matrix")
+library("pryr")
+source("../binSegInf/R/binseg.R")
+source("../binSegInf/R/funs.inf.R")
+source("../binSegInf/R/funs.R")
+```
+
+
+```{r}
+## Actual simulations
+deltas = c(0,1,2,3)
+nsims = c(12000,  3500,  1500,  1000)
+sims=mcmapply(function(delta,nsim){ do.one.sim(delta,nsim,sigma=1,numsteps=1)}, deltas, nsims)
+```
+
+```{r}
+## Actual simulations for 1d fused lasso
+deltas = c(0,1,2,3)
+nsims = c(12000,  3500,  1500,  1000)
+sims=mcmapply(function(delta,nsim){ do.one.sim.fl(delta,nsim,sigma=1,numsteps=1)}, deltas, nsims)
+```
+
+Objective
+========================
+- From one-jump generated data, make QQ plots of conditional power (no stopping rule)
+
+
+
+Simulation
+========================
+Generate data from:
+$$ n = 12 $$ 
+$$ y \in \mathbb{R}^n $$
+$$ \theta = (\underbrace{0,\cdots,0}_{n/2},\underbrace{\delta,\cdots,\delta}
+   )^n \in \mathbb{R}^n $$
+We will consider signal size $\delta = 0,1,2,3,4$.
+
+
+QQ-plots of p-values
+========================
+
+```{r, dev='svg',fig.width=4,fig.height=4, fig.align='center',fig.show='hold',out.extra='style="float:left"'}
+## Make example data plot
+n=12
+delta=3
+sigma=1
+theta = c(rep(0,n/2), rep(delta,n/2))
+y = theta + rnorm(n,0,sigma)
+plot(y, axes=F, ylim=c(-2,6), pch=16, col='grey50')
+axis(1);axis(2)
+for(delta in deltas){
+  theta = c(rep(0,n/2), rep(delta,n/2))
+  lines(theta, col = 'red', lwd=2, lty = (if(delta==3)1 else 2))
+}
+abline(v=n/2,col='grey',lty=2)
+
+## Make QQ plot
+pcols = brewer.pal(length(sims),"Set3")
+make.qqplot.background()
+invisible(Map(function(mysim,pcol){ make.qq.line(p=mysim,pch=16,pcol=pcol)}, sims, pcols))
+make.qqplot.legend(deltas,16,pcols)
+```

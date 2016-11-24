@@ -6,10 +6,14 @@ Authors@R: c(person("Sangwon", "Hyun", email = "robohyun66@gmail.com", role = c(
 Description: Binary Segmentation Inference
 Depends:
     R (>= 3.3.1),
+Imports:
     Matrix,
     pryr,
-    testthat,
-    stringr
-License: What license is it under?
+    wbs,
+    stringr,
+    stats
+Suggests:
+    testthat
+License: GPL2 
 LazyData: true
 RoxygenNote: 5.0.1
