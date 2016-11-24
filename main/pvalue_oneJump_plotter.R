@@ -1,5 +1,5 @@
 rm(list=ls())
-load("../results/pvalue_oneJump_bsFs_2016-11-13.RData")
+load("../results/pvalue_oneJump_bsFs_2016-11-18.RData")
 
 res <- bsFs_1JumpPValue
 n <- 100
@@ -9,7 +9,13 @@ mat  <- matrix (0, ncol = length(jump.loc), nrow = length (jump.height))
 colnames(mat) <- as.character(jump.loc)
 rownames(mat) <- as.character(jump.height)
 
-.rotate <- function(mat){t(mat)[,nrow(mat):1]}
+.detangle_matrix <- function(mat){
+  x = as.numeric(colnames(mat))#[rep(c(1:ncol(mat)), each = nrow(mat))]
+  y = as.numeric(rownames(mat))#[rep(c(1:nrow(mat)), times = ncol(mat))]
+  z = t(mat)
+  
+  list(x = x, y = y, z = z)
+}
 
 samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
   if(is.na(type)) return(1:ncol(lis[[1]]))
@@ -24,9 +30,26 @@ samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
 
 for (i in 1:length(res)){
   idx <- samp.selector(res[i])
-  two.sided <- sapply(res[[i]][1,], function(x){2*min(x, 1-x)})
-  mat[i] <- length(which(two.sided <= alpha))/ncol(res[[i]][,idx])
+  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/ncol(res[[i]][,idx])
 }
 
-image(.rotate(mat), zlim = c(0,1))
-contour(.rotate(mat), add = T, levels = 0.95, lwd = 3)
+# unconditional plot with y-axis in absolute
+image(.detangle_matrix(mat), zlim = c(0,1))
+contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
+
+# unconditional plot with y-axis in log-scale
+mat2 <- mat
+rownames(mat2) <- as.character(log(as.numeric(rownames(mat2))))
+image(.detangle_matrix(mat2), zlim = c(0,1))
+contour(.detangle_matrix(mat2), add = T, levels = 0.95, lwd = 3)
+
+
+## conditional on correct jump
+for (i in 1:length(res)){
+  idx <- samp.selector(res[i], type = T)
+  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/ncol(res[[i]][,idx])
+}
+
+
+image(.detangle_matrix(mat), zlim = c(0,1), xlim = c(0,100))
+contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
