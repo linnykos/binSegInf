@@ -5,3 +5,5 @@
 *.Ruserdata
 *.Rd
 *.tar.gz
+
+*NAMESPACE*
