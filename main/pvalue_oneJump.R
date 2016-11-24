@@ -1,18 +1,18 @@
 source("simulation_header.R")
 
-trials <- 1000
+trials <- 100
 num.height <- 21
 num.loc <- 11
-n <- 100
 cores <- 20
 
-jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
-jump.loc <- seq(0, 1, length.out = num.loc)[2:(num.loc-1)]
-paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
+jump.height <- 0.5
+jump.loc <- 0.5
+n.vec <- exp(seq(log(10), log(5000), length.out = 10))
+paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, n.vec))
 
-rule_bsFs_closure <- function(n){
+rule_bsFs_closure <- function(){
   function(vec){
-    y <- CpVector(n, vec[1:2], vec[3])$data
+    y <- CpVector(vec[4], vec[1:2], vec[3])$data
     
     obj <- binSeg_fixedSteps(y, 1)
   
@@ -26,11 +26,11 @@ rule_bsFs_closure <- function(n){
 
 ############################
 
-rule_bsFs <- rule_bsFs_closure(n)
+rule_bsFs <- rule_bsFs_closure()
 criterion <- function(x, vec){x}
 
-bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
+bsFs_1JumpPValue_nvary <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
 
-save.image(file = paste0("res/pvalue_oneJump_bsFs_", Sys.Date(), ".RData"))
+save.image(file = paste0("res/pvalue_oneJump_varyn_bsFs_", Sys.Date(), ".RData"))
 quit(save = "no")
