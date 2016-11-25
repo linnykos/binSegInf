@@ -43,7 +43,8 @@ test_that(".get_startEnd works", {
 ## .get_leaves_matrix_excluding is correct
 
 test_that(".get_leaves_matrix_excluding works", {
-  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5))
+  set.seed(10)
+  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5)) + 0.01*rnorm(40)
   obj <- binSeg_fixedSteps(y, 3)
   res <- .get_leaves_matrix_excluding(obj$tree, "1-20")
   
@@ -51,7 +52,8 @@ test_that(".get_leaves_matrix_excluding works", {
 })
 
 test_that(".get_leaves_matrix_excluding errors if node is not a split", {
-  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5))
+  set.seed(10)
+  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5)) + 0.01*rnorm(40)
   obj <- binSeg_fixedSteps(y, 3)
   
   expect_error(.get_leaves_matrix_excluding(obj$tree, "1-23"))
@@ -103,7 +105,8 @@ test_that(".threeColumnMatrix_from_nodeMatrix works", {
 ## .form_comparison is correct
 
 test_that(".form_comparison works", {
-  y <- c(rep(0, 20), rep(5, 10), rep(6, 10))
+  set.seed(10)
+  y <- c(rep(0, 20), rep(5, 10), rep(6, 10)) + 0.01*rnorm(40)
   obj <- binSeg_fixedSteps(y, 1)
   
   obj2 <- binSeg_fixedSteps(y, 2)

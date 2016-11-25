@@ -1,4 +1,7 @@
 #' Binary segmentation with fixed steps
+#' 
+#' y must not have duplicated values. This is to avoid
+#' degenerate behavior of binary segmentation
 #'
 #' @param y numeric vector to contain data
 #' @param numSteps numeric of number of steps
@@ -6,6 +9,8 @@
 #' @return a bsFs object
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
+  
+  if(any(duplicated(y))) stop("y must contain all unique values")
     
   #initialization
   n <- length(y); tree <- .create_node(1, n)
@@ -91,6 +96,7 @@ summary.bsFs <- function(object, ...){
 }
 
 .find_breakpoint <- function(y, start, end){
+  stopifnot(!any(duplicated(y))) 
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   

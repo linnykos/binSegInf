@@ -38,7 +38,8 @@ test_that(".cusum returns negatives", {
 ## .find_breakpoint is correct
 
 test_that(".find_breakpoint is correct", {
-  y <- c(rep(0,5), rep(1,5))
+  set.seed(10)
+  y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
   res <- .find_breakpoint(y, 1, 10)
   
   expect_true(length(res) == 2)
@@ -46,7 +47,8 @@ test_that(".find_breakpoint is correct", {
 })
 
 test_that(".find_breakpoint reports 0 if start = end", {
-  y <- c(rep(0,5), rep(1,5))
+  set.seed(10)
+  y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
   res <- .find_breakpoint(y, 4, 4)
   
   expect_true(length(res) == 2)
@@ -55,7 +57,8 @@ test_that(".find_breakpoint reports 0 if start = end", {
 })
 
 test_that(".find_breakpoint splits at the best location", {
-  y <- c(rep(0, 5), rep(10,4), -9)
+  set.seed(10)
+  y <- c(rep(0, 5), rep(10,4), -9) + 0.01*rnorm(10)
   
   mat <- cbind(1, 1:9, 10)
   cusum.vec <- apply(mat, 1, function(x){
@@ -70,11 +73,11 @@ test_that(".find_breakpoint splits at the best location", {
 })
 
 test_that(".find_breakpoint reports negatives", {
-   y <- c(rep(0, 5), rep(-10, 5))
+  set.seed(10)
+  y <- c(rep(0, 5), rep(-10, 5)) + 0.01*rnorm(10)
+  res <- .find_breakpoint(y, 1, 10)
    
-   res <- .find_breakpoint(y, 1, 10)
-   
-   expect_true(res$cusum < 0)
+  expect_true(res$cusum < 0)
 })
 
 #############################
@@ -82,7 +85,8 @@ test_that(".find_breakpoint reports negatives", {
 ## binSeg_fixedSteps is correct
 
 test_that("binSeg_fixedSteps works on one jump", {
-  y <- c(rep(0, 10), rep(1, 10))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
   
   expect_true(length(res) == 2)
@@ -92,7 +96,8 @@ test_that("binSeg_fixedSteps works on one jump", {
 })
 
 test_that("binSeg_fixedSteps works with two jumps", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 2)
   
   expect_true(res$tree$breakpoint == 10)
@@ -100,14 +105,21 @@ test_that("binSeg_fixedSteps works with two jumps", {
 })
 
 test_that("the isValid function works", {
-  y <- c(rep(0, 10), rep(1, 10))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
   
   expect_true(isValid(res))
 })
 
+test_that("binSeg errors on duplicated values", {
+  y <- rep(0, 10)
+  expect_error(binSeg_fixedSteps(y, 1))
+})
+
 test_that("binSeg splits at the best location", {
-  y <- c(rep(0, 5), rep(10,4), -9)
+  set.seed(10)
+  y <- c(rep(0, 5), rep(10,4), -9) + 0.01*rnorm(10)
   obj <- binSeg_fixedSteps(y, 1)
   
   breakpoint <- obj$tree$breakpoint
@@ -137,7 +149,8 @@ test_that(".cusum_contrast_full works", {
 ## get_jumps.bsFs is correct
 
 test_that("get_jumps.bsFs works", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- get_jumps(obj)
@@ -150,7 +163,8 @@ test_that("get_jumps.bsFs works", {
 ## get_jumps_cusum.bsFs is correct
 
 test_that("get_jumps_cusum.bsFs works", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- get_jump_cusum(obj)
@@ -160,7 +174,8 @@ test_that("get_jumps_cusum.bsFs works", {
 })
 
 test_that("get_jumps_cusum.bsFs reports negative values",{
-  y <- c(rep(0, 10), rep(-5, 5), rep(-10, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(-5, 5), rep(-10, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- get_jump_cusum(obj)

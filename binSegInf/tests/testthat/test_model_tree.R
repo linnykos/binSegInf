@@ -59,7 +59,8 @@ test_that(".split_node correctly returns left and right", {
 ## .enumerate_splits is correct
 
 test_that(".enumerate_splits is correct", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 2)
   
   expect_true(all(.enumerate_splits(res$tree) == c("1-20", "11-20")))
@@ -79,7 +80,8 @@ test_that("the first split is always the full vector", {
 ## .isValid.bsFs is correct
 
 test_that(".isValid matches the tree and numSteps", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 2)
   
   res$numSteps <- 3
@@ -92,7 +94,8 @@ test_that(".isValid matches the tree and numSteps", {
 ## get_jumps.tree is correct
 
 test_that("get_jumps.tree is correct", {
-  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+  set.seed(10)
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- get_jumps(obj$tree)
@@ -101,7 +104,8 @@ test_that("get_jumps.tree is correct", {
 })
 
 test_that("get_jumps.tree can sort", {
-  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+  set.seed(10)
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- get_jumps(obj$tree, sorted = T)

@@ -124,7 +124,8 @@ test_that(".gammaRows_from_comparisons works", {
 })
 
 test_that(".gammaRow_from_comparisons is fulfilled by y", {
-  y <- c(rep(0, 5), rep(10,4), -9)
+  set.seed(10)
+  y <- c(rep(0, 5), rep(10,4), -9) + 0.01*rnorm(10)
   obj <- binSeg_fixedSteps(y, 1)
   
   expect_true(obj$tree$breakpoint == 9)

@@ -3,7 +3,8 @@ context("Test contrast vector")
 ## contrast_vector.bsFs is correct
 
 test_that("contrast_vector.bsFs works", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- contrast_vector(obj, 1)
@@ -18,7 +19,8 @@ test_that("contrast_vector.bsFs works", {
 ## .contrast_vector_segment is correct
 
 test_that(".contrast_vector_segment works", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- .contrast_vector_segment(obj, 10, 20)
@@ -32,7 +34,8 @@ test_that(".contrast_vector_segment works", {
 ## .contrast_vector_spike is correct
 
 test_that(".contrast_vector_spike works", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- .contrast_vector_spike(obj, 10, 20)
