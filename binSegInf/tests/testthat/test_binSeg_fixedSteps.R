@@ -104,12 +104,12 @@ test_that("binSeg_fixedSteps works with two jumps", {
   expect_true(res$tree$children[[2]]$breakpoint == 15)
 })
 
-test_that("the isValid function works", {
+test_that("the is_valid function works", {
   set.seed(10)
   y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
   
-  expect_true(isValid(res))
+  expect_true(is_valid(res))
 })
 
 test_that("binSeg errors on duplicated values", {
@@ -146,39 +146,39 @@ test_that(".cusum_contrast_full works", {
 
 ############################
 
-## get_jumps.bsFs is correct
+## jumps.bsFs is correct
 
-test_that("get_jumps.bsFs works", {
+test_that("jumps.bsFs works", {
   set.seed(10)
   y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- get_jumps(obj)
+  res <- jumps(obj)
   
   expect_true(all(res == c(10, 15)))
 })
 
 #################################
 
-## get_jumps_cusum.bsFs is correct
+## jumps_cusum.bsFs is correct
 
-test_that("get_jumps_cusum.bsFs works", {
+test_that("jumps_cusum.bsFs works", {
   set.seed(10)
   y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- get_jump_cusum(obj)
+  res <- jump_cusum(obj)
   
   expect_true(length(res) == 2)
   expect_true(all(res > 0))
 })
 
-test_that("get_jumps_cusum.bsFs reports negative values",{
+test_that("jumps_cusum.bsFs reports negative values",{
   set.seed(10)
   y <- c(rep(0, 10), rep(-5, 5), rep(-10, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- get_jump_cusum(obj)
+  res <- jump_cusum(obj)
   
   expect_true(all(res < 0))
 })

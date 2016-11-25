@@ -7,13 +7,13 @@
 #'
 #' @return An object of class polyhedra
 #' @export
-form_polyhedra.bsFs <- function(obj, ...){
- isValid(obj)
+polyhedra.bsFs <- function(obj, ...){
+ is_valid(obj)
   
   n <- .get_startEnd(obj$tree$name)[2] 
   numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
-  sign.vec <- sign(get_jump_cusum(obj))
+  sign.vec <- sign(jump_cusum(obj))
   gamma.row.lis <- vector("list", numSteps)
 
   for(i in 1:numSteps){
@@ -24,7 +24,7 @@ form_polyhedra.bsFs <- function(obj, ...){
   }
   
   mat <- do.call(rbind, gamma.row.lis)
-  polyhedra(gamma = mat, u = rep(0, nrow(mat)))
+  polyhedra(obj = mat, u = rep(0, nrow(mat)))
 }
 
 .gammaRows_from_comparisons <- function(vec, mat, sign.win, n){

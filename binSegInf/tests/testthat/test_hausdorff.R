@@ -115,40 +115,40 @@ test_that("it works when one set is singleton", {
 
 #########################
 
-## test get_jumps
+## test jumps
 
 test_that("it errors when vec is not numeric", {
-  expect_error(get_jumps(c("a","b")))
+  expect_error(jumps(c("a","b")))
 })
 
 test_that("it returns numeric(0) for vec is length 0", {
-  expect_true(length(get_jumps(numeric(0))) == 0)
+  expect_true(length(jumps(numeric(0))) == 0)
 })
 
 test_that("jumps works properly", {
   vec <- rep(1:4, each = 10)
-  res <- get_jumps(vec)
+  res <- jumps(vec)
   
   expect_true(all(res == c(10,20,30)))
 })
 
 test_that("it works when vec is length 1", {
   vec <- 5
-  expect_true(length(get_jumps(vec)) == 0)
+  expect_true(length(jumps(vec)) == 0)
 })
 
 test_that("it works when vec is all singleton", {
   vec <- 1:10
-  res <- get_jumps(vec)
+  res <- jumps(vec)
   
   expect_true(all(res == 1:9))
 })
 
-test_that("combining get_jumps and .formMeanVec works", {
+test_that("combining jumps and .formMeanVec works", {
   jump.height <- c(1:4)
   jump.idx <- c(25,50,75)
   vec <- .formMeanVec(100, jump.height, jump.idx)
-  res <- get_jumps(vec)
+  res <- jumps(vec)
   
   expect_true(all(res == jump.idx))
 })
@@ -156,7 +156,7 @@ test_that("combining get_jumps and .formMeanVec works", {
 test_that("jumps are measured at the end of the piecewise segment",{
   set.seed(10)
   vec <- rep(sample(1:10), times = sample(2:11))
-  res <- get_jumps(vec)
+  res <- jumps(vec)
   
   expect_true(length(res) == 9)
   for(i in 1:length(res)){

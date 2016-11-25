@@ -14,7 +14,7 @@ contrast_vector.bsFs <- function(obj, jump.idx, sorted = F,
   if(!type[1] %in% c("segment", "spike")) stop("type must be either segment or spike")
   type <- type[1]
   
-  jump.vec <- get_jumps(obj, sorted)
+  jump.vec <- jumps(obj, sorted)
   jump <- jump.vec[jump.idx]
   n <- .get_startEnd(obj$tree$name)[2]
   
@@ -26,7 +26,7 @@ contrast_vector.bsFs <- function(obj, jump.idx, sorted = F,
 }
 
 .contrast_vector_segment <- function(obj, jump, n){
-  jumpSorted.vec <- c(1, get_jumps(obj, T), n)
+  jumpSorted.vec <- c(1, jumps(obj, T), n)
   
   idx <- which(jumpSorted.vec == jump)[1]
   if(idx == 1) idx <- 2

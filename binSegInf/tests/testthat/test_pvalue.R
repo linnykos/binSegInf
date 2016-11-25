@@ -7,7 +7,7 @@ test_that("p value is high power for correct changepoint", {
   y <- c(rep(0, 10), rep(50, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- pvalue(y, poly, contrast)
@@ -24,7 +24,7 @@ test_that("p value are roughly uniform", {
     y <- rnorm(20)
     obj <- binSeg_fixedSteps(y, 1)
     
-    poly <- form_polyhedra(obj)
+    poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
     pvalue_null.vec[i] <- pvalue(y, poly, contrast)
@@ -35,7 +35,7 @@ test_that("p value are roughly uniform", {
     y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
     obj <- binSeg_fixedSteps(y, 1)
     
-    poly <- form_polyhedra(obj)
+    poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
     pvalue_alt.vec[i] <- pvalue(y, poly, contrast)
@@ -51,7 +51,7 @@ test_that("p value one-sided and two-sided are related", {
   y <- c(rep(0, 10), rep(0.1, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res.pos.onesided <- pvalue(y, poly, contrast)
@@ -69,7 +69,7 @@ test_that("pvalue is not 1 when the signal is extremely large", {
   
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj, y)
+  poly <- polyhedra(obj, y)
   contrast <- contrast_vector(obj, 1)
   
   res <- pvalue(y, poly, contrast)
@@ -99,7 +99,7 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly", {
   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
   obj <- binSeg_fixedSteps(y,2)
 
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- .compute_truncGaus_terms(y, poly, contrast, 1)

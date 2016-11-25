@@ -37,13 +37,13 @@ binSeg_fixedSteps <- function(y, numSteps){
   structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
 }
 
-#' isValid for bsFs
+#' is_valid for bsFs
 #'
 #' @param obj bsFs object
 #'
 #' @return TRUE if valid
 #' @export
-isValid.bsFs <- function(obj){
+is_valid.bsFs <- function(obj){
   if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
   if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
   if(length(.enumerate_splits(obj$tree)) != obj$numSteps) 
@@ -64,8 +64,8 @@ isValid.bsFs <- function(obj){
 #'
 #' @return vector of jumps
 #' @export
-get_jumps.bsFs <- function(obj, sorted = F, ...){
-  get_jumps(obj$tree, sorted)
+jumps.bsFs <- function(obj, sorted = F, ...){
+  jumps(obj$tree, sorted)
 }
 
 #' Get the cusum for jumps for bsFs objects
@@ -80,8 +80,8 @@ get_jumps.bsFs <- function(obj, sorted = F, ...){
 #'
 #' @return vector of cusum numerics
 #' @export
-get_jump_cusum.bsFs <- function(obj, sorted = F, ...){
-  get_jump_cusum(obj$tree, sorted)
+jump_cusum.bsFs <- function(obj, sorted = F, ...){
+  jump_cusum(obj$tree, sorted)
 }
 
 #' Summary of bsFs object

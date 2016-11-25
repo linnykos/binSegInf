@@ -1,12 +1,13 @@
 #' Generate polyhedra
 #'
-#' @param gamma numeric matrix
+#' @param obj numeric matrix to be the gamma matrix
 #' @param u numeric vector
+#' @param ... not used
 #'
 #' @return object of class polyhedra
 #' @export
-polyhedra <- function(gamma, u){
-  structure(list(gamma = gamma, u = u), class = "polyhedra")
+polyhedra.matrix <- function(obj, u, ...){
+  structure(list(gamma = obj, u = u), class = "polyhedra")
 }
 
 #' Check if polyhedra is valid
@@ -15,7 +16,7 @@ polyhedra <- function(gamma, u){
 #'
 #' @return TRUE if valid
 #' @export
-isValid.polyhedra <- function(obj){
+is_valid.polyhedra <- function(obj){
   if(!is.numeric(obj$gamma) | !is.matrix(obj$gamma)) 
     stop("gamma is not a numeric matrix")
   if(!is.numeric(obj$u)) stop("u is not a numeric vector")

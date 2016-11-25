@@ -39,7 +39,7 @@ hausdorff <- function(set1, set2, one.sided = F){
 #'
 #' @return a set of numeric integers.
 #' @export
-get_jumps.numeric <- function(obj, tol = 1e-10, ...){
+jumps.numeric <- function(obj, tol = 1e-10, ...){
   if(!is.numeric(obj)) stop("obj must be numeric")
   if(length(obj) <= 1) return(numeric(0))
   
