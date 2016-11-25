@@ -17,7 +17,7 @@ rule_bsFs_closure <- function(gridsize = 100){
     
     obj <- binSeg_fixedSteps(y, 1)
   
-    poly <- form_polyhedra(obj, y)
+    poly <- polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
     res <- tryCatch({
@@ -27,7 +27,7 @@ rule_bsFs_closure <- function(gridsize = 100){
     })
     
     truth <- binSegInf:::.formMeanVec(vec[4], dat$jump.height, dat$jump.idx)
-    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], get_jumps(obj),
+    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj),
       res[3])
   }
 }

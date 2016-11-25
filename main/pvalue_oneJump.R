@@ -16,11 +16,11 @@ rule_bsFs_closure <- function(n){
     
     obj <- binSeg_fixedSteps(y, 1)
   
-    poly <- form_polyhedra(obj, y)
+    poly <- polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
     res <- pvalue(y, poly, contrast)
-    c(res, get_jumps(obj))
+    c(res, jumps(obj))
   }
 }
 

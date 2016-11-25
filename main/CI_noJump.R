@@ -13,7 +13,7 @@ rule_bsFs_closure <- function(n, gridsize = 100){
     
     obj <- binSeg_fixedSteps(y, 1)
   
-    poly <- form_polyhedra(obj, y)
+    poly <- polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
   
     res <- tryCatch({
@@ -22,7 +22,7 @@ rule_bsFs_closure <- function(n, gridsize = 100){
       c(-Inf, Inf, -1)
     })
     
-    c(abs(contrast %*% y), res[1:2], get_jumps(obj), res[3])
+    c(abs(contrast %*% y), res[1:2], jumps(obj), res[3])
   }
 }
 
