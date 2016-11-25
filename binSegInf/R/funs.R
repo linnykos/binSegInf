@@ -158,8 +158,12 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
     return(list(G=G, u=u))
 }
 
-##' Get all cusums, given S and E
-getcusums = function(s,e,y){
+##' Get all cusums, given start point \code{s} and end point \code{e}
+##' @param s Starting index, between \code{1} and \code{n}
+##' @param e Ending index, between \code{1} and \code{n}
+##' @param y \code{n}-lengthed data vector.
+##' @export
+getcusums <- function(s,e,y){
 
     if(s<=0 | e<= 0) stop("must enter valid e,s >=1 ")
 
@@ -181,16 +185,20 @@ getcusums = function(s,e,y){
 }
 
 
-##' Computes the CUSUM (cumulative sum) statistic. Note, we calculate this as
-##' the right-to-left difference, by default.
+##' Computes the CUSUM (cumulative sum) statistic.
+##'
+##' Note, we calculate this as the right-to-left difference, by default.
 ##' @param s starting index.
 ##' @param b breakpoint index.
 ##' @param e end index.
 ##' @param y data.
-##' @param right.to.left Whether you want right-to-left difference in the cusum calculation. Defaults to TRUE.
-##' @param contrast.vec If TRUE, then the contrast vector v for cusum=v'y is returned.
+##' @param right.to.left Whether you want right-to-left difference in the cusum
+##'     calculation. Defaults to TRUE.
+##' @param contrast.vec If TRUE, then the contrast vector v for cusum=v'y is
+##'     returned.
+##' @export
 
-cusum = function(s,b,e,y, right.to.left = TRUE, contrast.vec = FALSE){
+cusum <- function(s,b,e,y, right.to.left = TRUE, contrast.vec = FALSE){
 
     ## Form temporary quantities
     n = e-b+1
@@ -256,7 +264,7 @@ make.v.fixed.thresh = function(test.b, bs.output){
 ##' @param B vector of breakpoints to be considered
 ##' @param Z signs of B, as 
 ##' @param n length of contrast 
-make.v = function(test.b,B,Z,n){
+make.v <- function(test.b,B,Z,n){
         v = rep(0,n)
         z = Z[which(test.b == B, arr.ind = T)]
         ends = c(0,sort(B),n)
@@ -275,7 +283,7 @@ make.v = function(test.b,B,Z,n){
 ##' Simpler version of make.v
 ##' with fixed threshold.
 ##' @param b is the location that we want to test.
-make.v.simple = function(b, s, e, n,dir){
+make.v.simple <- function(b, s, e, n,dir){
         v = rep(0,n)
         left.b = (s):(b)
         right.b = (b+1):(e)
@@ -300,7 +308,7 @@ make.v.simple = function(b, s, e, n,dir){
 #' # Calculate linear inequality vectors
 #' ##myineqs = haarbasis(s = 0, b = 10, e = 20, n = 20, y = y, type = "ineq")
 #' 
-haarbasis = function(s, b, e, n, y, type=c("basis", "ineq")){
+haarbasis <- function(s, b, e, n, y, type=c("basis", "ineq")){
     type = match.arg(type)
     
     if(!(s <= b & b <= e)){
@@ -353,7 +361,7 @@ haarbasis = function(s, b, e, n, y, type=c("basis", "ineq")){
 
 
 #' Helper to get index of closest element of \code{val} out of vector \code{allval}
-get.closest = function(val, allval){
+get.closest <- function(val, allval){
     dists = (allval-val)
     pos.dists = neg.dists = dists
     pos.dists[dists<0] = Inf
@@ -369,7 +377,7 @@ get.closest = function(val, allval){
 #' Function to check if the columns in \code{basislist} are orthonormal.
 #' @param tol Numerical allowance; letting inner products to be up to size
 #'     \code{tol}.
-check.orth.basis = function(basislist, tol = 1E-10){
+check.orth.basis <- function(basislist, tol = 1E-10){
     n = length(basislist)
     inner.products = matrix(NA,nrow=n,ncol=n) 
     for(i in 1:length(basislist)){
@@ -388,7 +396,7 @@ check.orth.basis = function(basislist, tol = 1E-10){
 
 
 #' Helper to collapse matrix (with NAs) to a vector of unique elements.
-collapse = function(mat){
+collapse <- function(mat){
     collapsed = as.numeric(mat)
     collapsed = collapsed[!is.na(collapsed)]
     collapsed = unique(collapsed)
@@ -398,7 +406,7 @@ collapse = function(mat){
 
 ##' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
 ##' Returns NULL if mat is all NA's.
-trim.mat = function(mat, type = c("rowcol","row")){
+trim.mat <- function(mat, type = c("rowcol","row")){
     type = match.arg(type)
 
     ## If all NA matrix, return NULL.
@@ -416,19 +424,19 @@ trim.mat = function(mat, type = c("rowcol","row")){
 
 ##' Trims a list by deleting the last consecutive elements that are NULL.
 ##' @param mylist Some list.
-trim.list = function(mylist, rid.null=FALSE){
+trim.list <- function(mylist, rid.null=FALSE){
     return(mylist[1:(max(which(!sapply(mylist, is.null))))])
 }
 
 ##' Trims a list by deleting the last consecutive elements that are NULL.
 ##' @param mylist Some list.
-trim.vec = function(myvec){
+trim.vec <- function(myvec){
     return(myvec[1:(max(which(!sapply(myvec, is.na))))])
 }
 
 
 ##' Function to trim matrices, lists or vectors.
-trim = function(mything,...){
+trim <- function(mything,...){
     class.of.my.thing = class(mything)
     if(class.of.my.thing == "list"){
         return(trim.list(mything,...))
@@ -444,7 +452,7 @@ trim = function(mything,...){
 }
 
 #' Calculates a t-statistic for E(v2)-E(v1) given vectors v1 and v2.
-t.statistic = function(v1, v2){
+t.statistic <- function(v1, v2){
     numer = (mean(v2)-mean(v1))
     denom = sqrt(var(v1)/length(v1) + var(v2)/length(v2))
     return(numer/denom) 
@@ -452,7 +460,7 @@ t.statistic = function(v1, v2){
 
 #' Conducts a permutation t-test, given two subvectors
 #' Example doesn't work now, but here it is: EXAMPLES/perm.t.test.example.R
-perm.t.test = function(vec1, vec2, nsim=1000){
+perm.t.test <- function(vec1, vec2, nsim=1000){
     vec = c(vec1,vec2)
     n1 = length(vec1)
     n2 = length(vec2)
@@ -468,11 +476,12 @@ perm.t.test = function(vec1, vec2, nsim=1000){
 }
 
 
-##' Gets underlying means for changepoints in y.  Wrote this because plot.sbs
-##' function doesn't work properly.
-##' Example doesn't work now, but here it is: EXAMPLES/get.mean.example.R
+##' Get underlying means for changepoints in vector y.
+##' 
+##' Wrote this because wbs::plot.sbs function doesn't work properly.
+##' @example EXAMPLES/get.mean.example.R
 ##' @export
-get.means = function(y, changepoints, ...){
+get.means <- function(y, changepoints){
     cps = c(0, sort(changepoints), length(y))
     mns = rep(NA, length(y))
     for(ii in 1:(length(cps)-1) ){
@@ -494,7 +503,7 @@ pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("g
 
 ##' Takes a contrast vector v and optionally B & Z, and plots it
 ##' @param v Numeric vector containing contrast vector.
-plot.v = function(v, B=NULL, Z=NULL){
+plot.v <- function(v, B=NULL, Z=NULL){
     ## Basic checks
     if(any(is.na(B))|any(is.na(Z))|length(Z)!=length(B)) stop("Check yo Z and B!")
     stopifnot(all(abs(v)<=1))
@@ -512,7 +521,7 @@ plot.v = function(v, B=NULL, Z=NULL){
 
 ##' Binary search an integer vector for goal Returns index of goal, in the
 ##' vector.
-binary_search = function(vec, goal, verbose=FALSE){
+binary_search <- function(vec, goal, verbose=FALSE){
 
     ## Check if vec is all integers
     stopifnot(all(sapply(vec,function(myentry){round(myentry,0)==myentry})))
@@ -547,7 +556,7 @@ binary_search = function(vec, goal, verbose=FALSE){
 
 
 ##' A function I use for debugging.
-myprint = function(v1){
+myprint <- function(v1){
     print(paste(deparse(substitute(v1)),"is:"))
     print(v1)
 }
@@ -560,14 +569,15 @@ myprint = function(v1){
 ##'   Scurr = add(Scurr, 1,1,8)
 ##'   Ecurr = add(Ecurr, 1,2,11)
 ##'   Scurr = add(Scurr, 1,2,13)
-##'   ## rid.jk.nicely(Tcurr,Ecurr,Scurr) ==  list(c(1,2),NULL,NULL,NULL)
+##'   rid.jk.nicely(Tcurr,Ecurr,Scurr) ==  list(c(1,2),NULL,NULL,NULL)
+##' @export
 
-rid_jk_nicely_from_Tcurr= function(Tcurr, Scurr, Ecurr, Tcurr.which.new){
+rid_jk_nicely_from_Tcurr<- function(Tcurr, Scurr, Ecurr, Tcurr.which.new){
 
     if(all(sapply(Tcurr, is.null)))return(Tcurr)
 
     Tcurr.copy = Tcurr
-    check_if_one_apart = function(jk){
+    check_if_one_apart <- function(jk){
         if(is.null(jk)) return(FALSE)
         return(extract(Ecurr,jk[1], jk[2]) - extract(Scurr, jk[1], jk[2]) <=1 )
     }
@@ -584,16 +594,20 @@ rid_jk_nicely_from_Tcurr= function(Tcurr, Scurr, Ecurr, Tcurr.which.new){
     return(list(Tcurr=Tcurr.copy, Tcurr.which.new = Tcurr.which.new.copy))
 }
 
-##' Get's rid of null elements in a list
+##' Gets rid of null elements in a list
 ##' @param mylist Some list that is suspected to contain some elements equal to NULL.
-rid.null = function(mylist){
+rid.null <- function(mylist){
     return(mylist[!sapply(mylist,is.null)])
 }
 
 
 
-##' Gets ni random intervals whose intervals are sampled from 1:n.
-get.intervals = function(n,ni){
+##' Gets \code{ni} random intervals whose intervals are sampled from \code{1:n}.
+##'
+##' @param n nonnegative integer
+##' @param ni number of random intervals you want.
+
+get.intervals <- function(n,ni){
     intervals = matrix(NA,nrow=ni, ncol=2) 
     jj = 1
     all.found = FALSE

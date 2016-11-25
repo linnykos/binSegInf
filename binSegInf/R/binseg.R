@@ -136,10 +136,10 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
     if(numsteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     
     ## Initialize things
-    B = Z = rep(NA,length(y)) 
+    Bs = Z = rep(NA,length(y)) 
     Bcurr = Ccurr = Zcurr = Scurr = Ecurr = cplist(numsteps+1)
 
-    S = E = A = Tt = Tcurr = Acurr = lapply(1:length(y),function(i) c())
+    S = E = B = A = Tt = Tcurr = Acurr = lapply(1:length(y),function(i) c())
     Scurr = add(Scurr,1,1,1)
     Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
@@ -228,9 +228,10 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
         ## Take snapshot
         S[[mystep]] = trim(Scurr)
         E[[mystep]] = trim(Ecurr)
+        B[[mystep]] = trim(Bcurr)
         A[[mystep]] = trim(Acurr)
         Tt[[mystep]] = rid.null(Tcurr)
-        B[mystep] = extract(Bcurr, jmax, kmax)
+        Bs[mystep] = extract(Bcurr, jmax, kmax)
         Z[mystep] = extract(Zcurr, jmax, kmax)
         jk[[mystep]] = c(jmax,kmax) 
         
@@ -254,6 +255,7 @@ binseg.by.size = function(y,numsteps,verbose=FALSE){
                 A = trim(A),
                 T = trim(Tt),
                 B = trim(B),
+                Bs = trim(Bs),
                 Z = trim(Z),
                 G = G,
                 u = rep(0,nrow(G)),
