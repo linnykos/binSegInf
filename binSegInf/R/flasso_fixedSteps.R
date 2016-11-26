@@ -1,18 +1,21 @@
-flasso_fixedSteps <- function(y, numSteps){
+flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
   if(any(duplicated(y))) stop("y must contain all unique values")
 
   #initialization
   n <- length(y)
-  model.mat <- matrix(NA, numSteps, 3)
+  model.mat <- as.data.frame(matrix(NA, numSteps, 3))
   colnames(model.mat) <- c("Index", "Sign", "Lambda")
   D <- .form_Dmatrix(n)
 
   for(steps in 1:numSteps){
-    idx <- .select_nonactive(n, model.mat[,"Index"])
+    idx <- .select_nonactive(n, model.mat$Index)
     a.vec <- .compute_fused_numerator(D, idx, y)
     b.vec <- .compute_fused_denominator(D, idx, model.mat[1:(steps-1),,drop = F])
-
-    pos.ratio <- a.vec/(1+b.vec); neg.ratio <- a.vec/(-1+b.vec)
+    
+    pos.ratio <- a.vec/(1+b.vec)
+    pos.ratio[abs(1 + b.vec) < tol] <- 0
+    neg.ratio <- a.vec/(-1+b.vec)
+    neg.ratio[abs(-1 + b.vec) < tol] <- 0 
 
     if(max(pos.ratio) > max(neg.ratio)){
       model.mat[steps,] <- c(idx[which.max(pos.ratio)], 1, max(pos.ratio))
@@ -55,10 +58,10 @@ flasso_fixedSteps <- function(y, numSteps){
   stopifnot(min(idx) >= 1, max(idx) <= ncol(D) - 1)
   stopifnot(ncol(D) == nrow(D) + 1)
   
-  if(length(idx) == nrow(D) || length(model.mat) == 0 || any(is.na(model.mat[,"Index"]))) 
+  if(length(idx) == nrow(D) || length(model.mat) == 0 || any(is.na(model.mat$Index))) 
     return(rep(0, nrow(D)))
   
-  active.idx <- model.mat[,"Index"]; sign.vec <- model.mat[,"Sign"]
+  active.idx <- model.mat$Index; sign.vec <- model.mat$Sign
   DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
   DDTs <- D[idx,,drop = F] %*% t(D[active.idx,,drop = F]) %*% sign.vec
   

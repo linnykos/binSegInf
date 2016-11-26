@@ -132,6 +132,14 @@ test_that("binSeg splits at the best location", {
   expect_true(all(abs(cusum.vec[breakpoint]) >= abs(cusum.vec)))
 })
 
+test_that("binSeg works with many jumps", {
+  set.seed(10)
+  y <- rnorm(100)
+  res <- binSeg_fixedSteps(y, 10)
+  
+  expect_true(length(res$tree$leaves) == 11)
+})
+
 #################################
 
 ## .cusum_contrast_full is correct

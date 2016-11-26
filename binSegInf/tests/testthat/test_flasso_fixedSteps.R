@@ -23,6 +23,36 @@ test_that("flasso finds the right jump", {
   expect_true(res$model[,"Sign"] == 1)
 })
 
+test_that("flasso works with many jumps", {
+  set.seed(10)
+  y <- rnorm(100)
+  res <- flasso_fixedSteps(y, 10)
+  
+  expect_true(all(dim(res$model) == c(10,3)))
+  expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
+})
+
+test_that("flasso gest the right 2 jumps", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(10, 10), rep(0, 10)) + 0.01*rnorm(30)
+  res <- flasso_fixedSteps(y, 2)
+  
+  idx <- order(res$model$Index)
+  expect_true(all(res$model$Index[idx] == c(10,20)))
+  expect_true(all(res$model$Sign[idx] == c(1,-1)))
+  expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
+})
+
+test_that("flasso gets the right 4 jumps", {
+  set.seed(10)
+  n <- 10; h <- 50
+  y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
+  res <- flasso_fixedSteps(y, 4)
+  
+  expect_true(all(sort(res$model[,"Index"]) == c(10, 20, 30,40)))
+  expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
+})
+
 #######################################
 
 ## .form_Dmatrix is correct
