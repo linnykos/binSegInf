@@ -50,4 +50,20 @@ test_that(".svd_solve solves correctly", {
   
   expect_true(length(res) == 5)
   expect_true(sum(abs(x-res)) < 1e-7)
+  expect_true(!is.matrix(res))
+})
+
+####################################
+
+## .compute_fused_numerator is correct
+
+test_that(".compute_fused_numerator returns a vector", {
+  set.seed(10)
+  D <- .form_Dmatrix(10)
+  idx <- c(1:9)[-c(5,8)]
+  y <- rnorm(10)
+  
+  res <- .compute_fused_numerator(D, idx, y)
+  expect_true(is.numeric(res))
+  expect_true(length(res) == 9 - 2)
 })

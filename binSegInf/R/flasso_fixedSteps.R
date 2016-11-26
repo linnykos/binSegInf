@@ -38,23 +38,31 @@
 }
 
 .compute_fused_numerator <- function(D, idx, y){
+  stopifnot(is.numeric(D), is.matrix(D), is.numeric(y))
+  stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
+  stopifnot(min(idx) >= 1, max(idx) <= length(y) - 1)
+  stopifnot(ncol(D) == length(y), nrow(D) == length(y) - 1)
   
+  DDT <- D[idx,]%*%t(D[idx,])
+  Dy <- D[idx,]%*%y
+  
+  .svd_solve(DDT, Dy)
 }
 
 .compute_fused_denominator <- function(D, idx, sign.vec){
   
 }
 
-#solves Ax = b for A as a PSD matrix
+#solves Ax = b for A as a PSD matrix. Equivalently, (A.inv)b
 .svd_solve <- function(A, b, tol = 1e-7){
   stopifnot(is.matrix(A), is.numeric(A), is.numeric(b))
   stopifnot(nrow(A) == length(b))
   
   s <- svd(A)
   d <- s$d
+  stopifnot(all(d > -tol)) #ensure A is PSD
   bool <- (d > tol)
-  d[bool] <- 1/d[bool]
-  d[!bool] <- 0
+  d[bool] <- 1/d[bool]; d[!bool] <- 0
   
-  s$v %*% (d * t(s$u) %*% b)
+  as.numeric(s$v %*% (d * t(s$u) %*% b))
 }
