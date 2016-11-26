@@ -58,7 +58,7 @@ summary.flFs <- function(object, ...){
   nonactive.idx <- c(1:(n-1))[-model.mat$Index]
   u.vec[nonactive.idx] <- a.vec - lambda*b.vec
   
-  y - t(.form_Dmatrix(n))%*%u.vec
+  as.numeric(y - t(.form_Dmatrix(n))%*%u.vec)
 }
 
 .form_Dmatrix <- function(n){

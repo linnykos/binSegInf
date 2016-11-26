@@ -93,6 +93,7 @@ test_that(".refit_flasso produces a reasonable fit", {
   
   res <- .refit_flasso(y, obj$model)
   expect_true(sum((res - truth)^2) < .1)
+  expect_true(!is.matrix(res))
 })
 
 #######################################
