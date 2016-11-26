@@ -35,3 +35,19 @@ test_that(".select_nonactive returns full vector", {
   res <- .select_nonactive(20, vec)
   expect_true(all(res == 1:20))
 })
+
+###############################
+
+## .svd_solve is correct
+
+test_that(".svd_solve solves correctly", {
+  A <- matrix(1:25, 5, 5)
+  A <- (t(A) + A)/2
+  x <- c(1:5)
+  b <- A%*%x
+  
+  res <- .svd_solve(A, b)
+  
+  expect_true(length(res) == 5)
+  expect_true(sum(abs(x-res)) < 1e-7)
+})

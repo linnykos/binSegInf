@@ -45,6 +45,16 @@
   
 }
 
+#solves Ax = b for A as a PSD matrix
 .svd_solve <- function(A, b, tol = 1e-7){
+  stopifnot(is.matrix(A), is.numeric(A), is.numeric(b))
+  stopifnot(nrow(A) == length(b))
   
+  s <- svd(A)
+  d <- s$d
+  bool <- (d > tol)
+  d[bool] <- 1/d[bool]
+  d[!bool] <- 0
+  
+  s$v %*% (d * t(s$u) %*% b)
 }
