@@ -49,8 +49,20 @@
   .svd_solve(DDT, Dy)
 }
 
-.compute_fused_denominator <- function(D, idx, sign.vec){
+.compute_fused_denominator <- function(D, idx, model.mat){
+  stopifnot(is.numeric(D), is.matrix(D))
+  stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
+  stopifnot(min(idx) >= 1, max(idx) <= ncol(D) - 1)
+  stopifnot(ncol(D) == nrow(D) + 1)
   
+  if(any(is.na(model.mat[,1])) | length(model.mat) == 0 | length(idx) == nrow(D)) 
+    return(rep(0, nrow(D)))
+  
+  active.idx <- model.mat[,1]; sign.vec <- model.mat[,2]
+  DDT <- D[idx,]%*%t(D[idx,])
+  DDTs <- D[idx,] %*% t(D[active.idx,]) %*% sign.vec
+  
+  .svd_solve(DDT, DDTs)
 }
 
 #solves Ax = b for A as a PSD matrix. Equivalently, (A.inv)b

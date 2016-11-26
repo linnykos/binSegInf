@@ -67,3 +67,31 @@ test_that(".compute_fused_numerator returns a vector", {
   expect_true(is.numeric(res))
   expect_true(length(res) == 9 - 2)
 })
+
+####################################
+
+## .compute_fused_denominator is correct
+
+test_that(".compute_fused_denominator returns a vector", {
+  D <- .form_Dmatrix(10)
+  idx <- c(1:9)[-c(5,8)]
+  model.mat <- matrix(NA, 2, 2)
+  model.mat[,1] <- c(5,8)
+  model.mat[,2] <- c(1,-1)
+  
+  res <- .compute_fused_denominator(D, idx, model.mat)
+  
+  expect_true(is.numeric(res))
+  expect_true(length(res) == 9 - 2)
+})
+
+test_that(".compute_fused_denominator can return all 0's", {
+  D <- .form_Dmatrix(10)
+  idx <- c(1:9)
+  model.mat <- matrix(NA, 0, 2)
+  
+  res <- .compute_fused_denominator(D, idx, model.mat)
+  expect_true(length(res) == 9)
+  expect_true(all(res == 0))
+   
+})
