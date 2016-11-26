@@ -9,7 +9,7 @@
 #' @return a bsFs object
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
-  
+  if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
   if(any(duplicated(y))) stop("y must contain all unique values")
     
   #initialization

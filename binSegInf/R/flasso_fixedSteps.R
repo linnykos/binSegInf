@@ -1,13 +1,14 @@
 flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
+  if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
   if(any(duplicated(y))) stop("y must contain all unique values")
 
   #initialization
   n <- length(y)
-  model.mat <- as.data.frame(matrix(NA, numSteps, 3))
+  model.mat <- as.data.frame(matrix(NA, numSteps + 1, 3))
   colnames(model.mat) <- c("Index", "Sign", "Lambda")
   D <- .form_Dmatrix(n)
 
-  for(steps in 1:numSteps){
+  for(steps in 1:(numSteps + 1)){
     idx <- .select_nonactive(n, model.mat$Index)
     a.vec <- .compute_fused_numerator(D, idx, y)
     b.vec <- .compute_fused_denominator(D, idx, model.mat[1:(steps-1),,drop = F])
@@ -23,8 +24,11 @@ flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
       model.mat[steps,] <- c(idx[which.max(neg.ratio)], -1, max(neg.ratio))
     }
   }
+  
+  y.fit <- .refit_flasso(y, model.mat)
 
-  structure(list(model = model.mat, numSteps = numSteps), class = "flFs")
+  structure(list(model = model.mat[1:numSteps, ], y.fit = y.fit, 
+    numSteps = numSteps), class = "flFs")
 }
 
 jumps.flFs <- function(obj, sorted = F, ...){
@@ -38,6 +42,23 @@ jump_lambda.flFs <- function(obj, ...){
 
 summary.flFs <- function(object, ...){
   object$model
+}
+
+.refit_flasso <- function(y, model.mat){
+  n <- length(y)
+  D <- .form_Dmatrix(n)
+  u.vec <- rep(NA, n-1)
+  lambda <- min(model.mat$Lambda)
+  u.vec[model.mat$Index] <- lambda*model.mat$Sign
+  
+  idx <- .select_nonactive(n, model.mat$Index)
+  a.vec <- .compute_fused_numerator(D, idx, y)
+  b.vec <- .compute_fused_denominator(D, idx, model.mat)
+  
+  nonactive.idx <- c(1:(n-1))[-model.mat$Index]
+  u.vec[nonactive.idx] <- a.vec - lambda*b.vec
+  
+  y - t(.form_Dmatrix(n))%*%u.vec
 }
 
 .form_Dmatrix <- function(n){

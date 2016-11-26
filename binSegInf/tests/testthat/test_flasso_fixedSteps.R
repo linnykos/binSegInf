@@ -80,6 +80,21 @@ test_that("jump_lambda.flFs returns the right vector", {
 })
 
 
+#################################
+
+## .refit_flasso is correct
+
+test_that(".refit_flasso produces a reasonable fit", {
+  set.seed(10)
+  n <- 20
+  truth <- c(rep(0, 10), rep(10, 10))
+  y <- truth + 0.01*rnorm(n)
+  obj <- flasso_fixedSteps(y, 2)
+  
+  res <- .refit_flasso(y, obj$model)
+  expect_true(sum((res - truth)^2) < .1)
+})
+
 #######################################
 
 ## .form_Dmatrix is correct
