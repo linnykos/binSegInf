@@ -14,6 +14,15 @@ test_that("flasso_fixedSteps returns a valid matrix for 2 jumps", {
   expect_true(res$numSteps == 2)
 })
 
+test_that("flasso finds the right jump", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(10,10)) + 0.01*rnorm(20)
+  res <- flasso_fixedSteps(y, 1)
+  
+  expect_true(res$model[,"Index"] == 10)
+  expect_true(res$model[,"Sign"] == 1)
+})
+
 #######################################
 
 ## .form_Dmatrix is correct
