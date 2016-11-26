@@ -27,6 +27,19 @@ flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
   structure(list(model = model.mat, numSteps = numSteps), class = "flFs")
 }
 
+jumps.flFs <- function(obj, sorted = F, ...){
+  idx <- obj$model$Index
+  if(sorted) sort(idx) else idx
+}
+
+jump_lambda.flFs <- function(obj, ...){
+  obj$model$Lambda
+}
+
+summary.flFs <- function(object, ...){
+  object$model
+}
+
 .form_Dmatrix <- function(n){
   t(sapply(1:(n-1), function(x){
     vec <- rep(0, n)

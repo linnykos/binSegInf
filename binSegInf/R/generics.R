@@ -35,7 +35,23 @@ jumps <- function(obj, ...) {UseMethod("jumps")}
 #' @export
 contrast_vector <- function(obj, ...) {UseMethod("contrast_vector")}
 
+#' Generic function to count the number of jump cusum
+#'
+#' @param obj  object
+#' @param ... additional parameters
+#'
+#' @return vector of cusums
+#' @export
 jump_cusum <- function(obj, ...) {UseMethod("jump_cusum")}
+
+#' Generic function to count the number of jump lambdas
+#'
+#' @param obj  object
+#' @param ... additional parameters
+#'
+#' @return vector of lambdas
+#' @export
+jump_lambda <- function(obj, ...) {UseMethod("jump_lambda")}
 
 .list_comparison <- function(obj) UseMethod(".list_comparison")
 

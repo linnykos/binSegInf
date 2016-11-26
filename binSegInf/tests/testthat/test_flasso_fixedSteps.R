@@ -49,9 +49,36 @@ test_that("flasso gets the right 4 jumps", {
   y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
   res <- flasso_fixedSteps(y, 4)
   
-  expect_true(all(sort(res$model[,"Index"]) == c(10, 20, 30,40)))
+  expect_true(all(sort(res$model$Index) == c(10, 20, 30,40)))
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
 })
+
+##############################
+
+## jumps.flFs is correct
+
+test_that("jumps.flFs returns the right vector", {
+  set.seed(10)
+  n <- 10; h <- 50
+  y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
+  res <- flasso_fixedSteps(y, 4)
+  
+  expect_true(all(sort(jumps(res)) == c(10, 20, 30,40)))
+})
+
+###############################
+
+## jump_lambda.flFs is correct
+
+test_that("jump_lambda.flFs returns the right vector", {
+  set.seed(10)
+  n <- 10; h <- 50
+  y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
+  res <- flasso_fixedSteps(y, 4)
+  
+  expect_true(all(sort(jump_lambda(res), decreasing = T) == jump_lambda(res)))
+})
+
 
 #######################################
 
@@ -152,3 +179,4 @@ test_that(".compute_fused_denominator can return all 0's", {
   expect_true(all(res == 0))
    
 })
+
