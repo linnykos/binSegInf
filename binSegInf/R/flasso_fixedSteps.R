@@ -24,7 +24,7 @@ flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
     }
   }
 
-  structure(list(model = model.mat, numSteps = numSteps), class = "flasso")
+  structure(list(model = model.mat, numSteps = numSteps), class = "flFs")
 }
 
 .form_Dmatrix <- function(n){

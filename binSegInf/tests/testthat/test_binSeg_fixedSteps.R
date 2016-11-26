@@ -80,6 +80,8 @@ test_that(".find_breakpoint reports negatives", {
   expect_true(res$cusum < 0)
 })
 
+
+
 #############################
 
 ## binSeg_fixedSteps is correct
@@ -93,6 +95,15 @@ test_that("binSeg_fixedSteps works on one jump", {
   expect_true(class(res) == "bsFs")
   expect_true(class(res$tree)[1] == "Node")
   expect_true(res$tree$breakpoint == 10)
+})
+
+test_that("flasso gets the right 4 jumps", {
+  set.seed(10)
+  n <- 10; h <- 50
+  y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
+  res <- binSeg_fixedSteps(y, 4)
+  
+  expect_true(all(jumps(res) == c(10, 20, 30,40)))
 })
 
 test_that("binSeg_fixedSteps works with two jumps", {

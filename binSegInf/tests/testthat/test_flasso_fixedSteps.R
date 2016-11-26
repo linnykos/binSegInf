@@ -7,7 +7,7 @@ test_that("flasso_fixedSteps returns a valid matrix for 2 jumps", {
   y <- rnorm(20)
   res <- flasso_fixedSteps(y, 2)
   
-  expect_true(class(res) == "flasso")
+  expect_true(class(res) == "flFs")
   expect_true(all(dim(res$model) == c(2,3)))
   expect_true(all(colnames(res$model) == c("Index", "Sign", "Lambda")))
   expect_true(!any(is.na(res$model)))
@@ -130,7 +130,7 @@ test_that(".compute_fused_numerator returns a vector", {
 test_that(".compute_fused_denominator returns a vector", {
   D <- .form_Dmatrix(10)
   idx <- c(1:9)[-c(5,8)]
-  model.mat <- matrix(NA, 2, 2)
+  model.mat <- as.data.frame(matrix(NA, 2, 2))
   model.mat[,1] <- c(5,8)
   model.mat[,2] <- c(1,-1)
   colnames(model.mat) <- c("Index", "Sign")
