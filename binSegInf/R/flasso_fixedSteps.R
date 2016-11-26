@@ -8,16 +8,16 @@
 #   D <- .form_Dmatrix(n)
 #   
 #   for(steps in 1:numSteps){
-#     idx <- .select_index(n, model.mat$Index)
+#     idx <- .select_nonactive(n, model.mat$Index)
 #     a.vec <- .compute_fused_numerator(D, idx, y)
 #     b.vec <- .compute_fused_denominator(D, idx, model.mat$Sign[1:(steps-1)])
 #     
 #     pos.ratio <- a.vec/(1+b.vec); neg.ratio <- a.vec/(-1+b.vec)
 #     
 #     if(max(pos.ratio) > max(neg.ratio)){
-#       model.mat[steps,] <- c(which.max(pos.ratio), 1, max(pos.ratio))
+#       model.mat[steps,] <- c(idx[which.max(pos.ratio)], 1, max(pos.ratio))
 #     } else {
-#       model.mat[steps,] <- c(which.max(neg.ratio), -1, max(neg.ratio))
+#       model.mat[steps,] <- c(idx[which.max(neg.ratio)], -1, max(neg.ratio))
 #     }
 #   }
 #   
@@ -25,10 +25,14 @@
 # }
 
 .form_Dmatrix <- function(n){
-  
+  t(sapply(1:(n-1), function(x){
+    vec <- rep(0, n)
+    vec[c(x, x+1)] <- c(-1,1)
+    vec
+  }))
 }
 
-.select_index <- function(n, vec){
+.select_nonactive <- function(n, vec){
   
 }
 
