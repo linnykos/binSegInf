@@ -10,7 +10,7 @@
 #   for(steps in 1:numSteps){
 #     idx <- .select_nonactive(n, model.mat$Index)
 #     a.vec <- .compute_fused_numerator(D, idx, y)
-#     b.vec <- .compute_fused_denominator(D, idx, model.mat$Sign[1:(steps-1)])
+#     b.vec <- .compute_fused_denominator(D, idx, model.mat[1:2, 1:(steps-1)])
 #     
 #     pos.ratio <- a.vec/(1+b.vec); neg.ratio <- a.vec/(-1+b.vec)
 #     
@@ -33,7 +33,8 @@
 }
 
 .select_nonactive <- function(n, vec){
-  
+  val <- vec[!is.na(vec)]
+  if(length(val) == 0) 1:n else c(1:n)[-val]
 }
 
 .compute_fused_numerator <- function(D, idx, y){

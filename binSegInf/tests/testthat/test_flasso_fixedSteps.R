@@ -14,3 +14,24 @@ test_that(".form_Dmatrix forms a correct matrix", {
   
   expect_true(all(res == res2))
 })
+
+#############################
+
+## .select_nonactive is correct
+
+test_that(".select_nonactive selects indices", {
+  vec <- rep(NA, 10)
+  vec[1:3] <- c(5,2,3)
+  
+  res <- .select_nonactive(20, vec)
+  expect_true(length(res) == 17)
+  expect_true(all(res == sort(res)))
+  expect_true(!any(c(5,2,3) %in% res))
+  expect_true(!any(duplicated(res)))
+})
+
+test_that(".select_nonactive returns full vector", {
+  vec <- rep(NA, 10)
+  res <- .select_nonactive(20, vec)
+  expect_true(all(res == 1:20))
+})
