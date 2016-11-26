@@ -1,5 +1,21 @@
 context("Test fused lasso fixed steps")
 
+## flasso_fixedSteps is correct
+
+test_that("flasso_fixedSteps returns a valid matrix for 2 jumps", {
+  set.seed(10)
+  y <- rnorm(20)
+  res <- flasso_fixedSteps(y, 2)
+  
+  expect_true(class(res) == "flasso")
+  expect_true(all(dim(res$model) == c(2,3)))
+  expect_true(all(colnames(res$model) == c("Index", "Sign", "Lambda")))
+  expect_true(!any(is.na(res$model)))
+  expect_true(res$numSteps == 2)
+})
+
+#######################################
+
 ## .form_Dmatrix is correct
 
 test_that(".form_Dmatrix forms a correct matrix", {
@@ -24,7 +40,7 @@ test_that(".select_nonactive selects indices", {
   vec[1:3] <- c(5,2,3)
   
   res <- .select_nonactive(20, vec)
-  expect_true(length(res) == 17)
+  expect_true(length(res) == 19-3)
   expect_true(all(res == sort(res)))
   expect_true(!any(c(5,2,3) %in% res))
   expect_true(!any(duplicated(res)))
@@ -33,7 +49,7 @@ test_that(".select_nonactive selects indices", {
 test_that(".select_nonactive returns full vector", {
   vec <- rep(NA, 10)
   res <- .select_nonactive(20, vec)
-  expect_true(all(res == 1:20))
+  expect_true(all(res == 1:19))
 })
 
 ###############################
@@ -78,6 +94,7 @@ test_that(".compute_fused_denominator returns a vector", {
   model.mat <- matrix(NA, 2, 2)
   model.mat[,1] <- c(5,8)
   model.mat[,2] <- c(1,-1)
+  colnames(model.mat) <- c("Index", "Sign")
   
   res <- .compute_fused_denominator(D, idx, model.mat)
   
@@ -89,6 +106,7 @@ test_that(".compute_fused_denominator can return all 0's", {
   D <- .form_Dmatrix(10)
   idx <- c(1:9)
   model.mat <- matrix(NA, 0, 2)
+  colnames(model.mat) <- c("Index", "Sign")
   
   res <- .compute_fused_denominator(D, idx, model.mat)
   expect_true(length(res) == 9)

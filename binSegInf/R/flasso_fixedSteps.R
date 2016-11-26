@@ -1,28 +1,28 @@
-# flasso_fixedSteps <- function(y, numSteps){
-#   if(any(duplicated(y))) stop("y must contain all unique values")
-#     
-#   #initialization
-#   n <- length(y)
-#   model.mat <- matrix(NA, numSteps, 3)
-#   colnames(model.mat) <- c("Index", "Sign", "Lambda")
-#   D <- .form_Dmatrix(n)
-#   
-#   for(steps in 1:numSteps){
-#     idx <- .select_nonactive(n, model.mat$Index)
-#     a.vec <- .compute_fused_numerator(D, idx, y)
-#     b.vec <- .compute_fused_denominator(D, idx, model.mat[1:2, 1:(steps-1)])
-#     
-#     pos.ratio <- a.vec/(1+b.vec); neg.ratio <- a.vec/(-1+b.vec)
-#     
-#     if(max(pos.ratio) > max(neg.ratio)){
-#       model.mat[steps,] <- c(idx[which.max(pos.ratio)], 1, max(pos.ratio))
-#     } else {
-#       model.mat[steps,] <- c(idx[which.max(neg.ratio)], -1, max(neg.ratio))
-#     }
-#   }
-#   
-#   structure(list(model = model.mat, numSteps = numSteps), class = "flasso")
-# }
+flasso_fixedSteps <- function(y, numSteps){
+  if(any(duplicated(y))) stop("y must contain all unique values")
+
+  #initialization
+  n <- length(y)
+  model.mat <- matrix(NA, numSteps, 3)
+  colnames(model.mat) <- c("Index", "Sign", "Lambda")
+  D <- .form_Dmatrix(n)
+
+  for(steps in 1:numSteps){
+    idx <- .select_nonactive(n, model.mat[,"Index"])
+    a.vec <- .compute_fused_numerator(D, idx, y)
+    b.vec <- .compute_fused_denominator(D, idx, model.mat[1:(steps-1),,drop = F])
+
+    pos.ratio <- a.vec/(1+b.vec); neg.ratio <- a.vec/(-1+b.vec)
+
+    if(max(pos.ratio) > max(neg.ratio)){
+      model.mat[steps,] <- c(idx[which.max(pos.ratio)], 1, max(pos.ratio))
+    } else {
+      model.mat[steps,] <- c(idx[which.max(neg.ratio)], -1, max(neg.ratio))
+    }
+  }
+
+  structure(list(model = model.mat, numSteps = numSteps), class = "flasso")
+}
 
 .form_Dmatrix <- function(n){
   t(sapply(1:(n-1), function(x){
@@ -34,7 +34,7 @@
 
 .select_nonactive <- function(n, vec){
   val <- vec[!is.na(vec)]
-  if(length(val) == 0) 1:n else c(1:n)[-val]
+  if(length(val) == 0) 1:(n-1) else c(1:(n-1))[-val]
 }
 
 .compute_fused_numerator <- function(D, idx, y){
@@ -43,8 +43,8 @@
   stopifnot(min(idx) >= 1, max(idx) <= length(y) - 1)
   stopifnot(ncol(D) == length(y), nrow(D) == length(y) - 1)
   
-  DDT <- D[idx,]%*%t(D[idx,])
-  Dy <- D[idx,]%*%y
+  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
+  Dy <- D[idx,,drop = F]%*%y
   
   .svd_solve(DDT, Dy)
 }
@@ -55,12 +55,12 @@
   stopifnot(min(idx) >= 1, max(idx) <= ncol(D) - 1)
   stopifnot(ncol(D) == nrow(D) + 1)
   
-  if(any(is.na(model.mat[,1])) | length(model.mat) == 0 | length(idx) == nrow(D)) 
+  if(length(idx) == nrow(D) || length(model.mat) == 0 || any(is.na(model.mat[,"Index"]))) 
     return(rep(0, nrow(D)))
   
-  active.idx <- model.mat[,1]; sign.vec <- model.mat[,2]
-  DDT <- D[idx,]%*%t(D[idx,])
-  DDTs <- D[idx,] %*% t(D[active.idx,]) %*% sign.vec
+  active.idx <- model.mat[,"Index"]; sign.vec <- model.mat[,"Sign"]
+  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
+  DDTs <- D[idx,,drop = F] %*% t(D[active.idx,,drop = F]) %*% sign.vec
   
   .svd_solve(DDT, DDTs)
 }
