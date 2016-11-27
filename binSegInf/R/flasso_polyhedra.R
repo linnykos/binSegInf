@@ -11,21 +11,25 @@
 #   polyhedra(obj = mat, u = rep(0, nrow(mat)))
 # }
 # 
-# .gammaRows_from_flasso <- function(n, D, model){
-#   sign.win <- model$Sign[nrow(model)]
-#   idx <- ifelse(nrow(model) == 1, 1:(n-1), 
-#     .select_nonactive(n, model$Index[1:(nrow(model) - 1)]))
-#   
-#   numerator.mat <- .compute_fused_numerator_polyhedra(D, idx)
-#   denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
-#   active.idx <- which(idx == model$Index[nrow(model)])
-#   
-#   contrasts <- .form_contrast_flasso(numerator.mat, denominator.vec, sign.win, active.idx)
-#   
-#   res1 <- .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, nrow(contrasts$lose))
-#   
-#   rbind(res1, contrasts$win)
-# }
+.gammaRows_from_flasso <- function(n, D, model){
+  sign.win <- model$Sign[nrow(model)]
+  if(nrow(model) == 1){ 
+    idx <- 1:(n-1) 
+  } else {
+    idx <- .select_nonactive(n, model$Index[1:(nrow(model) - 1)])
+  }
+
+  numerator.mat <- .compute_fused_numerator_polyhedra(D, idx)
+  denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
+  active.idx <- which(idx == model$Index[nrow(model)])
+
+  contrasts <- .form_contrast_flasso(numerator.mat, denominator.vec, sign.win, active.idx)
+
+  res1 <- .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, 
+    rep(1, nrow(contrasts$lose)))
+
+  rbind(res1, contrasts$win)
+}
 
 .compute_fused_numerator_polyhedra <- function(D, idx){
   stopifnot(is.numeric(D), is.matrix(D))
@@ -42,6 +46,7 @@
 .form_contrast_flasso <- function(numerator.mat, denominator.vec,
   sign.win, active.idx, tol = 1e-7){
   stopifnot(active.idx <= nrow(numerator.mat))
+  
   win <- numerator.mat[active.idx,]/(sign.win + denominator.vec[active.idx])
 
   denom <- denominator.vec[-active.idx]

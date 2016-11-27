@@ -24,11 +24,29 @@ test_that(".form_contrast_flasso returns the right matrices", {
   res <- .form_contrast_flasso(mat, vec, sign.win, active.idx)
   
   expect_true(length(res) == 2)
-  expect_true(sum(abs(res - mat[2,]/(1+2))) < 1e-7)
+  expect_true(sum(abs(res$win - mat[2,]/(1+2))) < 1e-7)
   expect_true(all(names(res) == c("win", "lose")))
   expect_true(is.numeric(res$win))
   expect_true(length(res$win) == 5)
   expect_true(is.matrix(res$lose))
   expect_true(all(dim(res$lose) == c(2*5, 5)))
   expect_true(!any(is.infinite(res$lose)))
+})
+
+######################################
+
+## .gammaRows_from_flasso is correct
+
+test_that(".gammaRows_from_flasso returns matrix of right size", {
+  set.seed(10)
+  y <- rnorm(20)
+  obj <- fLasso_fixedSteps(y, 2)
+  D <- .form_Dmatrix(20)
+  
+  res <- .gammaRows_from_flasso(20, D, obj$model)
+  
+  expect_true(is.numeric(res))
+  expect_true(is.matrix(res))
+  expect_true(ncol(res) == 20)
+  expect_true(nrow(res) == (19-2)*2 + 1)
 })
