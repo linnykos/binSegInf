@@ -32,9 +32,11 @@ binSeg_fixedSteps <- function(y, numSteps){
     node.pairs <- .split_node(node.selected)
     node.selected$AddChildNode(node.pairs$left)
     node.selected$AddChildNode(node.pairs$right)
-   }
+  }
+  
+  y.fit <- .refit_binseg(y, jumps(tree))
     
-  structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
+  structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
 }
 
 #' is_valid for bsFs
@@ -93,6 +95,19 @@ jump_cusum.bsFs <- function(obj, sorted = F, ...){
 #' @export
 summary.bsFs <- function(object, ...){
   summary(object$tree)
+}
+
+.refit_binseg <- function(y, jumps){
+  stopifnot(max(jumps) < length(y), min(jumps) > 0)
+  stopifnot(all(jumps %% 1 == 0), length(jumps) == length(unique(jumps)))
+  
+  n <- length(y); y.fit <- numeric(n)
+  jumps <- c(0, sort(jumps), n)
+  for(i in 2:length(jumps)){
+    y.fit[(jumps[i-1]+1):jumps[i]] <- mean(y[(jumps[i-1]+1):jumps[i]])
+  }
+  
+  y.fit
 }
 
 .find_breakpoint <- function(y, start, end){

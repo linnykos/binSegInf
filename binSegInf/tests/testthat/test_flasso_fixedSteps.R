@@ -1,41 +1,42 @@
 context("Test fused lasso fixed steps")
 
-## flasso_fixedSteps is correct
+## fLasso_fixedSteps is correct
 
-test_that("flasso_fixedSteps returns a valid matrix for 2 jumps", {
+test_that("fLasso_fixedSteps returns a valid matrix for 2 jumps", {
   set.seed(10)
   y <- rnorm(20)
-  res <- flasso_fixedSteps(y, 2)
+  res <- fLasso_fixedSteps(y, 2)
   
   expect_true(class(res) == "flFs")
+  expect_true(length(res) == 3)
   expect_true(all(dim(res$model) == c(2,3)))
   expect_true(all(colnames(res$model) == c("Index", "Sign", "Lambda")))
   expect_true(!any(is.na(res$model)))
   expect_true(res$numSteps == 2)
 })
 
-test_that("flasso finds the right jump", {
+test_that("fLasso finds the right jump", {
   set.seed(10)
   y <- c(rep(0, 10), rep(10,10)) + 0.01*rnorm(20)
-  res <- flasso_fixedSteps(y, 1)
+  res <- fLasso_fixedSteps(y, 1)
   
   expect_true(res$model[,"Index"] == 10)
   expect_true(res$model[,"Sign"] == 1)
 })
 
-test_that("flasso works with many jumps", {
+test_that("fLasso works with many jumps", {
   set.seed(10)
   y <- rnorm(100)
-  res <- flasso_fixedSteps(y, 10)
+  res <- fLasso_fixedSteps(y, 10)
   
   expect_true(all(dim(res$model) == c(10,3)))
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
 })
 
-test_that("flasso gest the right 2 jumps", {
+test_that("fLasso gest the right 2 jumps", {
   set.seed(10)
   y <- c(rep(0, 10), rep(10, 10), rep(0, 10)) + 0.01*rnorm(30)
-  res <- flasso_fixedSteps(y, 2)
+  res <- fLasso_fixedSteps(y, 2)
   
   idx <- order(res$model$Index)
   expect_true(all(res$model$Index[idx] == c(10,20)))
@@ -43,11 +44,11 @@ test_that("flasso gest the right 2 jumps", {
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
 })
 
-test_that("flasso gets the right 4 jumps", {
+test_that("fLasso gets the right 4 jumps", {
   set.seed(10)
   n <- 10; h <- 50
   y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
-  res <- flasso_fixedSteps(y, 4)
+  res <- fLasso_fixedSteps(y, 4)
   
   expect_true(all(sort(res$model$Index) == c(10, 20, 30,40)))
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
@@ -61,7 +62,7 @@ test_that("jumps.flFs returns the right vector", {
   set.seed(10)
   n <- 10; h <- 50
   y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
-  res <- flasso_fixedSteps(y, 4)
+  res <- fLasso_fixedSteps(y, 4)
   
   expect_true(all(sort(jumps(res)) == c(10, 20, 30,40)))
 })
@@ -74,7 +75,7 @@ test_that("jump_lambda.flFs returns the right vector", {
   set.seed(10)
   n <- 10; h <- 50
   y <- c(rep(0,n), rep(h,n), rep(0,n), rep(h,n), rep(0,n)) + 0.01*rnorm(5*n)
-  res <- flasso_fixedSteps(y, 4)
+  res <- fLasso_fixedSteps(y, 4)
   
   expect_true(all(sort(jump_lambda(res), decreasing = T) == jump_lambda(res)))
 })
@@ -89,7 +90,7 @@ test_that(".refit_flasso produces a reasonable fit", {
   n <- 20
   truth <- c(rep(0, 10), rep(10, 10))
   y <- truth + 0.01*rnorm(n)
-  obj <- flasso_fixedSteps(y, 2)
+  obj <- fLasso_fixedSteps(y, 2)
   
   res <- .refit_flasso(y, obj$model)
   expect_true(sum((res - truth)^2) < .1)

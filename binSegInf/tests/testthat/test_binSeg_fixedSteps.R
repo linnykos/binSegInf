@@ -91,7 +91,7 @@ test_that("binSeg_fixedSteps works on one jump", {
   y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
   
-  expect_true(length(res) == 2)
+  expect_true(length(res) == 3)
   expect_true(class(res) == "bsFs")
   expect_true(class(res$tree)[1] == "Node")
   expect_true(res$tree$breakpoint == 10)
@@ -200,4 +200,16 @@ test_that("jumps_cusum.bsFs reports negative values",{
   res <- jump_cusum(obj)
   
   expect_true(all(res < 0))
+})
+
+###################################
+
+## .refit_binseg is correct
+
+test_that(".refit_binseg is correct", {
+  y <- c(1:5, 101:105)
+  jumps <- 5
+  res <- .refit_binseg(y, jumps)
+  
+  expect_true(all(res == c(rep(3, 5), rep(103, 5))))
 })

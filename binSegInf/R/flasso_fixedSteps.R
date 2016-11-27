@@ -1,4 +1,4 @@
-flasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
+fLasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
   if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
   if(any(duplicated(y))) stop("y must contain all unique values")
 
