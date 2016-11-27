@@ -1,16 +1,16 @@
-# polyhedra.flFs <- function(obj, ...){
-#   k <- nrow(obj$model); n <- length(obj$y.fit)
-#   gamma.row.lis <- vector("list", k)
-#   D <- .form_Dmatrix(n)
-#   
-#   for(i in 1:k){
-#     gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:k,])
-#   }
-#   
-#   mat <- do.call(rbind, gamma.row.lis)
-#   polyhedra(obj = mat, u = rep(0, nrow(mat)))
-# }
-# 
+polyhedra.flFs <- function(obj, ...){
+  k <- nrow(obj$model); n <- length(obj$y.fit)
+  gamma.row.lis <- vector("list", k)
+  D <- .form_Dmatrix(n)
+
+  for(i in 1:k){
+    gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:k,])
+  }
+
+  mat <- do.call(rbind, gamma.row.lis)
+  polyhedra(obj = mat, u = rep(0, nrow(mat)))
+}
+
 .gammaRows_from_flasso <- function(n, D, model){
   sign.win <- model$Sign[nrow(model)]
   if(nrow(model) == 1){ 

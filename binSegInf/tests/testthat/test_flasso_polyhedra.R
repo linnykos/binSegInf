@@ -1,5 +1,46 @@
 context("Test fused lasso polyhedra")
 
+## polyhedra.flFs is correct
+
+test_that("polyhedra.flFs returns the right object", {
+  set.seed(10)
+  y <- rnorm(20)
+  obj <- fLasso_fixedSteps(y, 2)
+  
+  res <- polyhedra(obj)
+  
+  expect_true(class(res) == "polyhedra")
+  expect_true(all(names(res) == c("gamma", "u")))
+  expect_true(all(res$gamma%*%y >= res$u))
+})
+
+test_that("having the same model if and only if the inequalities are satisfied", {
+  set.seed(5)
+  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  obj <- fLasso_fixedSteps(y,2)
+
+  model <- obj$model[,1:2]
+  poly <- polyhedra(obj)
+
+  expect_true(all(poly$gamma %*% y >= poly$u))
+
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    obj.tmp <- fLasso_fixedSteps(y.tmp,2)
+
+    model.tmp <- obj.tmp$model[,1:2]
+
+    bool1 <- all(model == model.tmp)
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+
+    expect_true(bool1 == bool2)
+  }
+})
+
+#########################################
+
 ## .compute_fused_numerator_polyhedra is correct
 
 test_that(".compute_fused_numerator_polyhedra returns a matrix of correct size", {
