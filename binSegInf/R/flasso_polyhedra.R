@@ -38,18 +38,18 @@
   
   MASS::ginv(DDT)%*%Didx
 }
-# 
-# .form_contrast_flasso <- function(numerator.mat, denominator.vec, 
-#   sign.win, active.idx, tol = 1e-7){
-#   stopifnot(active.idx <= nrow(numerator.mat))
-#   win <- numerator.mat[active.idx,]/(sign.win + denominator.vec[active.idx])
-#   
-#   denom <- denominator.vec[-active.idx]
-#   pos.denom <- denom; pos.denom[abs(denom - 1) < tol] <- 0
-#   neg.denom <- denom; neg.denom[abs(denom + 1) < tol] <- 0
-#   
-#   lose1 <- numerator.mat[-active.idx,]/(1 + pos.denom)
-#   lose2 <- numerator.mat[-active.idx,]/(-1 + neg.denom)
-#   
-#   list(win = win, lose = rbind(lose1, lose2))
-# }
+
+.form_contrast_flasso <- function(numerator.mat, denominator.vec,
+  sign.win, active.idx, tol = 1e-7){
+  stopifnot(active.idx <= nrow(numerator.mat))
+  win <- numerator.mat[active.idx,]/(sign.win + denominator.vec[active.idx])
+
+  denom <- denominator.vec[-active.idx]
+  pos.denom <- denom; pos.denom[abs(denom + 1) < tol] <- 0
+  neg.denom <- denom; neg.denom[abs(denom - 1) < tol] <- 0
+
+  lose1 <- numerator.mat[-active.idx,]/(1 + pos.denom)
+  lose2 <- numerator.mat[-active.idx,]/(-1 + neg.denom)
+
+  list(win = win, lose = rbind(lose1, lose2))
+}
