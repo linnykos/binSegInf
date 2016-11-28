@@ -62,6 +62,16 @@ points(sort(fl.ci), pch = 16, col = 3)
 bs.ci2 <- compute.CIlength(bsFs_0JumpCI[[1]], T)
 fl.ci2 <- compute.CIlength(flFs_0JumpCI[[1]], T)
 
+idx <- sort(intersect(which(!is.na(bs.ci2)), which(!is.na(fl.ci2))))
+sum(fl.ci2[idx] < bs.ci2[idx])/(length(fl.ci2[idx]))
+
+par(mfrow = c(1,3))
 plot(bs.ci2, fl.ci2, xlab = "Binary Segmentation CI Width",
   ylab = "Fused Lasso CI Width", pch = 16, cex = 2, asp = T)
 lines(c(-1000,1000), c(-1000,1000), lwd = 2, col = "red")
+
+hist(fl.ci2[idx] - bs.ci2[idx], col = "gray", breaks = 20, xlab = "FL - BS",
+  main = "")
+
+plot(sort(fl.ci2[idx] - bs.ci2[idx]), pch = 16, cex = 2,
+  xlab = "Index", ylab = "FL - BS")
