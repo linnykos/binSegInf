@@ -7,7 +7,7 @@ test_that("confidence_interval has the right coverage zero", {
   y <- rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- confidence_interval(y, poly, contrast, gridsize = 100)
@@ -20,7 +20,7 @@ test_that("confidence_interval has right coverage non-zero", {
   y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res <- confidence_interval(y, poly, contrast, gridsize = 100)
@@ -33,7 +33,7 @@ test_that("confidence interval one and two-sided are related", {
   y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 1)
   
-  poly <- form_polyhedra(obj)
+  poly <- polyhedra(obj)
   contrast <- contrast_vector(obj, 1)
   
   res.twosided <- confidence_interval(y, poly, contrast, gridsize = 50)
@@ -57,7 +57,7 @@ test_that("confidence interval is not a point", {
   
   obj <- binSeg_fixedSteps(y, 1)
 
-  poly <- form_polyhedra(obj, y)
+  poly <- polyhedra(obj, y)
   contrast <- contrast_vector(obj, 1)
 
   res <- confidence_interval(y, poly, contrast, gridsize = 100)
@@ -72,7 +72,7 @@ test_that("confidence int. should give a left point less than right", {
   
   obj <- binSeg_fixedSteps(y, 1)
 
-  poly <- form_polyhedra(obj, y)
+  poly <- polyhedra(obj, y)
   contrast <- contrast_vector(obj, 1)
 
   res <- confidence_interval(y, poly, contrast, gridsize = 50)
@@ -87,7 +87,7 @@ test_that("confindence int throws warning appropriate", {
   
   obj <- binSeg_fixedSteps(y, 1)
 
-  poly <- form_polyhedra(obj, y)
+  poly <- polyhedra(obj, y)
   contrast <- contrast_vector(obj, 1)
 
   expect_warning(confidence_interval(y, poly, contrast, gridsize = 50))

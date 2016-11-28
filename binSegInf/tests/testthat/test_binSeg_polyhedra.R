@@ -1,13 +1,13 @@
 context("Test binSeg_polyhedra")
 
-## form_polyhedra.bsFs is correct
+## polyhedra.bsFs is correct
 
-test_that("form_polyhedra.bsFs works", {
+test_that("polyhedra.bsFs works", {
   set.seed(10)
   y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- form_polyhedra(obj)
+  res <- polyhedra(obj)
   
   expect_true(class(res) == "polyhedra")
   expect_true(length(res) == 2)
@@ -21,7 +21,7 @@ test_that("it is invalid if a few inequalities are flipped",{
   y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- form_polyhedra(obj)
+  res <- polyhedra(obj)
   gamma <- res$gamma
   idx <- sample(1:nrow(gamma), 5)
   gamma[idx,] <- -gamma[idx,]
@@ -34,9 +34,9 @@ test_that("having the same model if and only if the inequalities are satisfied",
   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
   obj <- binSeg_fixedSteps(y,2)
 
-  model.jumps <- get_jumps(obj)
-  model.sign <- sign(get_jump_cusum(obj))
-  poly <- form_polyhedra(obj)
+  model.jumps <- jumps(obj)
+  model.sign <- sign(jump_cusum(obj))
+  poly <- polyhedra(obj)
 
   expect_true(all(poly$gamma %*% y >= poly$u))
 
@@ -46,8 +46,8 @@ test_that("having the same model if and only if the inequalities are satisfied",
     y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
-    model.jumps.tmp <- get_jumps(obj.tmp)
-    model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
+    model.jumps.tmp <- jumps(obj.tmp)
+    model.sign.tmp <- sign(jump_cusum(obj.tmp))
 
     bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
@@ -61,9 +61,9 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
   y <- rnorm(10)
   obj <- binSeg_fixedSteps(y,2)
 
-  model.jumps <- get_jumps(obj)
-  model.sign <- sign(get_jump_cusum(obj))
-  poly <- form_polyhedra(obj)
+  model.jumps <- jumps(obj)
+  model.sign <- sign(jump_cusum(obj))
+  poly <- polyhedra(obj)
 
   expect_true(all(poly$gamma %*% y >= poly$u))
 
@@ -73,8 +73,8 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
     y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
-    model.jumps.tmp <- get_jumps(obj.tmp)
-    model.sign.tmp <- sign(get_jump_cusum(obj.tmp))
+    model.jumps.tmp <- jumps(obj.tmp)
+    model.sign.tmp <- sign(jump_cusum(obj.tmp))
 
     bool1 <- (all(model.jumps.tmp == model.jumps) & all(model.sign == model.sign.tmp))
     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
@@ -124,7 +124,8 @@ test_that(".gammaRows_from_comparisons works", {
 })
 
 test_that(".gammaRow_from_comparisons is fulfilled by y", {
-  y <- c(rep(0, 5), rep(10,4), -9)
+  set.seed(10)
+  y <- c(rep(0, 5), rep(10,4), -9) + 0.01*rnorm(10)
   obj <- binSeg_fixedSteps(y, 1)
   
   expect_true(obj$tree$breakpoint == 9)

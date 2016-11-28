@@ -15,6 +15,7 @@ binSeg_fixedSteps(y, numSteps)
 a bsFs object
 }
 \description{
-Binary segmentation with fixed steps
+y must not have duplicated values. This is to avoid
+degenerate behavior of binary segmentation
 }
 

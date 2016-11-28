@@ -1,7 +1,8 @@
 context("Test list_comparison")
 
 test_that(".list_comparison works", {
-  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5))
+  set.seed(10)
+  y <- c(rep(0, 20), rep(5, 10), rep(10, 5), rep(11, 5)) + 0.01*rnorm(40)
   obj <- binSeg_fixedSteps(y, 3)
   
   res <- .list_comparison(obj)

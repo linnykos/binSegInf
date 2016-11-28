@@ -1,4 +1,7 @@
 #' Binary segmentation with fixed steps
+#' 
+#' y must not have duplicated values. This is to avoid
+#' degenerate behavior of binary segmentation
 #'
 #' @param y numeric vector to contain data
 #' @param numSteps numeric of number of steps
@@ -6,6 +9,8 @@
 #' @return a bsFs object
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
+  if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
+  if(any(duplicated(y))) stop("y must contain all unique values")
     
   #initialization
   n <- length(y); tree <- .create_node(1, n)
@@ -27,18 +32,20 @@ binSeg_fixedSteps <- function(y, numSteps){
     node.pairs <- .split_node(node.selected)
     node.selected$AddChildNode(node.pairs$left)
     node.selected$AddChildNode(node.pairs$right)
-   }
+  }
+  
+  y.fit <- .refit_binseg(y, jumps(tree))
     
-  structure(list(tree = tree, numSteps = numSteps), class = "bsFs")
+  structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
 }
 
-#' isValid for bsFs
+#' is_valid for bsFs
 #'
 #' @param obj bsFs object
 #'
 #' @return TRUE if valid
 #' @export
-isValid.bsFs <- function(obj){
+is_valid.bsFs <- function(obj){
   if(class(obj$tree)[1] != "Node") stop("obj$tree must a Node")
   if(!is.numeric(obj$numSteps)) stop("obj$numSteps must be a numeric")
   if(length(.enumerate_splits(obj$tree)) != obj$numSteps) 
@@ -59,8 +66,8 @@ isValid.bsFs <- function(obj){
 #'
 #' @return vector of jumps
 #' @export
-get_jumps.bsFs <- function(obj, sorted = F, ...){
-  get_jumps(obj$tree, sorted)
+jumps.bsFs <- function(obj, sorted = F, ...){
+  jumps(obj$tree, sorted)
 }
 
 #' Get the cusum for jumps for bsFs objects
@@ -75,8 +82,8 @@ get_jumps.bsFs <- function(obj, sorted = F, ...){
 #'
 #' @return vector of cusum numerics
 #' @export
-get_jump_cusum.bsFs <- function(obj, sorted = F, ...){
-  get_jump_cusum(obj$tree, sorted)
+jump_cusum.bsFs <- function(obj, sorted = F, ...){
+  jump_cusum(obj$tree, sorted)
 }
 
 #' Summary of bsFs object
@@ -90,7 +97,21 @@ summary.bsFs <- function(object, ...){
   summary(object$tree)
 }
 
+.refit_binseg <- function(y, jumps){
+  stopifnot(max(jumps) < length(y), min(jumps) > 0)
+  stopifnot(all(jumps %% 1 == 0), length(jumps) == length(unique(jumps)))
+  
+  n <- length(y); y.fit <- numeric(n)
+  jumps <- c(0, sort(jumps), n)
+  for(i in 2:length(jumps)){
+    y.fit[(jumps[i-1]+1):jumps[i]] <- mean(y[(jumps[i-1]+1):jumps[i]])
+  }
+  
+  y.fit
+}
+
 .find_breakpoint <- function(y, start, end){
+  stopifnot(!any(duplicated(y))) 
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   

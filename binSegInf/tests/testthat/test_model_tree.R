@@ -4,7 +4,7 @@ context("Test model tree")
 
 test_that(".create_node makes a valid node", {
   res <- .create_node(2, 5)
-  expect_true(isValid(res))
+  expect_true(is_valid(res))
 })
 
 test_that(".create_node errors if start is larger than end", {
@@ -59,7 +59,8 @@ test_that(".split_node correctly returns left and right", {
 ## .enumerate_splits is correct
 
 test_that(".enumerate_splits is correct", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 2)
   
   expect_true(all(.enumerate_splits(res$tree) == c("1-20", "11-20")))
@@ -76,35 +77,38 @@ test_that("the first split is always the full vector", {
 
 ###################################
 
-## .isValid.bsFs is correct
+## .is_valid.bsFs is correct
 
-test_that(".isValid matches the tree and numSteps", {
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5))
+test_that(".is_valid matches the tree and numSteps", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 2)
   
   res$numSteps <- 3
   
-  expect_error(isValid(res))
+  expect_error(is_valid(res))
 })
 
 ########################################
 
-## get_jumps.tree is correct
+## jumps.tree is correct
 
-test_that("get_jumps.tree is correct", {
-  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+test_that("jumps.tree is correct", {
+  set.seed(10)
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- get_jumps(obj$tree)
+  res <- jumps(obj$tree)
   
   expect_true(all(res == c(10, 5)))
 })
 
-test_that("get_jumps.tree can sort", {
-  y <- c(rep(6, 5), rep(5, 5), rep(0, 10))
+test_that("jumps.tree can sort", {
+  set.seed(10)
+  y <- c(rep(6, 5), rep(5, 5), rep(0, 10)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
   
-  res <- get_jumps(obj$tree, sorted = T)
+  res <- jumps(obj$tree, sorted = T)
   
   expect_true(all(res == c(5, 10)))
 })

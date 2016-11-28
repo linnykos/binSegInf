@@ -1,5 +1,5 @@
 .list_comparison.bsFs <- function(obj){
-  isValid(obj)
+  is_valid(obj)
 
   numSteps <- obj$numSteps
   comp.lis <- vector("list", numSteps)

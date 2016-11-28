@@ -12,7 +12,8 @@ Imports:
     plyr,
     data.tree,
     hash,
-    Rmpfr
+    Rmpfr,
+    MASS
 Suggests:
     testthat
 RoxygenNote: 5.0.1

@@ -7,7 +7,7 @@
   node$cusum <- cusum
   node$active <- active
   
-  isValid(node)
+  is_valid(node)
   
   node
 }
@@ -18,7 +18,7 @@
 #'
 #' @return TRUE if valid
 #' @export
-isValid.Node <- function(obj){
+is_valid.Node <- function(obj){
   if(obj$start > obj$end) stop("the start must be less or equal to end")
   if(!is.na(obj$breakpoint) & (obj$start > obj$breakpoint & obj$end < obj$breakpoint))
     stop("breakpoint must be between start and end (inclusive)")
@@ -38,7 +38,7 @@ isValid.Node <- function(obj){
 #'
 #' @return vector of jumps
 #' @export
-get_jumps.Node <- function(obj, sorted = F, ...){
+jumps.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
   res <- sapply(leaves, function(x){obj$FindNode(x)$breakpoint})
@@ -57,13 +57,13 @@ get_jumps.Node <- function(obj, sorted = F, ...){
 #'
 #' @return vector of cusum numerics
 #' @export
-get_jump_cusum.Node <- function(obj, sorted = F, ...){
+jump_cusum.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
   res <- sapply(leaves, function(x){obj$FindNode(x)$cusum})
   
   if(sorted){
-    jumps <- get_jumps(obj, sorted = T)
+    jumps <- jumps(obj, sorted = T)
     idx <- order(jumps)
     res[idx]
   } else {
@@ -80,8 +80,8 @@ get_jump_cusum.Node <- function(obj, sorted = F, ...){
 #' @export
 summary.Node <- function(object, ...){
   leaves <- .enumerate_splits(object)
-  jumps <- get_jumps(object)
-  cusum <- get_jump_cusum(object)
+  jumps <- jumps(object)
+  cusum <- jump_cusum(object)
   
   mat <- t(sapply(leaves, .get_startEnd))
   dat <- data.frame("Split_Number" = 1:length(leaves), "Start" = mat[,1], 

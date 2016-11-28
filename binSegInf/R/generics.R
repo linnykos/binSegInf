@@ -6,7 +6,7 @@
 #' @param  obj  The object to check
 #' @return void
 #' @export
-isValid <- function(obj) UseMethod("isValid")
+is_valid <- function(obj) UseMethod("is_valid")
 
 #' Generic function to generate polyhedra
 #'
@@ -15,7 +15,7 @@ isValid <- function(obj) UseMethod("isValid")
 #'
 #' @return An object of class polyhedra
 #' @export
-form_polyhedra <- function(obj, ...) {UseMethod("form_polyhedra")}
+polyhedra <- function(obj, ...) {UseMethod("polyhedra")}
 
 #' Generic function to count the number of jumps
 #'
@@ -24,18 +24,25 @@ form_polyhedra <- function(obj, ...) {UseMethod("form_polyhedra")}
 #'
 #' @return vector of jumps
 #' @export
-get_jumps <- function(obj, ...) {UseMethod("get_jumps")}
+jumps <- function(obj, ...) {UseMethod("jumps")}
 
-#' Generic function to form contrast vectors
+#' Generic function to count the number of jump cusum
 #'
-#' @param obj object
+#' @param obj  object
 #' @param ... additional parameters
 #'
-#' @return vector of numerics
+#' @return vector of cusums
 #' @export
-contrast_vector <- function(obj, ...) {UseMethod("contrast_vector")}
+jump_cusum <- function(obj, ...) {UseMethod("jump_cusum")}
 
-get_jump_cusum <- function(obj, ...) {UseMethod("get_jump_cusum")}
+#' Generic function to count the number of jump lambdas
+#'
+#' @param obj  object
+#' @param ... additional parameters
+#'
+#' @return vector of lambdas
+#' @export
+jump_lambda <- function(obj, ...) {UseMethod("jump_lambda")}
 
-.list_comparison <- function(obj) UseMethod(".list_comparison")
-
+.list_comparison <- function(obj) {UseMethod(".list_comparison")}
+.get_length <- function(obj) {UseMethod(".get_length")}

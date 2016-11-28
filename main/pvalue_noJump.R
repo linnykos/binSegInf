@@ -6,29 +6,33 @@ cores <- 20
 
 paramMat <- as.matrix(0)
 
-rule_bsFs_closure <- function(n){
+rule_closure <- function(n, method = binSeg_fixedSteps){
   function(void){
-    y <- CpVector(n, 0, NA)$data
+    dat <- CpVector(vec[4], vec[1:2], vec[3])
+    y <- dat$data
     
-    obj <- binSeg_fixedSteps(y, 1)
+    obj <- method(y, 1)
   
-    poly <- form_polyhedra(obj, y)
+    poly <- polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
     
     if(any(poly$gamma %*% y < poly$u)) stop()
   
     res <- pvalue(y, poly, contrast)
-    c(res, get_jumps(obj))
+    c(res, jumps(obj), sum((obj$y.fit)^2)/n)
   }
 }
 
 ############################
 
-rule_bsFs <- rule_bsFs_closure(n)
+rule_bsFs <- rule_closure(n, method = binSeg_fixedSteps)
+rule_flFs <- rule_closure(n, method = fLasso_fixedSteps)
 criterion <- function(x, vec){x}
 
 bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
+flFs_0JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
+  trials, cores)
 
-save.image(file = paste0("res/pvalue_noJump_bsFs_", Sys.Date(), ".RData"))
+save.image(file = paste0("res/pvalue_noJump_", Sys.Date(), ".RData"))
 quit(save = "no")
