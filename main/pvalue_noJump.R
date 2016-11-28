@@ -8,7 +8,7 @@ paramMat <- as.matrix(0)
 
 rule_closure <- function(n, method = binSeg_fixedSteps){
   function(void){
-    dat <- CpVector(vec[4], vec[1:2], vec[3])
+    dat <- CpVector(n, 0, NA)
     y <- dat$data
     
     obj <- method(y, 1)

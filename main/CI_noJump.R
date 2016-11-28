@@ -7,7 +7,7 @@ cores <- 20
 paramMat <- as.matrix(0)
 
 rule_closure <- function(n, gridsize = 100, method = binSeg_fixedSteps){
-  function(vec){
+  function(void){
     dat <- CpVector(n, 0, NA)
     y <- dat$data
     
