@@ -26,15 +26,6 @@ polyhedra <- function(obj, ...) {UseMethod("polyhedra")}
 #' @export
 jumps <- function(obj, ...) {UseMethod("jumps")}
 
-#' Generic function to form contrast vectors
-#'
-#' @param obj object
-#' @param ... additional parameters
-#'
-#' @return vector of numerics
-#' @export
-contrast_vector <- function(obj, ...) {UseMethod("contrast_vector")}
-
 #' Generic function to count the number of jump cusum
 #'
 #' @param obj  object
@@ -53,5 +44,5 @@ jump_cusum <- function(obj, ...) {UseMethod("jump_cusum")}
 #' @export
 jump_lambda <- function(obj, ...) {UseMethod("jump_lambda")}
 
-.list_comparison <- function(obj) UseMethod(".list_comparison")
-
+.list_comparison <- function(obj) {UseMethod(".list_comparison")}
+.get_length <- function(obj) {UseMethod(".get_length")}

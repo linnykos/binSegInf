@@ -1,8 +1,8 @@
 context("Test contrast vector")
 
-## contrast_vector.bsFs is correct
+## contrast_vector is correct
 
-test_that("contrast_vector.bsFs works", {
+test_that("contrast_vector works", {
   set.seed(10)
   y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
   obj <- binSeg_fixedSteps(y, 2)
@@ -43,4 +43,30 @@ test_that(".contrast_vector_spike works", {
   expect_true(all(res[c(10, 11)] == c(-1, 1)))
   expect_true(all(res[1:9] == 0))
   expect_true(all(res[12:20] == 0))
+})
+
+###############################################
+
+## .get_length.bsFs is correct
+
+test_that(".get_length.bsFs is correct", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- .get_length(obj)
+  expect_true(res == 20)
+})
+
+##########################################
+
+## .get_length.flFs is correct
+
+test_that(".get_length.bsFs is correct", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
+  obj <- fLasso_fixedSteps(y, 2)
+  
+  res <- .get_length(obj)
+  expect_true(res == 20)
 })

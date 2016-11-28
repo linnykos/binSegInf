@@ -1,6 +1,6 @@
 #' Generate contrast bector
 #'
-#' @param obj bsFs object
+#' @param obj object
 #' @param jump.idx index among the list of jumps to jump at
 #' @param sorted boolean on whether or not jumps should be sorted
 #' @param type segment or spike
@@ -8,21 +8,30 @@
 #'
 #' @return numeric vector
 #' @export
-contrast_vector.bsFs <- function(obj, jump.idx, sorted = F, 
+contrast_vector <- function(obj, jump.idx, sorted = F, 
   type = c("segment", "spike"), ...){
+  if(!class(obj) %in% c("bsFs", "flFs"))
   if(!is.character(type[1])) stop("type must be character")
   if(!type[1] %in% c("segment", "spike")) stop("type must be either segment or spike")
   type <- type[1]
   
   jump.vec <- jumps(obj, sorted)
   jump <- jump.vec[jump.idx]
-  n <- .get_startEnd(obj$tree$name)[2]
+  n <- .get_length(obj)
   
   if(type == "segment") {
     .contrast_vector_segment(obj, jump, n)
   } else {
     .contrast_vector_spike(obj, jump, n)
   }
+}
+
+.get_length.bsFs <- function(obj){
+  .get_startEnd(obj$tree$name)[2]
+}
+
+.get_length.flFs <- function(obj){
+  length(obj$y.fit)
 }
 
 .contrast_vector_segment <- function(obj, jump, n){
