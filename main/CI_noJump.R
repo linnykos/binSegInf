@@ -22,7 +22,7 @@ rule_closure <- function(n, gridsize = 100, method = binSeg_fixedSteps){
       c(-Inf, Inf, -1)
     })
     
-    c(abs(contrast %*% y), res[1:2], jumps(obj), res[3])
+    c(abs(contrast %*% y), res[1:2], jumps(obj), sum((obj$y.fit)^2)/n, res[3])
   }
 }
 

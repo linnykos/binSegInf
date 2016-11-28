@@ -12,7 +12,9 @@ paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, n.vec))
 
 rule_closure <- function(method = binSeg_fixedSteps){
   function(vec){
-    y <- CpVector(vec[4], vec[1:2], vec[3])$data
+    n <- vec[4]
+    dat <- CpVector(n, vec[1:2], vec[3])
+    y <- dat$data
     
     obj <- method(y, 1)
   
@@ -20,7 +22,9 @@ rule_closure <- function(method = binSeg_fixedSteps){
     contrast <- contrast_vector(obj, 1)
   
     res <- pvalue(y, poly, contrast)
-    c(res, jumps(obj))
+    
+    truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
+    c(res, jumps(obj), sum((obj$y.fit - truth)^2)/n)
   }
 }
 

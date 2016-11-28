@@ -8,7 +8,8 @@ paramMat <- as.matrix(0)
 
 rule_closure <- function(n, method = binSeg_fixedSteps){
   function(void){
-    y <- CpVector(n, 0, NA)$data
+    dat <- CpVector(vec[4], vec[1:2], vec[3])
+    y <- dat$data
     
     obj <- method(y, 1)
   
@@ -18,7 +19,7 @@ rule_closure <- function(n, method = binSeg_fixedSteps){
     if(any(poly$gamma %*% y < poly$u)) stop()
   
     res <- pvalue(y, poly, contrast)
-    c(res, jumps(obj))
+    c(res, jumps(obj), sum((obj$y.fit)^2)/n)
   }
 }
 

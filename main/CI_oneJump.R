@@ -28,7 +28,7 @@ rule_closure <- function(n, gridsize = 100, method = binSeg_fixedSteps){
     
     truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
     c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj),
-      res[3])
+      sum((obj$y.fit - truth)^2)/n, res[3])
   }
 }
 
@@ -40,6 +40,8 @@ criterion <- function(x, vec){x}
 
 bsFs_1JumpCI <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
+save.image(file = paste0("res/CI_oneJump_", Sys.Date(), ".RData"))
+
 flFs_1JumpCI <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 

@@ -12,7 +12,8 @@ paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
 
 rule_closure <- function(n, method = binSeg_fixedSteps){
   function(vec){
-    y <- CpVector(n, vec[1:2], vec[3])$data
+    dat <- CpVector(n, vec[1:2], vec[3])
+    y <- dat$data
     
     obj <- method(y, 1)
   
@@ -20,7 +21,9 @@ rule_closure <- function(n, method = binSeg_fixedSteps){
     contrast <- contrast_vector(obj, 1)
   
     res <- pvalue(y, poly, contrast)
-    c(res, jumps(obj))
+    
+    truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
+    c(res, jumps(obj), sum((obj$y.fit - truth)^2)/n)
   }
 }
 
@@ -32,6 +35,8 @@ criterion <- function(x, vec){x}
 
 bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
+save.image(file = paste0("res/pvalue_oneJump_", Sys.Date(), ".RData"))
+
 flFs_1JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 
