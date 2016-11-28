@@ -10,11 +10,11 @@ jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
 jump.loc <- seq(0, 1, length.out = num.loc)[2:(num.loc-1)]
 paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
 
-rule_bsFs_closure <- function(n){
+rule_closure <- function(n, method = binSeg_fixedSteps){
   function(vec){
     y <- CpVector(n, vec[1:2], vec[3])$data
     
-    obj <- binSeg_fixedSteps(y, 1)
+    obj <- method(y, 1)
   
     poly <- polyhedra(obj, y)
     contrast <- contrast_vector(obj, 1)
@@ -26,11 +26,14 @@ rule_bsFs_closure <- function(n){
 
 ############################
 
-rule_bsFs <- rule_bsFs_closure(n)
+rule_bsFs <- rule_closure(n, method = binSeg_fixedSteps)
+rule_flFs <- rule_closure(n, method = fLasso_fixedSteps)
 criterion <- function(x, vec){x}
 
 bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
+flFs_1JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
+  trials, cores)
 
-save.image(file = paste0("res/pvalue_oneJump_bsFs_", Sys.Date(), ".RData"))
+save.image(file = paste0("res/pvalue_oneJump_", Sys.Date(), ".RData"))
 quit(save = "no")
