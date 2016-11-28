@@ -36,6 +36,8 @@ criterion <- function(x, vec){x}
 
 bsFs_1JumpPValue_nvary <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
+save.image(file = paste0("res/pvalue_oneJump_varyn_", Sys.Date(), ".RData"))
+
 flFs_1JumpPValue_nvary <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 
