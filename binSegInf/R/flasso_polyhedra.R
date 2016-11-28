@@ -1,3 +1,12 @@
+#' Generate polyhedra matrix from flFs object
+#'
+#' Forms both Gamma matrix and u vector
+#' 
+#' @param obj flFs object
+#' @param ... not used
+#'
+#' @return An object of class polyhedra
+#' @export
 polyhedra.flFs <- function(obj, ...){
   k <- nrow(obj$model); n <- length(obj$y.fit)
   gamma.row.lis <- vector("list", k)
