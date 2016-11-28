@@ -1,3 +1,15 @@
+#' Fused lasso with fixed steps
+#'
+#' y must not have duplicated values. This is to avoid
+#' degenerate behavior of binary segmentation. The reported \code{y.fit}
+#' is set the lambda where the (k+1)th jump is about to appear.
+#'
+#' @param y  numeric vector to contain data
+#' @param numSteps  numeric of number of steps
+#' @param tol tolerance to handle divide by zero instances
+#'
+#' @return a flFs object
+#' @export
 fLasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
   if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
   if(any(duplicated(y))) stop("y must contain all unique values")
@@ -31,15 +43,46 @@ fLasso_fixedSteps <- function(y, numSteps, tol = 1e-7){
     numSteps = numSteps), class = "flFs")
 }
 
+#' Get jumps from flFs objects
+#' 
+#' Enumerates the jumps. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj flFs object
+#' @param sorted boolean
+#' @param ... not used
+#'
+#' @return vector of jumps
+#' @export
 jumps.flFs <- function(obj, sorted = F, ...){
   idx <- obj$model$Index
   if(sorted) sort(idx) else idx
 }
 
+#' Get lambdas for flFs objects
+#'
+#' Enumerates the decreasing sequence of lambdas for the jumps.
+#' Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj flFs object
+#' @param ... not used
+#'
+#' @return vector of decreasing lambdas
+#' @export
 jump_lambda.flFs <- function(obj, ...){
   obj$model$Lambda
 }
 
+#' Summary for flFs object
+#'
+#' @param object flFs object
+#' @param ... not used
+#'
+#' @return summary of flFs (data frame)
+#' @export
 summary.flFs <- function(object, ...){
   object$model
 }
