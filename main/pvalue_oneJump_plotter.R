@@ -103,9 +103,11 @@ rownames(flMat) <- as.character(log(as.numeric(rownames(flMat))))
 par(mfrow = c(1,2))
 image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index", 
   ylab = "log Jump Height", main = "Binary Segmentation")
-contour(.detangle_matrix(bsMat), add = T, levels = 100, lwd = 3)
+contour(.detangle_matrix(bsMat), add = T, levels = 0.05, lwd = 3)
+contour(.detangle_matrix(bsMat), add = T, levels = 0.15, lwd = 3)
 
 image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index", 
   ylab = "log Jump Height", main = "Fused Lasso")
-contour(.detangle_matrix(flMat), add = T, levels = 100, lwd = 3)
+contour(.detangle_matrix(flMat), add = T, levels = 0.05, lwd = 3)
+contour(.detangle_matrix(flMat), add = T, levels = 0.15, lwd = 3)
 
