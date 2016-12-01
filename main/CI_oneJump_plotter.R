@@ -43,9 +43,10 @@ resp.coverage <- function(res, idx, true.loc){
 resp.length <- function(res, idx, true.loc){
   len.vec <- apply(res[,idx], 2, function(x){x[4] - x[3]}); mean(len.vec)
 }
-resp.power <- function(res, idx, true.loc){
-  length(intersect(which(0 >= res[3,idx]), which(0 <= res[4,idx])))/length(idx)
+resp.power <- function(res, idx, true.loc, n){
+  length(unique(c(which(0 <= res[3,idx]), which(0 >= res[4,idx]))))/length(idx)
 }
+
 
 ########################################
 

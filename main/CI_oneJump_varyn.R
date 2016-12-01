@@ -46,5 +46,5 @@ save.image(file = paste0("res/CI_oneJump_vary_n_", Sys.Date(), ".RData"))
 flFs_1JumpCI <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 
-save.image(file = paste0("res/CI_oneJump_vary_n_", Sys.Date(), ".RData"))
+save.image(file = paste0("res/CI_oneJump_varyn_", Sys.Date(), ".RData"))
 quit(save = "no")
