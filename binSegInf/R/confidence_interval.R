@@ -17,7 +17,8 @@ confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
   gridsize = 250, alternative = c("two.sided", "one.sided"), precBits = 10){
   alternative <- match.arg(alternative, c("two.sided", "one.sided"))
   
-  seq.val <- seq(-max(abs(y)), max(abs(y)), length.out = gridsize)
+  diff <- max(y) - min(y)
+  seq.val <- seq(-2*diff, 2*diff, length.out = gridsize)
   pvalue <- pvalue(y, polyhedra, contrast, sigma, null_mean = seq.val,
     precBits = precBits)
   

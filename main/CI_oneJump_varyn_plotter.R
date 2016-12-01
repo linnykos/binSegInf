@@ -28,7 +28,8 @@ form.matrix <- function(res, alpha, resp.func = resp.coverage, ...){
     
     idx1 <- samp.selector(res[i], true.loc, ...)
     idx2 <- which(res[[i]][7,] == 0)
-    idx <- intersect(idx1, idx2)
+    idx3 <- unique(which(res[[i]][1,]>=res[[i]][4,]), which(res[[i]][1,]<=res[[i]][3,]))
+    idx <- setdiff(intersect(idx1, idx2), idx3)
     
     mat[i] <- resp.func(res[[i]], idx, true.loc, n)
   }
@@ -93,7 +94,8 @@ plot.intervals <- function(lis, limit = 50, ...){
   idx1 <- samp.selector(lis, true.loc, ...)
   res <- lis[[1]]
   idx2 <- which(res[7,] == 0)
-  idx <- intersect(idx1, idx2)
+  idx3 <- unique(which(res[1,]>=res[4,]), which(res[1,]<=res[3,]))
+  idx <- setdiff(intersect(idx1, idx2), idx3)
   if(length(idx) > limit) idx <- idx[1:limit]
   
   plot(NA, xlim = c(1, length(idx)), ylim = c(min(res[3,idx]), max(res[4,idx])),
