@@ -75,3 +75,12 @@ hist(fl.ci2[idx] - bs.ci2[idx], col = "gray", breaks = 20, xlab = "FL - BS",
 
 plot(sort(fl.ci2[idx] - bs.ci2[idx]), pch = 16, cex = 2,
   xlab = "Index", ylab = "FL - BS")
+
+#####################################################
+
+load("../results/pvalue_noJump_2016-11-27.RData")
+
+par(mfrow = c(1,2))
+
+plot(bs.ci2[1:500], bsFs_0JumpPValue[[1]][1,], pch = 16, cex = 2, main = "Binary Segmentation")
+plot(fl.ci2[1:500], flFs_0JumpPValue[[1]][1,], pch = 16, cex = 2, main = "Fused Lasso")

@@ -46,3 +46,22 @@ plot(bsFs_0JumpPValue[[1]][1,idx], flFs_0JumpPValue[[1]][1,idx], pch = 16, cex =
 
 mean(bsFs_0JumpPValue[[1]][3,])
 mean(flFs_0JumpPValue[[1]][3,])
+
+graphics.off()
+par(mfrow = c(1,2))
+plot(bsFs_0JumpPValue[[1]][3,], flFs_0JumpPValue[[1]][3,], pch = 16, cex = 2,
+  xlab = "Binary Segmentation", ylab = "Fused Lasso", asp = T)
+lines(c(0,10), c(0,10), col = "red", lwd = 2)
+
+plot(sort(bsFs_0JumpPValue[[1]][3,]), pch = 16, cex = 2, xlab = "Index",
+  ylab = "MSE", ylim = c(0, max(bsFs_0JumpPValue[[1]][3,])))
+points(sort(flFs_0JumpPValue[[1]][3,]), pch = 16, cex = 2, col = 3)
+
+####################################################
+
+par(mfrow = c(1,3))
+hist(bsFs_0JumpPValue[[1]][2,], col = "gray", breaks = 20)
+hist(flFs_0JumpPValue[[1]][2,], col = "gray", breaks = 20)
+plot(bsFs_0JumpPValue[[1]][2,], flFs_0JumpPValue[[1]][2,], pch = 16, cex = 2,
+  xlab = "Binary Segmentation", ylab = "Fused Lasso")
+lines(c(0,100), c(0,100), col = "red", lwd = 2)
