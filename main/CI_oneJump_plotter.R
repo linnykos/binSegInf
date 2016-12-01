@@ -110,7 +110,6 @@ plot.intervals <- function(lis, limit = 50, ...){
   idx2 <- which(res[7,] == 0)
   idx <- intersect(idx1, idx2)
   if(length(idx) > limit) idx <- idx[1:limit]
-  print(idx)
   
   plot(NA, xlim = c(1, length(idx)), ylim = c(min(res[3,idx]), max(res[4,idx])),
     xlab = "Index", ylab = "Value")
@@ -130,7 +129,7 @@ plot.intervals <- function(lis, limit = 50, ...){
 }
 
 ## confidence intervals
-par(mfrow = c(2,1))
+par(mfrow = c(1,2))
 plot.intervals(bsFs_1JumpCI[105])
 title(main = "Binary Segmentation")
 

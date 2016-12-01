@@ -86,3 +86,38 @@ image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index",
   ylab = "Jump Height", main = "Binary Segmentation")
 image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index", 
   ylab = "Jump Height", main = "Fused Lasso")
+
+###############################################
+
+plot.intervals <- function(lis, limit = 50, ...){
+  idx1 <- samp.selector(lis, true.loc, ...)
+  res <- lis[[1]]
+  idx2 <- which(res[7,] == 0)
+  idx <- intersect(idx1, idx2)
+  if(length(idx) > limit) idx <- idx[1:limit]
+  
+  plot(NA, xlim = c(1, length(idx)), ylim = c(min(res[3,idx]), max(res[4,idx])),
+    xlab = "Index", ylab = "Value")
+  for(i in 1:length(idx)){
+    if(res[2,idx[i]] >= res[3,idx[i]] & res[2,idx[i]] <= res[4,idx[i]]){
+      col = 4
+    } else {
+      col = 2
+    }
+    
+    lines(x = rep(i,2), y = c(res[3,idx[i]], res[4,idx[i]]), col = col, lwd = 2)
+    points(i, res[2,idx[i]], col = 1, cex = 2, pch = 16)
+    points(i, res[1,idx[i]], col = col, cex = 1, pch = 16)
+  }
+  
+  invisible()
+}
+
+## confidence intervals
+par(mfrow = c(1,2))
+plot.intervals(bsFs_1JumpCI[185])
+title(main = "Binary Segmentation")
+
+plot.intervals(flFs_1JumpCI[185])
+title(main = "Fused Lasso")
+
