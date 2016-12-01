@@ -1,23 +1,7 @@
 rm(list=ls())
-load("../results/pvalue_oneJump_varyn_bsFs_2016-11-24.RData")
+load("../results/pvalue_oneJump_varyn_2016-11-30.RData")
 
-res <- bsFs_1JumpPValue_nvary
 alpha <- 0.05
-
-mat  <- matrix (0, nrow = length(jump.loc), ncol = length (n.vec))
-rownames(mat) <- as.character(jump.loc)
-colnames(mat) <- as.character(n.vec)
-
-samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
-  if(is.na(type)) return(1:ncol(lis[[1]]))
-  
-  jump.percent  <-  as.numeric(strsplit(names(lis), 
-  split = "-")[[1]][3])
-  true.loc  <- round(n*jump.percent)
-  
-  bool.vec <- sapply(lis[[1]][2,], func, y = true.loc)
-  which(bool.vec)
-}
 
 .detangle_matrix <- function(mat){
   x = as.numeric(colnames(mat))
@@ -27,21 +11,72 @@ samp.selector <- function(lis, type = NA, func = function(x,y){x == y}){
   list(x = x, y = y, z = z)
 }
 
-
-for (i in 1:length(res)){
-  idx <- samp.selector(res[i])
-  mat[i] <- length(which(res[[i]][1,idx] <= alpha))/ncol(res[[i]][,idx])
+samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){
+  if(is.na(type)) return(1:ncol(lis[[1]]))
+  
+  bool.vec <- sapply(lis[[1]][2,], func, y = true.loc)
+  which(bool.vec)
 }
 
-mat <- t(mat)
+form.matrix <- function(res, alpha, resp.func = resp.power, ...){
+  mat  <- matrix (0, nrow = length(jump.loc), ncol = length(n.vec))
+  rownames(mat) <- as.character(jump.loc)
+  colnames(mat) <- as.character(n.vec)
 
+  for (i in 1:length(res)){
+    jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3])
+    n <- as.numeric(strsplit(names(res)[i], split = "-")[[1]][4])
+    true.loc  <- round(n*jump.percent)
+    
+    idx <- samp.selector(res[i], true.loc, ...)
+    mat[i] <- resp.func(res[[i]], idx, true.loc, n)
+  }
+  
+  t(mat)
+}
+
+#some default resp.func
+resp.power <- function(res, idx, true.loc, n){
+  length(which(res[1,idx] <= alpha))/length(idx)
+}
+resp.exact <- function(res, idx, true.loc, n){
+  length(idx)/ncol(res)
+}
+resp.variance <- function(res, idx, true.loc, n){
+  mean(abs(res[2,idx]-true.loc))/n
+}
+
+################################
 # unconditional plot with y-axis in absolute
-image(.detangle_matrix(mat), zlim = c(0,1))
-contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
 
-# unconditional plot with y-axis in log-scale
-mat2 <- mat
-rownames(mat2) <- as.character(log(as.numeric(rownames(mat2))))
-image(.detangle_matrix(mat2), zlim = c(0,1))
-contour(.detangle_matrix(mat2), add = T, levels = 0.95, lwd = 3)
+bsMat <- form.matrix(bsFs_1JumpPValue_nvary, alpha)
+flMat <- form.matrix(flFs_1JumpPValue_nvary, alpha)
 
+par(mfrow = c(1,2))
+image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index", 
+  ylab = "Size of n", main = "Binary Segmentation")
+contour(.detangle_matrix(bsMat), add = T, levels = 0.95, lwd = 3)
+
+image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index", 
+  ylab = "Size of n", main = "Fused Lasso")
+contour(.detangle_matrix(flMat), add = T, levels = 0.95, lwd = 3)
+
+########################################
+
+
+#more lenient metric to getting the right jump
+bsMat <- form.matrix(bsFs_1JumpPValue_nvary, alpha, resp.func = resp.variance)
+flMat <- form.matrix(flFs_1JumpPValue_nvary, alpha, resp.func = resp.variance)
+zlim = c(min(bsMat, flMat), max(bsMat, flMat))
+
+rownames(bsMat) <- as.character(log(as.numeric(rownames(bsMat))))
+rownames(flMat) <- as.character(log(as.numeric(rownames(flMat))))
+
+par(mfrow = c(1,2))
+image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index", 
+  ylab = "log Size of n", main = "Binary Segmentation")
+contour(.detangle_matrix(bsMat), add = T, levels = 0.15, lwd = 3)
+
+image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index", 
+  ylab = "log Size of n", main = "Fused Lasso")
+contour(.detangle_matrix(flMat), add = T, levels = 0.15, lwd = 3)

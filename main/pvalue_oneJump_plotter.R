@@ -43,7 +43,7 @@ resp.exact <- function(res, idx, true.loc){
   length(idx)/ncol(res)
 }
 resp.variance <- function(res, idx, true.loc){
-  mean((res[2,idx]-true.loc)^2)
+  mean(abs(res[2,idx]-true.loc))/n
 }
 
 bsMat <- form.matrix(bsFs_1JumpPValue, alpha)
