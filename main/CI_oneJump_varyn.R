@@ -7,7 +7,7 @@ cores <- 20
 
 jump.height <- 0.25
 jump.loc <- seq(0, 1, length.out = num.loc)[2:(num.loc-1)]
-n.vec <- round(exp(seq(log(10), log(5000), length.out = num.n)))
+n.vec <- round(exp(seq(log(10), log(1000), length.out = num.n)))
 paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc, n.vec))
 
 rule_closure <- function(gridsize = 100, method = binSeg_fixedSteps){
