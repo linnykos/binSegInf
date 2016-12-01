@@ -42,7 +42,7 @@ test_that("confidence interval one and two-sided are related", {
   res.neg.onesided <- confidence_interval(y, poly, -contrast, gridsize = 50, 
     alternative = "one.sided")
   
-  expect_true(res.twosided[1] >= res.pos.onesided[1])
+  expect_true(res.twosided[1] <= res.pos.onesided[1])
   expect_true(res.pos.onesided[1] >= res.neg.onesided[1])
   expect_true(res.neg.onesided[1] <= 0.5)
   expect_true(res.pos.onesided[2] == Inf)
