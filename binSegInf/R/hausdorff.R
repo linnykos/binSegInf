@@ -33,16 +33,17 @@ hausdorff <- function(set1, set2, one.sided = F){
 #' 
 #' Here, an idx i is a changepoint if i+1 != i.
 #'
-#' @param vec a numeric vector
+#' @param obj a numeric vector
 #' @param tol the numeric threshold to determine if a location is a changepoint
+#' @param ... not used
 #'
 #' @return a set of numeric integers.
 #' @export
-enumerateJumps <- function(vec, tol = 1e-4){
-  if(!is.numeric(vec)) stop("vec must be numeric")
-  if(length(vec) <= 1) return(numeric(0))
+jumps.numeric <- function(obj, tol = 1e-10, ...){
+  if(!is.numeric(obj)) stop("obj must be numeric")
+  if(length(obj) <= 1) return(numeric(0))
   
-  dif = abs(diff(vec))
+  dif = abs(diff(obj))
   idx = which(dif > tol)
   
   idx

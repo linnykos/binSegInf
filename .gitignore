@@ -1,7 +1,7 @@
 *.Rproj.user
 *.Rhistory
-*.RData
 *.Ruserdata
+.Rout
 *.Rout
 *.out
 .Rproj.user

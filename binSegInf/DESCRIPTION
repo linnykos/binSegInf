@@ -9,7 +9,11 @@ License: MIT +file LICENSE
 Encoding: UTF-8
 LazyData: true
 Imports:
-    plyr
+    plyr,
+    data.tree,
+    hash,
+    Rmpfr,
+    MASS
 Suggests:
     testthat
 RoxygenNote: 5.0.1
