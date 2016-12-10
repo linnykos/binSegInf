@@ -54,6 +54,20 @@ test_that("fLasso gets the right 4 jumps", {
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
 })
 
+test_that("fLasso behaves as in fusedlasso1d in genlasso package", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(2, 10), rep(1, 10)) + 0.01*rnorm(30)
+  
+  target.res <- genlasso::fusedlasso1d(y)
+  target.vec <- coef(target.res, df = 6)$beta
+  target.changepoints <- which(abs(diff(target.vec)) > 1e-4)
+  
+  res <- fLasso_fixedSteps(y, 5)
+  
+  expect_true(all(sort(target.changepoints) == sort(res$model$Index)))
+  expect_true(sum(abs(target.vec - res$y.fit)) < 1e-4)
+})
+
 ##############################
 
 ## jumps.flFs is correct
