@@ -19,14 +19,18 @@ samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}
   which(bool.vec)
 }
 
+true.location <- function(lis){
+  jump.percent  <-  as.numeric(strsplit(names(lis)[1],split = "-")[[1]][3])
+  round(n*jump.percent)
+}
+
 form.matrix <- function(res, alpha, resp.func = resp.power, ...){
   mat  <- matrix (0, ncol = length(jump.loc), nrow = length (jump.height))
   colnames(mat) <- as.character(jump.loc)
   rownames(mat) <- as.character(jump.height)
 
   for (i in 1:length(res)){
-    jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3])
-    true.loc  <- round(n*jump.percent)
+    true.loc <- true.location(res[i])
   
     idx <- samp.selector(res[i], true.loc, ...)
     mat[i] <- resp.func(res[[i]], idx, true.loc)
@@ -75,6 +79,13 @@ image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index",
   ylab = "log Jump Height", main = "Fused Lasso")
 contour(.detangle_matrix(flMat), add = T, levels = 0.95, lwd = 3)
 
+
+####################################################
+
+# conditional plot
+bsMat <- form.matrix(bsFs_1JumpPValue, alpha, type = T)
+flMat <- form.matrix(flFs_1JumpPValue, alpha, type = T)
+
 ####################################################
 
 # percent chance of getting the right jump
@@ -110,4 +121,12 @@ image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index",
   ylab = "log Jump Height", main = "Fused Lasso")
 contour(.detangle_matrix(flMat), add = T, levels = 0.05, lwd = 3)
 contour(.detangle_matrix(flMat), add = T, levels = 0.15, lwd = 3)
+
+#####################################################
+
+par(mfrow = c(1,2))
+hist(bsFs_1JumpPValue[[11]][2,], breaks = 20, col = "gray",
+  xlab = "Binary Segmentation", main = "")
+hist(flFs_1JumpPValue[[11]][2,], breaks = 20, col = "gray",
+  xlab = "Fused Lasso", main = "")
 

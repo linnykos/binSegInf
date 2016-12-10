@@ -84,3 +84,37 @@ par(mfrow = c(1,2))
 
 plot(bs.ci2[1:500], bsFs_0JumpPValue[[1]][1,], pch = 16, cex = 2, main = "Binary Segmentation")
 plot(fl.ci2[1:500], flFs_0JumpPValue[[1]][1,], pch = 16, cex = 2, main = "Fused Lasso")
+
+#########################################################
+
+plot.intervals <- function(lis, limit = 50, ...){
+  idx1 <- samp.selector(lis, ...)
+  res <- lis[[1]]
+  idx2 <- which(res[6,] == 0)
+  idx3 <- unique(which(0>=res[3,]), which(0<=res[2,]))
+  idx <- setdiff(intersect(idx1, idx2), idx3)
+  if(length(idx) > limit) idx <- idx[1:limit]
+  
+  plot(NA, xlim = c(1, length(idx)), ylim = c(min(res[2,idx]), max(res[3,idx])),
+    xlab = "Index", ylab = "Value")
+  for(i in 1:length(idx)){
+    if(0 >= res[2,idx[i]] & 0 <= res[3,idx[i]]){
+      col = 4
+    } else {
+      col = 2
+    }
+    
+    lines(x = rep(i,2), y = c(res[2,idx[i]], res[3,idx[i]]), col = col, lwd = 2)
+    points(i, 0, col = 1, cex = 2, pch = 16)
+    points(i, res[1,idx[i]], col = col, cex = 1, pch = 16)
+  }
+  
+  invisible()
+}
+
+par(mfrow = c(1,2))
+plot.intervals(bsFs_0JumpCI)
+title(main = "Binary Segmentation")
+
+plot.intervals(flFs_0JumpCI)
+title(main = "Fused Lasso")
