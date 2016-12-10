@@ -41,15 +41,13 @@ polyhedra.flFs <- function(obj, ...){
 }
 
 .compute_fused_numerator_polyhedra <- function(D, idx){
-  stopifnot(is.numeric(D), is.matrix(D))
   stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
   stopifnot(min(idx) >= 1, max(idx) <= nrow(D))
-  stopifnot(ncol(D) == nrow(D) + 1)
   
-  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
+  DDT <- Matrix::tcrossprod(D[idx,,drop = F])
   Didx <- D[idx,,drop = F]
   
-  MASS::ginv(DDT)%*%Didx
+  Matrix::solve(DDT)%*%Didx
 }
 
 .form_contrast_flasso <- function(numerator.mat, denominator.vec,
@@ -65,5 +63,5 @@ polyhedra.flFs <- function(obj, ...){
   lose1 <- numerator.mat[-active.idx,]/(1 + pos.denom)
   lose2 <- numerator.mat[-active.idx,]/(-1 + neg.denom)
 
-  list(win = win, lose = rbind(lose1, lose2))
+  list(win = win, lose = rbind(as.matrix(lose1), as.matrix(lose2)))
 }

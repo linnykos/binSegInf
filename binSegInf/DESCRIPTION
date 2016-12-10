@@ -15,7 +15,8 @@ Imports:
     Rmpfr,
     MASS,
     wbs,
-    genlasso
+    genlasso,
+    Matrix
 Suggests:
     testthat
 RoxygenNote: 5.0.1
