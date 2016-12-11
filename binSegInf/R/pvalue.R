@@ -38,23 +38,30 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5, 
-  precBits = 10){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_zero = 1e-5, 
+  tol_prec = 1e-2, precBits = 10){
   if(b < a) stop("b must be greater or equal to a")
   
   sapply(value, function(x){
-    if(x <= a) { 
-      0
-    } else if(x >= b){
-      1
+    if(x <= a) return(0)
+    if(x >= b) return(1)
+   
+    a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
+    z_scaled <- (value-mu)/sigma
+    denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
+    numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
+    
+    if(denom > tol_prec & numerator > tol_prec & numerator/denom > tol_prec 
+      & numerator/denom < 1-tol_prec){
+      return(numerator/denom)
     } else {
-      a <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
-      b <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
-      z <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
-
-      denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
-      if(denom < tol) denom <- tol
-      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
+      a_scaled <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
+      b_scaled <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
+      z_scaled <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
+  
+      denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
+      if(denom < tol_zero) denom <- tol_zero
+      as.numeric((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom)
     }
   })
 }
