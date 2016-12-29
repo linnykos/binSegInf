@@ -111,7 +111,7 @@ test_that(".form_comparison works", {
   
   obj2 <- binSeg_fixedSteps(y, 2)
   node <- .enumerate_splits(obj2$tree)[2]
-  breakpoint <- obj2$tree$FindNode(node)$breakpoint
+  breakpoint <- data.tree::FindNode(obj2$tree, node)$breakpoint
   
   expect_true(node == "21-40")
   expect_true(breakpoint == 30)
