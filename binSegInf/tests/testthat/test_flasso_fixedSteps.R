@@ -68,6 +68,17 @@ test_that("fLasso behaves as in fusedlasso1d in genlasso package", {
   expect_true(sum(abs(target.vec - res$y.fit)) < 1e-4)
 })
 
+test_that("fLasso can handle large problems", {
+  set.seed(10)
+  y <- c(rep(0, 1000), rep(1, 1000)) + 0.01*rnorm(2000)
+  
+  start <- proc.time()[3]
+  target.res <- genlasso::fusedlasso1d(y)
+  end <- proc.time()[3]
+  
+  expect_true(abs(end - start) <= 180)
+})
+
 ##############################
 
 ## jumps.flFs is correct
