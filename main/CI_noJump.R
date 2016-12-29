@@ -2,7 +2,7 @@ source("simulation_header.R")
 
 trials <- 1000
 n <- 100
-cores <- 20
+cores <- 2
 
 paramMat <- as.matrix(0)
 

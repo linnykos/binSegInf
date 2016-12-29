@@ -7,18 +7,17 @@
 #' @param null_mean the null-hypothesis mean to test against
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
-#' @param precBits the number of bits used to compute the p value
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
 pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
-  alternative = c("one.sided", "two.sided"), precBits = 10){
+  alternative = c("one.sided", "two.sided")){
   alternative <- match.arg(alternative, c("one.sided", "two.sided"))
   
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
   res <- sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
-    sigma = terms$sigma, a = terms$a, b = terms$b, precBits = precBits)})
+    sigma = terms$sigma, a = terms$a, b = terms$b)})
   
   if(alternative == "one.sided") res else 2*min(res, 1-res)
 }
@@ -39,29 +38,37 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 }
 
 .truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_zero = 1e-5, 
-  tol_prec = 1e-2, precBits = 10){
+                                 tol_prec = 1e-2){
   if(b < a) stop("b must be greater or equal to a")
   
-  sapply(value, function(x){
-    if(x <= a) return(0)
-    if(x >= b) return(1)
-   
-    a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
-    z_scaled <- (value-mu)/sigma
-    denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
-    numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
-    
-    if(denom > tol_prec & numerator > tol_prec & numerator/denom > tol_prec 
-      & numerator/denom < 1-tol_prec){
-      return(numerator/denom)
-    } else {
-      a_scaled <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
-      b_scaled <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
-      z_scaled <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
+  val <- numeric(length(value))
+  val[value <= a] <- 0
+  val[value >= b] <- 1
+  idx <- intersect(which(value >= a), which(value <= b))
+  if(length(idx) == 0) return(val)
   
-      denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
-      if(denom < tol_zero) denom <- tol_zero
-      as.numeric((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom)
-    }
-  })
+  a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
+  z_scaled <- (value[idx]-mu)/sigma
+  denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
+  numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
+  
+  val[idx] <- numerator/denom
+  issue <- denom < tol_prec | numerator < tol_prec | val[idx] < tol_prec | 
+    val[idx] > 1-tol_prec
+  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                               mu, sigma, a, b)
+  
+  val
+}
+
+.truncated_gauss_cdf_Rmpfr <- function(value, mu, sigma, a, b, tol_zero = 1e-5,
+                                       precBits = 10){
+  
+  a_scaled <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
+  b_scaled <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
+  z_scaled <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
+  
+  denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
+  if(denom < tol_zero) denom <- tol_zero
+  as.numeric((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom)
 }
