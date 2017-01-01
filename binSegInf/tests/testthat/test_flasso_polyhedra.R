@@ -14,6 +14,19 @@ test_that("polyhedra.flFs returns the right object", {
   expect_true(all(res$gamma%*%y >= res$u))
 })
 
+test_that("polyhedra.flFs satisfies the polyhedra requirement", {
+  set.seed(1)
+  dat <- CpVector(100, 0, NA)
+  y <- dat$data
+  
+  obj <- fLasso_fixedSteps(y, 1)
+  
+  res <- polyhedra(obj)
+  
+  expect_true(all(res$gamma%*%y >= res$u))
+})
+
+
 test_that("having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
   y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
@@ -88,4 +101,17 @@ test_that(".gammaRows_from_flasso returns matrix of right size", {
   expect_true(is.matrix(res))
   expect_true(ncol(res) == 20)
   expect_true(nrow(res) == (19-2)*2 + 1)
+})
+
+test_that(".gammaRows_from_flasso satisfies polyhedra", {
+  set.seed(1)
+  dat <- CpVector(100, 0, NA)
+  y <- dat$data
+  
+  obj <- fLasso_fixedSteps(y, 1)
+  D <- .form_Dmatrix(100)
+  
+  res <- .gammaRows_from_flasso(100, D, obj$model)
+  
+  expect_true(all(res%*%y >= 0))
 })

@@ -24,12 +24,13 @@ polyhedra.flFs <- function(obj, ...){
   sign.win <- model$Sign[nrow(model)]
   if(nrow(model) == 1){ 
     idx <- 1:(n-1) 
+    denominator.vec <- .compute_fused_denominator(D, idx, model[-1,])
   } else {
     idx <- .select_nonactive(n, model$Index[1:(nrow(model) - 1)])
+    denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
   }
 
   numerator.mat <- .compute_fused_numerator_polyhedra(D, idx)
-  denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
   active.idx <- which(idx == model$Index[nrow(model)])
 
   contrasts <- .form_contrast_flasso(numerator.mat, denominator.vec, sign.win, active.idx)
