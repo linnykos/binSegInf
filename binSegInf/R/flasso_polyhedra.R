@@ -13,7 +13,7 @@ polyhedra.flFs <- function(obj, ...){
   D <- .form_Dmatrix(n)
 
   for(i in 1:k){
-    gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:k,])
+    gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:i,])
   }
 
   mat <- do.call(rbind, gamma.row.lis)
