@@ -4,7 +4,7 @@ context("Test binSeg_polyhedra")
 
 test_that("polyhedra.bsFs works", {
   set.seed(10)
-  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
+  y <- c(rep(1, 50), rep(10, 25), rep(5, 25)) + rnorm(100)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- polyhedra(obj)
@@ -18,7 +18,7 @@ test_that("polyhedra.bsFs works", {
 
 test_that("it is invalid if a few inequalities are flipped",{
   set.seed(10)
-  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
+  y <- c(rep(1, 50), rep(10, 25), rep(5, 25)) + rnorm(100)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- polyhedra(obj)
@@ -31,7 +31,7 @@ test_that("it is invalid if a few inequalities are flipped",{
 
 test_that("having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
-  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  y <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
   obj <- binSeg_fixedSteps(y,2)
 
   model.jumps <- jumps(obj)
@@ -43,7 +43,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
     model.jumps.tmp <- jumps(obj.tmp)
@@ -58,7 +58,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
 
 test_that("same model iff the inequalities are satisfied for no signal model", {
   set.seed(5)
-  y <- rnorm(10)
+  y <- rnorm(100)
   obj <- binSeg_fixedSteps(y,2)
 
   model.jumps <- jumps(obj)
@@ -70,7 +70,7 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
     model.jumps.tmp <- jumps(obj.tmp)

@@ -29,7 +29,7 @@ test_that("polyhedra.flFs satisfies the polyhedra requirement", {
 
 test_that("having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
-  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  y <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
   obj <- fLasso_fixedSteps(y,2)
 
   model <- obj$model[,1:2]
@@ -40,7 +40,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     obj.tmp <- fLasso_fixedSteps(y.tmp,2)
 
     model.tmp <- obj.tmp$model[,1:2]
@@ -48,6 +48,31 @@ test_that("having the same model if and only if the inequalities are satisfied",
     bool1 <- all(model == model.tmp)
     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
 
+    expect_true(bool1 == bool2)
+  }
+})
+
+test_that("having the same model if and only if the inequalities are satisfied", {
+  set.seed(5)
+  y <- rnorm(100)
+  obj <- fLasso_fixedSteps(y,2)
+  
+  model <- obj$model[,1:2]
+  poly <- polyhedra(obj)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+  
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
+    obj.tmp <- fLasso_fixedSteps(y.tmp,2)
+    
+    model.tmp <- obj.tmp$model[,1:2]
+    
+    bool1 <- all(model == model.tmp)
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    
     expect_true(bool1 == bool2)
   }
 })

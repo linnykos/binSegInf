@@ -46,9 +46,9 @@ test_that("p value are roughly uniform", {
     < sum(abs(quantile(pvalue_alt.vec, probs = quant, na.rm = T) - quant)))
 })
 
-test_that("p value one-sided and two-sided are related", {
+test_that("p value one-sided and two-sided are related for binseg", {
   set.seed(10)
-  y <- c(rep(0, 10), rep(0.1, 10)) + rnorm(20)
+  y <- c(rep(0, 50), rep(0.1, 50)) + rnorm(100)
   obj <- binSeg_fixedSteps(y, 1)
   
   poly <- polyhedra(obj)
@@ -58,7 +58,24 @@ test_that("p value one-sided and two-sided are related", {
   res.two.sided <- pvalue(y, poly, contrast, alternative = "two.sided")
   res.neg.onesided <- pvalue(y, poly, -contrast)
   
-  expect_true(-contrast%*%y < 0)
+  expect_true(contrast%*%y > 0)
+  expect_true(res.neg.onesided > res.pos.onesided)
+  expect_true(abs(res.pos.onesided*2 - res.two.sided) < 1e-4)
+})
+
+test_that("p value one-sided and two-sided are related for fused lasso", {
+  set.seed(10)
+  y <- c(rep(0, 50), rep(0.1, 50)) + rnorm(100)
+  obj <- fLasso_fixedSteps(y, 1)
+  
+  poly <- polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res.pos.onesided <- pvalue(y, poly, contrast)
+  res.two.sided <- pvalue(y, poly, contrast, alternative = "two.sided")
+  res.neg.onesided <- pvalue(y, poly, -contrast)
+  
+  expect_true(contrast%*%y > 0)
   expect_true(res.neg.onesided > res.pos.onesided)
   expect_true(abs(res.pos.onesided*2 - res.two.sided) < 1e-4)
 })
@@ -92,11 +109,11 @@ test_that(".truncated_gauss_cdf returns 0 for extreme values", {
 
 ###################################
 
-## .compute_truncGaus_terms is correct
+## .compute_truncGaus_terms is correct for binSeg
 
-test_that(".compute_truncGaus_terms preserves vlo and vup correctly", {
+test_that(".compute_truncGaus_terms preserves vlo and vup correctly for binseg", {
   set.seed(5)
-  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  y <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
   obj <- binSeg_fixedSteps(y,2)
 
   poly <- polyhedra(obj)
@@ -108,7 +125,30 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly", {
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
+    res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
+    
+    bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)
+    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    expect_true(bool1 == bool2)
+  }
+})
+
+test_that(".compute_truncGaus_terms preserves vlo and vup correctly for flasso", {
+  set.seed(5)
+  y <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
+  obj <- fLasso_fixedSteps(y,2)
+  
+  poly <- polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- .compute_truncGaus_terms(y, poly, contrast, 1)
+  expect_true(res$a <= contrast%*%y & res$b >= contrast%*%y)
+  
+  trials <- 100
+  for(i in 1:trials){
+    set.seed(i*10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
     
     bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)

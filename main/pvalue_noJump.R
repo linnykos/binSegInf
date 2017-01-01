@@ -2,7 +2,7 @@ source("simulation_header.R")
 
 trials <- 1000
 n <- 100
-cores <- 20
+cores <- NA
 
 paramMat <- as.matrix(0)
 
@@ -29,10 +29,10 @@ rule_bsFs <- rule_closure(n, method = binSeg_fixedSteps)
 rule_flFs <- rule_closure(n, method = fLasso_fixedSteps)
 criterion <- function(x, vec){x}
 
-bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
-  trials, cores)
+#bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
+#  trials, cores)
 flFs_0JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 
-save.image(file = paste0("res/pvalue_noJump_", Sys.Date(), ".RData"))
+save.image(file = paste0("../results/pvalue_noJump_", Sys.Date(), ".RData"))
 quit(save = "no")
