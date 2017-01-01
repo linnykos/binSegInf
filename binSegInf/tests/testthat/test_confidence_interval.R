@@ -80,19 +80,6 @@ test_that("confidence int. should give a left point less than right", {
   expect_true(res[1] <= res[2])
 })
 
-test_that("confindence int throws warning appropriate", {
-  set.seed(500)
-  dat <- CpVector(100, 0, NA)
-  y <- dat$data
-  
-  obj <- binSeg_fixedSteps(y, 1)
-
-  poly <- polyhedra(obj, y)
-  contrast <- contrast_vector(obj, 1)
-
-  expect_warning(confidence_interval(y, poly, contrast, gridsize = 50))
-})
-
 #####################################
 
 ## .select_index is correct

@@ -29,8 +29,8 @@ rule_bsFs <- rule_closure(n, method = binSeg_fixedSteps)
 rule_flFs <- rule_closure(n, method = fLasso_fixedSteps)
 criterion <- function(x, vec){x}
 
-#bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
-#  trials, cores)
+bsFs_0JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
+  trials, cores)
 flFs_0JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
 

@@ -37,7 +37,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_prec = 1e-2){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_zero = 1e-4){
   if(b < a) stop("b must be greater or equal to a")
   
   val <- numeric(length(value))
@@ -49,28 +49,28 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
   z_scaled <- (value[idx]-mu)/sigma
   denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
+  if(denom < tol_zero) denom <- tol_zero
   numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
   
   val[idx] <- numerator/denom
-  issue <- denom < tol_prec | numerator < tol_prec | val[idx] < tol_prec | 
-    val[idx] > 1-tol_prec
+  #issue <- is.na(val[idx])
   
-  old <- val[idx]
-  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
-                                                               mu, sigma, a, b)
-  if(any(issue)) {
-    type <- numeric(0)
-    if(any(denom < tol_prec)) type <- paste0(type, 1)
-    if(any(numerator < tol_prec)) type <- paste0(type, 2)
-    if(any(val[idx] < tol_prec)) type <- paste0(type, 3)
-    if(any(val[idx] > 1-tol_prec)) type <- paste0(type, 4)
-    
-    print(paste0("TYPE ", type, ". Std:", round(old, 3),
-                ", Rmpfr: ", round(val[idx], 3),
-                ", Apx:", round(.truncated_gauss_cdf_approx(value, mu, sigma, a, b), 3),
-                ". Z:", round(z_scaled, 3), ", A: ", round(a_scaled, 3), 
-                ", B: ", round(b_scaled, 3), collapse = ", "))
-  }
+  #old <- val[idx]
+  #if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                                mu, sigma, a, b)
+  # if(any(issue)) {
+  #   type <- numeric(0)
+  #   if(any(denom < tol_prec)) type <- paste0(type, 1)
+  #   if(any(numerator < tol_prec)) type <- paste0(type, 2)
+  #   if(any(val[idx] < tol_prec)) type <- paste0(type, 3)
+  #   if(any(val[idx] > 1-tol_prec)) type <- paste0(type, 4)
+  #   
+  #   print(paste0("TYPE ", type, ". Std:", round(old, 3),
+  #               ", Rmpfr: ", round(val[idx], 3),
+  #               ", Apx:", round(.truncated_gauss_cdf_approx(value, mu, sigma, a, b), 3),
+  #               ". Z:", round(z_scaled, 3), ", A: ", round(a_scaled, 3), 
+  #               ", B: ", round(b_scaled, 3), collapse = ", "))
+  # }
   
   val
 }
