@@ -73,6 +73,7 @@ for(i in 1:(n-1)){
     cov.mat[j,i] <- cov.mat[i,j]
   }
 }
+
 image(clockwise90(cov.mat))
 
 break.vec.sim <- numeric(trials)
