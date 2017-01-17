@@ -159,9 +159,14 @@ get.polyhedron = function(binseg.results, thresh, verbose = F) {
 }
 
 ##' Get all cusums, given start point \code{s} and end point \code{e}
+##' 
 ##' @param s Starting index, between \code{1} and \code{n}
 ##' @param e Ending index, between \code{1} and \code{n}
 ##' @param y \code{n}-lengthed data vector.
+##'
+##' @return list of information about the cusum calculations and maximizers in
+##'     this interval.
+##' @example EXAMPLES/getcusums-example.R
 ##' @export
 getcusums <- function(s,e,y){
 
@@ -178,6 +183,7 @@ getcusums <- function(s,e,y){
 
     return(list(bmax = which.max(abs.cusums)+s-1,
                 bmax.cusums = which.max(abs.cusums),
+                inds = s:(e-1),
                 cusum = max(abs.cusums),
                 allcusums = cusums,
                 contrasts = contrasts,
