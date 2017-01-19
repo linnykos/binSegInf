@@ -40,18 +40,18 @@ lines(x=c(-10,10), y = c(-10,10), col = "red")
 #############################################
 
 #BINARY SEG
-cov.mat <- matrix(0, n-1, n-1)
+cov.mat1 <- matrix(0, n-1, n-1)
 for(i in 1:(n-1)){
   for(j in i:(n-1)){
     w1 <- sqrt(1/(1/i + 1/(n-i)))
     w2 <- sqrt(1/(1/j + 1/(n-j)))
-    cov.mat[i,j] <- w1*w2*(1/j - (j-i)/((n-i)*j) + 1/(n-i))
-    cov.mat[j,i] <- cov.mat[i,j]
+    cov.mat1[i,j] <- w1*w2*(1/j - (j-i)/((n-i)*j) + 1/(n-i))
+    cov.mat1[j,i] <- cov.mat1[i,j]
   }
 }
 
 clockwise90 = function(a) { t(a[nrow(a):1,]) }
-image(clockwise90(cov.mat))
+image(clockwise90(cov.mat1), asp = T)
 
 break.vec.sim <- numeric(trials)
 for(trial in 1:trials){
@@ -66,15 +66,17 @@ hist(break.vec.sim)
 ####################################
 
 #FUSED LASSO
-cov.mat <- matrix(0, n-1, n-1)
+cov.mat2 <- matrix(0, n-1, n-1)
 for(i in 1:(n-1)){
   for(j in i:(n-1)){
-    cov.mat[i,j] <- i*(n-j)/n
-    cov.mat[j,i] <- cov.mat[i,j]
+    cov.mat2[i,j] <- i*(n-j)/n
+    cov.mat2[j,i] <- cov.mat2[i,j]
   }
 }
 
-image(clockwise90(cov.mat))
+par(mfrow = c(1,2))
+image(clockwise90(cov.mat1), asp = T, main = "Binary Segmentation")
+image(clockwise90(cov.mat2), asp = T, main = "Fused Lasso")
 
 break.vec.sim <- numeric(trials)
 for(trial in 1:trials){
