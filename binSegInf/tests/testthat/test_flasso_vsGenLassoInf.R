@@ -728,7 +728,7 @@ asrowmat = function(obj){
 test_that("dimension of gamma is the same", {
   set.seed(10)
   #use justin's code
-  n <- 5
+  n <- 10
   y <- rnorm(n, 0, 1)
   D <- makeDmat(n, ord = 1)
   mypath <- dualpathSvd2(y, D, 1, approx = T)
@@ -746,9 +746,9 @@ test_that("dimension of gamma is the same", {
 test_that("dimension of gamma is the same", {
   set.seed(10)
   #use justin's code
-  n <- 5
+  n <- 10
   y <- rnorm(n, 0, 1)
-  D <- makeDmat(n, ord = 1)
+  D <- makeDmat(n, ord = 0)
   mypath <- dualpathSvd2(y, D, 1, approx = T)
   G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
   d <- getdvec(mypath, y, 1, 1, type = "segment")
