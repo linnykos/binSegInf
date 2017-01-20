@@ -35,10 +35,8 @@ polyhedra.flFs <- function(obj, ...){
 
   contrasts <- .form_contrast_flasso(numerator.mat, denominator.vec, sign.win, active.idx)
 
-  res1 <- .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, 
+  .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, 
     rep(1, nrow(contrasts$lose)))
-
-  rbind(res1, contrasts$win)
 }
 
 .compute_fused_numerator_polyhedra <- function(D, idx){

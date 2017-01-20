@@ -125,7 +125,7 @@ test_that(".gammaRows_from_flasso returns matrix of right size", {
   expect_true(is.numeric(res))
   expect_true(is.matrix(res))
   expect_true(ncol(res) == 20)
-  expect_true(nrow(res) == (19-2)*2 + 1)
+  expect_true(nrow(res) == (19-2)*2)
 })
 
 test_that(".gammaRows_from_flasso satisfies polyhedra", {

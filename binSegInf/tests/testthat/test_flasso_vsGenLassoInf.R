@@ -730,17 +730,17 @@ test_that("dimension of gamma is the same", {
   #use justin's code
   n <- 10
   y <- rnorm(n, 0, 1)
-  D <- makeDmat(n, ord = 1)
+  D <- makeDmat(n, ord = 0)
   mypath <- dualpathSvd2(y, D, 1, approx = T)
   G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
   d <- getdvec(mypath, y, 1, 1, type = "segment")
-  pval <- pval.fl1d(y, G$Gammat, d, sigma, rep(0, nrow(G$Gammat))) 
+  pval <- pval.fl1d(y, G$Gammat, d, 1)
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)
   res <- polyhedra(obj)
   
-  #expect_true(all(dim(G$Gammat) == dim(res$gamma)))
+  expect_true(all(dim(G$Gammat) == dim(res$gamma)))
 })
 
 test_that("dimension of gamma is the same", {
@@ -752,7 +752,7 @@ test_that("dimension of gamma is the same", {
   mypath <- dualpathSvd2(y, D, 1, approx = T)
   G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
   d <- getdvec(mypath, y, 1, 1, type = "segment")
-  pval <- pval.fl1d(y, G$Gammat, d, sigma, rep(0, nrow(G$Gammat))) 
+  pval <- pval.fl1d(y, G$Gammat, d, 1) 
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)
@@ -769,8 +769,8 @@ test_that("dimension of gamma is the same", {
     match_value[i] <- min(vec)
   }
   
-  #expect_true(length(unique(match_vec)) == length(match_vec))
-  #expect_true(all(match_value < 1e-4))
+  expect_true(length(unique(match_vec)) == length(match_vec))
+  expect_true(all(match_value < 1e-4))
 })
 
 

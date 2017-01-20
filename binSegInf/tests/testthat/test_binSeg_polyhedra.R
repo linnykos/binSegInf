@@ -120,7 +120,7 @@ test_that(".gammaRows_from_comparisons works", {
   
   res <- .gammaRows_from_comparisons(vec, mat, 1, 10)
   
-  expect_true(all(dim(res) == c(17, 10)))
+  expect_true(all(dim(res) == c(16, 10)))
 })
 
 test_that(".gammaRow_from_comparisons is fulfilled by y", {
