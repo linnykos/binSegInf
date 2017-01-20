@@ -53,24 +53,11 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
   
   val[idx] <- numerator/denom
-  #issue <- is.na(val[idx])
+  issue <- is.na(val[idx]) | any(denom < tol_zero) | any(numerator < tol_zero) |
+    any(val[idx] < tol_zero) | any(val[idx] > 1-tol_zero)
   
-  #old <- val[idx]
-  #if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
-  #                                                              mu, sigma, a, b)
-  # if(any(issue)) {
-  #   type <- numeric(0)
-  #   if(any(denom < tol_prec)) type <- paste0(type, 1)
-  #   if(any(numerator < tol_prec)) type <- paste0(type, 2)
-  #   if(any(val[idx] < tol_prec)) type <- paste0(type, 3)
-  #   if(any(val[idx] > 1-tol_prec)) type <- paste0(type, 4)
-  #   
-  #   print(paste0("TYPE ", type, ". Std:", round(old, 3),
-  #               ", Rmpfr: ", round(val[idx], 3),
-  #               ", Apx:", round(.truncated_gauss_cdf_approx(value, mu, sigma, a, b), 3),
-  #               ". Z:", round(z_scaled, 3), ", A: ", round(a_scaled, 3), 
-  #               ", B: ", round(b_scaled, 3), collapse = ", "))
-  # }
+  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                               mu, sigma, a, b)
   
   val
 }
