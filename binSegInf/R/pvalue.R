@@ -37,7 +37,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_zero = 1e-4){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_prec = 1e-2){
   if(b < a) stop("b must be greater or equal to a")
   
   val <- numeric(length(value))
@@ -49,12 +49,11 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
   z_scaled <- (value[idx]-mu)/sigma
   denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
-  if(denom < tol_zero) denom <- tol_zero
   numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
   
   val[idx] <- numerator/denom
-  issue <- is.na(val[idx]) | any(denom < tol_zero) | any(numerator < tol_zero) |
-    any(val[idx] < tol_zero) | any(val[idx] > 1-tol_zero)
+  issue <- is.na(val[idx]) | any(denom < tol_prec) | any(numerator < tol_prec) |
+    any(val[idx] < tol_prec) | any(val[idx] > 1-tol_prec)
   
   if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
                                                                mu, sigma, a, b)
