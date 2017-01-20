@@ -725,19 +725,52 @@ asrowmat = function(obj){
 ################################################
 
 
-test_that("pvalue is roughly the same", {
-  sigma <- 1
-  n <- 40
-  mn <- rep(c(0,5), each = n/2)
-  y <- mn + rnorm(n, 0, sigma)
+test_that("dimension of gamma is the same", {
+  set.seed(10)
+  #use justin's code
+  n <- 5
+  y <- rnorm(n, 0, 1)
   D <- makeDmat(n, ord = 1)
-  mypath <- dualpathSvd2(y, D, 10, approx = T)
-  stoptime <- 1
-  G <- getGammat.naive(obj = mypath, y = y, condition.step=stoptime)
-  
-  # Make segment test contrast for the first detected knot
+  mypath <- dualpathSvd2(y, D, 1, approx = T)
+  G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
   d <- getdvec(mypath, y, 1, 1, type = "segment")
-  
-  # Conduct TG test at the first knot
   pval <- pval.fl1d(y, G$Gammat, d, sigma, rep(0, nrow(G$Gammat))) 
+  
+  #use our code
+  obj <- fLasso_fixedSteps(y, 1)
+  res <- polyhedra(obj)
+  
+  #expect_true(all(dim(G$Gammat) == dim(res$gamma)))
 })
+
+test_that("dimension of gamma is the same", {
+  set.seed(10)
+  #use justin's code
+  n <- 5
+  y <- rnorm(n, 0, 1)
+  D <- makeDmat(n, ord = 1)
+  mypath <- dualpathSvd2(y, D, 1, approx = T)
+  G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
+  d <- getdvec(mypath, y, 1, 1, type = "segment")
+  pval <- pval.fl1d(y, G$Gammat, d, sigma, rep(0, nrow(G$Gammat))) 
+  
+  #use our code
+  obj <- fLasso_fixedSteps(y, 1)
+  res <- polyhedra(obj)
+  
+  match_vec <- numeric(nrow(res$gamma))
+  match_value <- numeric(nrow(res$gamma))
+  for(i in 1:nrow(res$gamma)){
+    vec <- sapply(1:nrow(G$Gammat), function(x){
+      sqrt(sum((G$Gammat[x,] - res$gamma[i,])^2))
+    })
+    
+    match_vec[i] <- which.min(vec)
+    match_value[i] <- min(vec)
+  }
+  
+  #expect_true(length(unique(match_vec)) == length(match_vec))
+  #expect_true(all(match_value < 1e-4))
+})
+
+
