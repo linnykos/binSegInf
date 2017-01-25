@@ -21,6 +21,7 @@ for(i in 1:1000){
   mypath <- dualpathSvd2(y, D, 1, approx = T)
   G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
   #d <- getdvec(mypath, y, 1, 1, type = "segment")
+  #pval_vec[i] <- pval.fl1d(y, G$Gammat, d, 1)
   pval_vec[i] <- pval.fl1d(y, G$Gammat, contrast, 1)
   
   if(i %% 100 == 0) cat('*')
