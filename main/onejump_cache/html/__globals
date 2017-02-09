@@ -1,0 +1,3 @@
+unnamed-chunk-4	==	abline	axis	brewer.pal	c	deltas	F	for	if	invisible	length	lines	make.qq.line	make.qqplot.background	make.qqplot.legend	Map	plot	rep	rnorm	sims
+unnamed-chunk-2	library	options	source
+unnamed-chunk-3	c	do.one.sim	mcmapply

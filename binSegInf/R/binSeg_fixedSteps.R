@@ -9,30 +9,39 @@
 #' @return a bsFs object
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
-  if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
-  if(any(duplicated(y))) stop("y must contain all unique values")
-    
-  #initialization
-  n <- length(y); tree <- .create_node(1, n)
-    
-  for(steps in 1:numSteps){
-    leaves.names <- .get_leaves_names(tree)
-    for(i in 1:length(leaves.names)){
-      leaf <- data.tree::FindNode(tree, leaves.names[i])
+    if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
+    if(any(duplicated(y))) stop("y must contain all unique values")
       
-      res <- .find_breakpoint(y, leaf$start, leaf$end)
+    #initialization
+    n <- length(y)
+    tree <- .create_node(1, n)
       
-      leaf$breakpoint <- res$breakpoint; leaf$cusum <- res$cusum
+    for(steps in 1:numSteps){
+        ## leaves.names <- .get_leaves_names(tree)
+        leaves.names <- .get_active_leaves_names(tree)
+        
+        ## Go over all /active/ nodes
+        for(i in 1:length(leaves.names)){
+            
+            ## Find node in data.tree
+            leaf <- data.tree::FindNode(tree, leaves.names[i])
+            
+            ## Store the breakpoint and cusum of that node, to that node
+            res <- .find_breakpoint(y, leaf$start, leaf$end)
+            leaf$breakpoint <- res$breakpoint
+            leaf$cusum <- res$cusum
+        }
+        
+        ## Find leading breakpoint, store the step
+        node.name <- .find_leadingBreakpoint(tree)
+        node.selected <- data.tree::FindNode(tree, node.name)
+        node.selected$active <- steps
+        
+        ## Node pairs
+        node.pairs <- .split_node(node.selected)
+        node.selected$AddChildNode(node.pairs$left)
+        node.selected$AddChildNode(node.pairs$right)
     }
-    
-    node.name <- .find_leadingBreakpoint(tree)
-    node.selected <- data.tree::FindNode(tree, node.name)
-    node.selected$active <- steps
-     
-    node.pairs <- .split_node(node.selected)
-    node.selected$AddChildNode(node.pairs$left)
-    node.selected$AddChildNode(node.pairs$right)
-  }
   
   y.fit <- .refit_binseg(y, jumps(tree))
     

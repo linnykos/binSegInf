@@ -1,0 +1,3 @@
+unnamed-chunk-4	delta	n	pcols	sigma	theta	y
+unnamed-chunk-2	aicStop	binary.search	binseg.by.size	binseg.by.thresh	binseg.by.thresh.inner	bryc.tnorm.surv	check.orth.basis	collapse	crawler	cusum	do.one.sim	ff	forwardStop	get.closest	getcusums	get.means	get.polyhedron	grid.bsearch	grid.search	gsell.tnorm.surv	haarbasis	halfspaces	make.qq.line	make.qqplot.background	make.qqplot.legend	make.v	make.v.fixed.thresh	mpfr.tnorm.surv	mydiag	mypoly.int.lee	mypoly.pval.lee	perm.t.test	plot.v	poly.int	poly.pval	pval.fl1d	sqrt.mn.diff	tnorm.surv	trim	trim.list	trim.mat	trim.vec	t.statistic	where.jk
+unnamed-chunk-3	deltas	nsims	sims

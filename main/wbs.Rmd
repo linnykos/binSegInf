@@ -1,0 +1,42 @@
+---
+title: '1-step WBS check'
+author: "Binseginf"
+date: "Oct 13th, 2016"
+---
+  
+  
+  Objective
+========================
+- Check randomized inference for BS/WBS (simple case)
+
+Simulation settings
+========================
+  Generate data from:
+  $$ n = 12 $$ 
+  $$ y \in \mathbb{R}^n $$
+  $$ \theta = (\underbrace{0,\cdots,0}_{n/2},\underbrace{\delta,\cdots,\delta}
+  )^n \in \mathbb{R}^n $$
+  We will consider signal size $\delta = 0,1,2,3,4$.
+
+
+Basic sanity checks:
+=========================
+Check that: all $Gy \ge 0$ are true.
+```{r,include=}
+  ## Load package
+  library(binSegInf)
+  
+  ## Simulation settings
+  n = 12
+  numsteps = n - 1
+  nsim = 100
+  sigma = 0.5
+  
+  ## Confirm p-values
+  p = rep(NA,nsim)
+  for(isim in 1:nsim){
+    y = rnorm(n,0,sigma)
+    a = binSegInf:::binseg.by.size(y, numsteps, verbose=FALSE)
+    stopifnot(all(a$G%*%y>0))
+  }
+```

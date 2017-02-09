@@ -1,0 +1,3 @@
+Setup	do.one.sim.twojump
+Simulations	delta	nsim	sims	sims.onejump	sims.twojump
+Plotting	delta	n	sigma	theta	y

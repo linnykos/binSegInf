@@ -1,0 +1,3 @@
+Setup	do.one.sim.threejump
+Simulations	delta	deltas	ii	locs	nsim
+Plotting data	correct.locs	delta	n	sigma	theta	y

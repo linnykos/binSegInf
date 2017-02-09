@@ -1,0 +1,3 @@
+Setup	library	options	source
+Simulations	do.one.sim.twojump	mcmapply
+Plotting	==	$	abline	axis	c	F	if	legend	lines	make.qq.line	make.qqplot.background	nsim	opts_chunk	paste	plot	rep	rnorm	sims.onejump	sims.twojump	title

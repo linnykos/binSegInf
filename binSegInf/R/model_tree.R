@@ -98,13 +98,38 @@ summary.Node <- function(object, ...){
   sort(vec)
 }
 
+.get_active_leaves_names <- function(tree){
+
+    ## Get names of active nodes
+    leaves <- tree$leaves
+    vec <- sapply(leaves, function(x){
+        is.active = (data.tree::FindNode(x))$active
+        if(is.active){
+            return(x$name) 
+        } else{
+            return(NULL)
+        }
+    })
+
+    ## Get rid of inactive nodes
+    whichNull = sapply(vec, is.null)
+    vec <- vec[!whichNull]
+
+    ## Return sorted vec
+    names(vec) <- NULL
+    sort(vec)
+}
+
 .find_leadingBreakpoint <- function(tree){
-  leaves.names <- .get_leaves_names(tree)
-  cusum.vec <- sapply(leaves.names, function(x){
-    data.tree::FindNode(tree, x)$cusum
-  })
-  
-  leaves.names[which.max(abs(cusum.vec))]
+    
+    ## Collect all maximizing cusums
+    ## leaves.names <- .get_leaves_names(tree)
+    leaves.names <- .get_active_leaves_names(tree)
+    cusum.vec <- sapply(leaves.names, function(x){
+        data.tree::FindNode(tree, x)$cusum
+    })
+
+    leaves.names[which.max(abs(cusum.vec))]
 }
 
 .split_node <- function(node){

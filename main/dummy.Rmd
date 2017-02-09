@@ -1,0 +1,17 @@
+---
+title: 'One-jump simulations'
+author: "Binseginf"
+date: "Oct 13th, 2016"
+---
+Check package
+=========================
+```{r}
+library(binSegInf)
+n = 12
+numsteps = n - 1
+nsim = 100
+sigma = 0.5
+y = rnorm(n,0,sigma)
+binSegInf:::binseg.by.size(y,numsteps)
+```
+
