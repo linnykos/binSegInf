@@ -972,7 +972,7 @@ justin_code <- function(y){
   
   #my.v.lrt = get_v_1dfusedlasso(f0, y, 1, 1, type = "segment", length(y))
   
-  pval = poly.pval(y=y0, G=G, u=u, v=my.v.lrt, sigma=sigma)$pv
+  pval = poly.pval(y=y, G=G, u=u, v=my.v.lrt, sigma=sigma)$pv
   
   list(G = G, u = u, pval = pval, v = my.v.lrt)
 }
@@ -993,7 +993,7 @@ test_that("dimension of gamma is the same", {
   expect_true(all(dim(justin$G) == dim(res$gamma)))
 })
 
-test_that("dimension of gamma is the same", {
+test_that("rows of gamma is the same", {
   set.seed(10)
   sigma = .1; n = 100; lev1 = 0; lev2 = 3
   beta0 = rep(c(lev1,lev2),each=n/2)
