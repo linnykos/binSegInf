@@ -883,14 +883,79 @@ asrowmat = function(obj){
   return(objmat)
 }
 
+get_v_1dfusedlasso = function(obj, y=NULL, k, klater = k, type =c("spike","segment"), n){
+  
+  type <- match.arg(type)
+  if(k > klater) stop("Attempting to form contrast from a later step than the conditioning step.")
+  
+  ## ik and sk are the index and sign of the jump selected at step k
+  ik = (obj$pathobjs)$B[k]
+  sk = (obj$pathobjs)$s[k] 
+  breaks = (obj$pathobjs)$B
+  
+  if(type == "spike"){
+    
+    v = rep(0,length(y))
+    v[ik] = -1
+    v[ik+1] = 1
+    v = sk * v      
+    
+  } else if (type == "segment"){
+    
+    ## Extract usual segment test endpoints
+    Ks = makesegment(breaks=breaks,k=k,klater=klater,n=length(y))
+    K = Ks$K
+    Kmin = Ks$Kmin
+    Kmax = Ks$Kmax
+    
+    ## form vector
+    v = rep(0,length(y))    
+    v[Kmin:K] <- (Kmax - K)/(Kmax - Kmin + 1)
+    v[(K+1):Kmax] <- -(K - Kmin + 1)/(Kmax - Kmin + 1)
+    v <- -sk *v
+    
+  } else {
+    
+    stop("Not coded yet!")
+    
+  }
+  return(v)
+}
+
+makesegment  = function(breaks, k, klater, n){
+  
+  if(length(breaks)<k) stop("not enough breaks!! k > number of breaks")
+  K <- breaks[k] # is the index of the jump selected at step k
+  
+  # whether or not to condition on a later step (|klater|)
+  kk <- klater
+  
+  relevantbreaks = (if(kk==1) c() else breaks[1:kk])
+  endpoints = c(1,n)
+  allbreaks <- c(endpoints, relevantbreaks)
+  allbreaks <- sort(allbreaks)
+  
+  if(K %in% allbreaks) allbreaks = allbreaks[-which(allbreaks == K)]
+  allbreaks = sort(unique(c(allbreaks, endpoints))) #temporary fix just in case the global endpoints are detected..
+  min.index <- max(sum(allbreaks< K),1)             #temporary fix continued 
+  
+  Kmin <- allbreaks[min.index]
+  Kmax <- allbreaks[min.index + 1]    
+  
+  if(Kmin != 1) Kmin = Kmin + 1 # special case handling
+  
+  return(list(Kmin=Kmin,K=K,Kmax=Kmax))
+}
+
+
 ################################################
 
-justin_code <- function(y0){
-  D = dual1d_Dmat(length(y0))
-  f0  = dualpathSvd2(y0, D=D, 5, approx=T)
+justin_code <- function(y){
+  D = dual1d_Dmat(length(y))
+  f0  = dualpathSvd2(y, D=D, 5, approx=T)
   
   ## Get naive poyhedron (fixed stop time of 1)
-  Gobj = getGammat.naive(obj = f0, y = y0, condition.step = 1)
+  Gobj = getGammat.naive(obj = f0, y = y, condition.step = 1)
   G = Gobj$Gammat
   u = Gobj$u
   
@@ -904,6 +969,8 @@ justin_code <- function(y0){
                           adj.knot  = final.model,
                           test.knot.sign = this.sign,
                           D=D)
+  
+  #my.v.lrt = get_v_1dfusedlasso(f0, y, 1, 1, type = "segment", length(y))
   
   pval = poly.pval(y=y0, G=G, u=u, v=my.v.lrt, sigma=sigma)$pv
   
