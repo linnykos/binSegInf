@@ -2,6 +2,7 @@
 
 context("Test flasso implementation against genlassoinf")
 
+
 dualpathSvd2 <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
                          rtol=1e-7, btol=1e-7, verbose=FALSE, object=NULL,
                          ctol=1e-10, cdtol=1e-4, do.gc=F){
@@ -352,17 +353,18 @@ dualpathSvd2 <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
                         " partial path is being returned.)",sep="")
     warning(err)})
   
-  # Trim
+  ## Trim
   lams = lams[Seq(1,k-1)]
   h = h[Seq(1,k-1)]
   df = df[Seq(1,k-1),drop=FALSE]
   u = u[,Seq(1,k-1),drop=FALSE]
   
-  # Save needed elements for continuing the path
-  pathobjs = list(type="svd", r=r, B=B, I=I, approx=approx,
-                  k=k, df=df, D1=D1, D2=D2, Ds=Ds, ihit=ihit, m=m, n=n, h=h,
-                  rtol=rtol, btol=btol, s=s, y=y)
-  # If we reached the maximum number of steps
+  ## Save needed elements for continuing the path
+  pathobjs = list(type="svd", r=r, B=B, I=I, approx=approx, k=k, df=df, D1=D1,
+                  D2=D2, Ds=Ds, ihit=ihit, m=m, n=n, h=h, rtol=rtol,
+                  btol=btol, s=s, y=y)
+  
+  ## If we reached the maximum number of steps
   if (k>maxsteps) {
     if (verbose) {
       cat(sprintf("\nReached the maximum number of steps (%i),",maxsteps))
@@ -370,14 +372,14 @@ dualpathSvd2 <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
     }
     completepath = FALSE
   } else if (lams[k-1]<minlam) {
-    # If we reached the minimum lambda
+    ## If we reached the minimum lambda
     if (verbose) {
       cat(sprintf("\nReached the minimum lambda (%.3f),",minlam))
       cat(" skipping the rest of the path.")
     }
     completepath = FALSE
   } else {
-    # Otherwise, note that we completed the path
+    ## Otherwise, note that we completed the path
     completepath = TRUE
   }
   if (verbose) cat("\n")
@@ -388,163 +390,371 @@ dualpathSvd2 <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
   ss = c(NA,ss)
   states = get.states(action)
   
-  return(list(lambda=lams,beta=beta,fit=beta,u=u,hit=h,df=df,y=y,ss=ss,states=states,
-              completepath=completepath,bls=y,pathobjs=pathobjs, 
-              Gammat=Gammat, nk = nk, action=action,tab=tab))
+  mypath = list(lambda=lams,beta=beta,fit=beta,u=u,hit=h,df=df,y=y,ss=ss,
+                states=states, completepath=completepath,bls=y,
+                pathobjs=pathobjs, Gammat=Gammat, nk = nk, action=action,
+                tab=tab, D = D)
+  class(mypath) <- "path"
+  return(mypath)
 }
 
-
-# general function that makes various D matrices
-makeDmat = function(m, type = c("trend.filtering","2Dgraph"), order=0){
-  
-  type = match.arg(type)
-  D = NA
-  if(type == "trend.filtering"){ 
-    # handles fused lasso and more
-    D = dual1d_Dmat(m)
-    if(order>=1){
-      for(jj in 1:order){ D = dual1d_Dmat(m-jj) %*% D }
-    }
-    return(D)  
-  } else {
-    stop("Not coded yet!")
-  }
-}
-
-dual1d_Dmat = function(m){
-  D = matrix(0, nrow = m-1, ncol = m)
-  for(ii in 1:(m-1)){
-    D[ii,ii] = -1
-    D[ii,ii+1] = 1
-  }
-  return(D)
-}
-
-getGammat.naive = function(obj, y, condition.step){#, usage = c("fl1d", "dualpathSvd")){
+##' Gets k'th Gammat matrix from path object \code{obj}. Note! If you're being
+##' naive, then do whatever you want with condition.step.  Note, if you're using
+##' stop times, condition.step should be the (stoptime + 2)
+##' @export
+getGammat.naive = function(obj, y, condition.step=NULL){
   
   n = length(y)
-  
-  # Error checking
-  #  usage <- match.arg(usage)
-  if(length(obj$action) < condition.step ) stop("\n You must ask for polyhedron from less than ", length(obj$action), " steps! \n")
-  #  if(length(obj) < 11 && "completepath" %in% objects(obj)) stop("|obj| and |usage| are mismatched")
-  
-  # get appropriate sized Gamma matrix from selection step |condition.step|
-  #  if(usage == "fl1d"){
-  #    myGammat = obj$Gammat[1:obj$nk[condition.step],]
-  #  } else {
-  myGammat = obj$Gamma[1:obj$nk[condition.step],]
-  return(list(Gammat = myGammat,condition.step=condition.step))
-}
-
-
-
-
-#' get k'th dik vector, for the segment or spike test.
-getdvec = function(obj, y=NULL, k, klater = k, type =c("spike","segment","hybridsegment","general"), n){
-  # obj : either output from fl1d() or from dualpathSvd2()
-  # y     : data vector (same as the one used to produce path)
-  # k     : algorithm's step to use.
-  # klater: later step to condition on
-  
-  type <- match.arg(type)
-  if(k > klater) stop("Attempting to form contrast from a later step than the conditioning step.")
-  
-  
-  # ik and sk are the index and sign of the jump selected at step k
-  
-  ik = (obj$pathobjs)$B[k]
-  sk = (obj$pathobjs)$s[k] 
-  breaks = (obj$pathobjs)$B
-  
-  if(type == "spike"){
-    
-    dik = rep(0,length(y))
-    dik[ik] = -1
-    dik[ik+1] = 1
-    dik = sk * dik     # this ensures that the gap we're testing is positive. i.e. the jump sk(y_(ik) - y_(ik-1)) always positive!
-    
-  } else if (type == "segment"){
-    
-    ## extract usual segment test endpoints
-    Ks = makesegment(breaks=breaks,k=k,klater=klater,n=length(y))
-    K = Ks$K
-    Kmin = Ks$Kmin
-    Kmax = Ks$Kmax
-    
-    # form vector
-    dik = rep(0,length(y))    
-    dik[Kmin:K] <- (Kmax - K)/(Kmax - Kmin + 1)
-    dik[(K+1):Kmax] <- -(K - Kmin + 1)/(Kmax - Kmin + 1)
-    dik <- -sk *dik
-    
-  } else if (type == "hybridsegment"){
-    ## make sure you run it to a reasonable (or full set of) steps
-    
-    ## extract minimum length
-    sortedbreaks = sort(breaks)
-    if(length(sortedbreaks)<=1){
-      lens = 0
-    } else {
-      lens = sortedbreaks [2:length(sortedbreaks )] - sortedbreaks [1:(length(sortedbreaks )-1)]
-    }
-    minlen = mean(lens)*1.5 
-    
-    ## extract usual segment test endpoints
-    Ks = makesegment(breaks=breaks,k=k,klater=klater,n=length(y))
-    K = Ks$K
-    Kmin = Ks$Kmin
-    Kmax = Ks$Kmax
-    
-    ## replace Kmax and Kmin if necessary
-    if( (K - Kmin) > minlen ) Kmin = ceiling(K - minlen)
-    if( (Kmax - K) > minlen ) Kmax = floor(K + minlen)
-    
-    # form vector
-    dik = rep(0,length(y))
-    dik[Kmin:K] <- (Kmax - K)/(Kmax - Kmin + 1)
-    dik[(K+1):Kmax] <- -(K - Kmin + 1)/(Kmax - Kmin + 1)
-    dik <- -sk *dik
-    
-  } else if (type == "general") {     
-    stop("Not coded yet!")  
-  } else {
-    stop("Not coded yet!")
+  ## Error checking
+  if(length(obj$action) < condition.step ){
+    stop("\n You must ask for polyhedron from less than ",
+         length(obj$action), " steps! \n")
   }
-  return(dik)
+  myGammat = obj$Gamma[1:obj$nk[condition.step],]
+  return(list(Gammat = myGammat, u = rep(0,nrow(myGammat)),
+              condition.step=condition.step))
+}
+
+##' Produces the rows to add to Gammat matrix for IC-based stopping rule in
+##' generalized lasso signal approximation problem.
+##' @export
+getGammat.stoprule = function(obj, y, condition.step, stoprule, sigma, consec,
+                              maxsteps, ebic.fac= 0.5, D, verbose=F){
+  
+  if(!(stoprule %in% c('bic','ebic','aic'))){    stop('stoprule not coded yet!') }
+  
+  n = length(y)
+  mm = get.modelinfo(obj,y,sigma,maxsteps=maxsteps,D=D,stoprule=stoprule,ebic.fac=ebic.fac,verbose=verbose)
+  
+  ## get IC vector
+  ic = mm$ic #get.ic(y,obj, sigma,maxsteps,D,type=stoprule,ebic.fac=ebic.fac)$ic
+  
+  ## s* : change in model size
+  actiondirs = c(NA, sign(obj$action)[1:(maxsteps-1)])
+  ## s** : change in bic
+  seqdirs = c(getorder(ic))
+  ## multiply s* and s**
+  signs = seqdirs*actiondirs
+  
+  
+  ## get stop times
+  stoptime = which.rise(ic, consec, "forward") - 1
+  
+  if(length(seqdirs) < stoptime + consec + 1) warning(paste(stoprule, "has not stopped"))
+  
+  ## Check if conditioning steps are the same (i.e. stoptime + consec)
+  stopifnot(condition.step == stoptime+consec)
+  
+  ## safely making enough empty rows to add
+  rows.to.add = more.rows.to.add = matrix(NA, nrow = (stoptime+consec),
+                                          ncol = ncol(obj$Gammat))
+  upol = more.upol = rep(NA,stoptime+consec-1)
+  states = get.states(obj$action)
+  
+  ## Add rows to |G| and |u|
+  for(jj in 1:(stoptime+consec)){
+    
+    residual = mm$resids[,jj+1]
+    const    = abs(mm$pen[jj+1] - mm$pen[jj]) #getconst(stoprule,jj,sigma,n,big.df,small.df,bic.fac,ebic.fac)   
+    upol[jj] = (-signs[jj+1]) * sqrt(const)
+    rows.to.add[jj,] = (-signs[jj+1]) * sign(t(residual)%*%y) * residual/sqrt(sum(residual^2))
+    
+    # Also add other direction if (1) model size change and (2) BIC comparison
+    #    # are *both* up or down, in direction
+    #    if(actiondirs[jj+1] == seqdirs[jj+1] & !any(is.na(residual))){
+    #      more.upol[jj] = (-signs[jj+1]) * sqrt(const)
+    #      more.rows.to.add[jj,] = (signs[jj+1]) * sign(t(residual)%*%y) * residual/sqrt(sum(residual^2))
+    #    }
+  }
+  
+  rows.to.add = rbind(rows.to.add, 
+                      more.rows.to.add)
+  upol = c(upol, more.upol)
+  
+  # Get rid of non-primal-changing comparisons
+  upol = upol[which(!is.na(rows.to.add[,1]))]
+  rows.to.add = rows.to.add[which(!is.na(rows.to.add[,1])),]
+  
+  return(list(Gammat = rows.to.add, u = upol))
 }
 
 
-makesegment  = function(breaks, k, klater, n){
+##' Produces the rows to add to Gammat matrix, in the regression case requires
+##' X.orig, ginvX.orig and D.orig which are from the pre-elastic-net regression
+##' problem
+##' @export
+getGammat.stoprule.regression = function(obj, y, condition.step, stoprule,
+                                         sigma, consec, maxsteps,  X.orig,
+                                         ginvX.orig=NULL, D.orig,y0.orig){
+  if(stoprule!='bic'){
+    stop("Regression stopping rule only coded for BIC!")
+  }
   
-  if(length(breaks)<k) stop("not enough breaks!! k > number of breaks")
-  K <- breaks[k] # is the index of the jump selected at step k
+  n = length(y)
+  if(is.null(ginvX.orig)) ginvX.orig = ginv(X.orig)
   
-  # whether or not to condition on a later step (|klater|)
-  kk <- klater
+  # Function to get the entire sequence of information criterion values
+  ic = getbic.regression(y0.orig,f0,sigma,maxsteps=maxsteps-1,
+                         X.orig = X.orig, ginvX.orig = ginvX.orig, D.orig = D.orig)
   
-  relevantbreaks = (if(kk==1) c() else breaks[1:kk])
-  endpoints = c(1,n)
-  allbreaks <- c(endpoints, relevantbreaks)
-  allbreaks <- sort(allbreaks)
   
-  if(K %in% allbreaks) allbreaks = allbreaks[-which(allbreaks == K)]
-  allbreaks = sort(unique(c(allbreaks, endpoints))) #temporary fix just in case the global endpoints are detected..
-  min.index <- max(sum(allbreaks< K),1)             #temporary fix continued 
+  # s* : change in model size
+  actiondirs = c(NA, sign(obj$action)[1:(maxsteps-1)])
+  # s** : change in bic
+  seqdirs = c(getorder(ic))
   
-  Kmin <- allbreaks[min.index]
-  Kmax <- allbreaks[min.index + 1]    
   
-  if(Kmin != 1) Kmin = Kmin + 1 # special case handling
+  # multiply s* and s**
+  signs = seqdirs*actiondirs
   
-  return(list(Kmin=Kmin,K=K,Kmax=Kmax))
+  # get stop times
+  stoptime = which.rise(ic, consec, "forward") - 1
+  
+  if(length(seqdirs) < stoptime + consec + 1) warning(paste(stoprule, "has not stopped"))
+  
+  # Check if conditioning steps are the same (i.e. stoptime + consec)
+  stopifnot(condition.step == stoptime+consec)
+  
+  # safely making enough empty rows to add
+  rows.to.add = matrix(NA, nrow = (stoptime+consec),
+                       ncol = ncol(obj$Gammat))
+  upol = rep(NaN,stoptime+consec-1)
+  
+  states = get.states(f0$action)
+  
+  # Add rows to Gamma matrix and |u|)
+  # First comparison is the one between the null model and the 1st dual addition
+  #  end.step = pmin( stoptime+consec, maxsteps)
+  group.inds = lapply(1:J, function(ii){(TT*(ii-1)+1):(TT*(ii)-1) - (ii-1) })
+  for(jj in 1:(stoptime+consec)){
+    
+    # Identify small and big model from which to harvest the residual 
+    prev.state = states[[jj]]
+    this.state = states[[jj+1]]
+    
+    big.model = (if(actiondirs[jj+1]==+1){this.state} else {prev.state})
+    small.model = (if(actiondirs[jj+1]==+1){prev.state} else {this.state})    
+    this.hit = big.model[!(big.model %in% small.model)] 
+    
+    this.hit = f0$action[jj+1]
+    alt.breaks = big.model#unique(c(states[[jj]] , this.hit))
+    null.breaks = small.model#alt.breaks[alt.breaks!=this.hit]    
+    
+    # Function to obtain the "augmented" X matrix, by breaking at the fused lasso breakpoints
+    get.augmented.X = function(X,breaks,return.groups = F){
+      find.which.group = function(hit) which(sapply(1:J, function(jj) hit %in% group.inds[[jj]]))
+      which.group.breaks = sapply(breaks, find.which.group)
+      breaks.by.group = list()
+      for(groupnum in 1:J){
+        thisgroup.breaks = breaks[which.group.breaks==groupnum]
+        thisgroup.breaks = thisgroup.breaks - TT*(groupnum-1) + (groupnum-1)
+        breaks.by.group[[groupnum]] = thisgroup.breaks
+      }
+      
+      # Function to break var into #|breaks| variables broken at |breaks|
+      brk.var = function(var,breaks){
+        augmented.breaks =c(0,sort(breaks),length(var))
+        all.subvecs =  sapply(1:(length(augmented.breaks)-1), 
+                              function(ii){inds = (augmented.breaks[ii]+1):(augmented.breaks[ii+1])
+                              newvar = rep(0,length(var))
+                              newvar[inds] = var[inds]
+                              return(newvar)
+                              })
+        return(all.subvecs)
+      }
+      
+      X.augmented = do.call(cbind, 
+                            lapply(1:length(breaks.by.group), 
+                                   function(ii) brk.var(X[,ii], breaks.by.group[[ii]])))
+      if(return.groups){ return(breaks.by.group) } else { return(X.augmented) }
+    }
+    
+    # Augment the design matrix at their breaks
+    X.aug.alt  = get.augmented.X(X.orig, alt.breaks ) 
+    X.aug.null = get.augmented.X(X.orig, null.breaks)
+    
+    
+    # projection function
+    projection = function(mat){
+      rm = invisible(Matrix::rankMatrix(mat))
+      if(rm<ncol(mat)){
+        b = svd(mat)$u[,1:rm]
+        return(b %*% solve(t(b)%*%b, t(b)))
+      } else {
+        return(mat %*% solve(t(mat)%*%mat, t(mat)))
+      }
+    }
+    
+    # Get the basis vector of the residual linear subspace
+    P.alt = projection(X.aug.alt)#X.aug.alt %*% solve(t(X.aug.alt)%*% X.aug.alt, t(X.aug.alt))
+    P.null = projection(X.aug.null)#X.aug.null %*% solve(t(X.aug.null)%*% X.aug.null, t(X.aug.null))
+    P.diff = P.null - P.alt
+    if(invisible(Matrix::rankMatrix(P.diff))!=1){
+      print("rank of residual projection is not 1!")
+      print(alt.breaks); print(null.breaks);  print(Matrix::rankMatrix(P.diff))
+    }
+    residual = svd(P.diff)$u[,1]
+    
+    # Get the constant
+    const = (sigma^2)*(log(n))
+    
+    # Add it
+    upol[jj] = (-signs[jj+1]) * sqrt(const)
+    rows.to.add[jj,] = (-signs[jj+1]) * sign(t(residual)%*%y0.orig) * residual/sqrt(sum(residual^2))        
+  }
+  
+  # Get rid of non-primal-changing comparisons
+  upol = upol[which(!is.na(rows.to.add[,1]))]
+  rows.to.add = rows.to.add[which(!is.na(rows.to.add[,1])),]
+  
+  return(list(Gammat = rows.to.add, u = upol))
+}
+
+
+
+##' Function that takes the same arguments as the getGammat.naive(), and some
+##' extra arguments to extract the conditioning for the stopping rule.  Returns
+##' the final Gamma matrix and u vector with stopping rules incorporated.
+##' @export
+getGammat.with.stoprule = function(obj, y, condition.step,# usage = c("fl1d", "dualpathSvd"),
+                                   stoprule, sigma, maxsteps, consec,
+                                   ebic.fac= 0.5,
+                                   type = c("tf","graph", "regression"), X=NULL,
+                                   D=NULL, X.orig=NULL, ginvX = NULL,
+                                   D.orig=NULL, y0.orig = NULL,
+                                   ginvX.orig = NULL,verbose=F){
+  
+  ## Basic error checking
+  type = match.arg(type)
+  if(type=="regression" & (is.null(y0.orig)|is.null(X.orig)|is.null(D.orig))){
+    stop("You need to supply y, design matrix and D matrix from pre-elastic-net regression problem!")
+  }
+  
+  ## Get naive stuff
+  G.naive = getGammat.naive(obj, y, condition.step)#, usage = c("fl1d", "dualpathSvd"))
+  
+  ## Get stoprule-related stuff
+  if(type %in% c("tf", "graph")){
+    G.new.obj = getGammat.stoprule(obj=obj, y=y,
+                                   condition.step=condition.step,
+                                   stoprule=stoprule, sigma=sigma,
+                                   consec=consec, maxsteps=maxsteps,
+                                   ebic.fac= ebic.fac, D=D, verbose=verbose)
+  } else if (type == "regression"){
+    G.new.obj = getGammat.stoprule.regression(obj=obj,y=y,
+                                              y0.orig = y0.orig,
+                                              condition.step = condition.step,
+                                              stoprule = "bic", sigma=sigma,
+                                              consec=consec,
+                                              maxsteps=maxsteps,
+                                              X.orig = X.orig,
+                                              D.orig = D.orig,
+                                              ginvX.orig=ginvX.orig)
+  } else {
+    stop(paste(type, "not coded yet."))
+  }
+  
+  ## Combine naive rows and new rows
+  G.combined = rbind(G.naive$Gammat,
+                     G.new.obj$Gammat)
+  uvec = c(rep(0,nrow(G.naive$Gammat)), 
+           G.new.obj$u)
+  
+  return(list(Gammat = G.combined, u = uvec))
+}
+
+get.states = function(action.obj, path.obj=NULL){
+  
+  ## Extract action from pathobj
+  if(!is.null(path.obj)){
+    action.obj = path.boj$action
+  }
+  
+  ## Obtain a list of actions at each step.
+  actionlists = sapply(1:length(action.obj),function(ii) action.obj[1:ii] )
+  
+  ## Helper function to extract the final state after running through (a list of) actions
+  get.final.state = function(actionlist){
+    if(length(actionlist)==1) return(actionlist)
+    to.delete = c()
+    for(abs.coord in unique(abs(actionlist))){
+      all.coord.actions = which(abs(actionlist)==abs.coord)
+      if( length(all.coord.actions) > 1 ){
+        if( length(all.coord.actions) %%2 ==1){
+          to.delete = c(to.delete, all.coord.actions[1:(length(all.coord.actions)-1)])
+        } else {
+          to.delete = c(to.delete, all.coord.actions)
+        }
+      }
+    }
+    if(!is.null(to.delete)){
+      return(actionlist[-to.delete])
+    } else {
+      return(actionlist)
+    }
+  }
+  
+  ## Extract them
+  states = lapply(actionlists, get.final.state)
+  states = c(NA,states)
+  return(states)
+}
+
+make.v.tf.fp = function(test.knot, adj.knot, test.knot.sign, D){# fp for first principles
+  ## B1,B2 is smaller/larger model (knot sets)
+  ## rr^T is pB1 - pB2, 
+  ## pB1 formed by by proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
+  
+  stopifnot(test.knot %in% adj.knot)
+  
+  
+  bigmodel = unique(c(adj.knot,test.knot)) #states[[ii]]
+  smallmodel = c(adj.knot)
+  smallmodel = smallmodel[smallmodel!=test.knot]
+  tD = cbind(if(all(is.na(bigmodel))) t(D) else t(D)[,-(bigmodel)])
+  proj = function(mymat){ return(mymat %*% solve(t(mymat)%*%mymat, t(mymat)))}
+  
+  # Big model projection
+  rr = Matrix::rankMatrix(tD)
+  tDb = svd(tD)$u[,1:rr]
+  big.proj = proj(tDb)
+  
+  # Small model projection
+  tD.prev = cbind(if(all(is.na(smallmodel))) t(D) else t(D)[,-(smallmodel)])
+  rr.prev = Matrix::rankMatrix(tD.prev)
+  tDb.prev = svd(tD.prev)$u[,1:rr.prev]
+  small.proj = proj(tDb.prev)
+  
+  diff.proj = big.proj - small.proj
+  myresid = svd(diff.proj)$u[,1]
+  
+  stopifnot(Matrix::rankMatrix(diff.proj)==1 | as.numeric(rr.prev - rr) ==1)
+  myresid = myresid / sqrt(sum((myresid)^2))
+  #  d1 = diff(myresid[(test.knot):(test.knot+1)])
+  #  d2 = diff(myresid[(test.knot+1):(test.knot+2)])
+  #  d2-d1
+  #  slopedir = d2-d1 > 0
+  #  slopedir = sign(slopedir-.5)
+  
+  slopedir = sign(D[test.knot,] %*% myresid)
+  
+  # This is ensuring that the direction of myresid at the test knot position (slopedir) 
+  # is the same direction as the direction of slope change in the solution (test.knot.sign)
+  # A conditional like # if(slopedir != sign.test.knot) .. # used to do the job
+  
+  myresid = test.knot.sign * slopedir  * myresid
+  
+  
+  return(myresid)
 }
 
 pval.fl1d <- function(y, G, dik, sigma, approx=T, threshold=T, approxtype = c("gsell","rob"), u = rep(0,nrow(G))){
-  return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
+  ## return(poly.pval(y, G, u, dik, sigma, bits=NULL)$pv)
+  stop("you're using pval.fl1d! Swtich to poly.pval")
 }
 
-
+##' Main p-value function
+##' @export
 poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
   z = sum(v*y)
   vv = sum(v^2)
@@ -559,33 +769,6 @@ poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
   return(list(pv=pv,vlo=vlo,vup=vup))
 }
 
-# Main confidence interval function
-
-poly.int <- function(y, G, u, v, sigma, alpha, gridrange=c(-100,100),
-                     gridpts=100, griddepth=2, flip=FALSE, bits=NULL) {
-  
-  z = sum(v*y)
-  vv = sum(v^2)
-  sd = sigma*sqrt(vv)
-  
-  rho = G %*% v / vv
-  vec = (u - G %*% y + rho*z) / rho
-  vlo = suppressWarnings(max(vec[rho>0]))
-  vup = suppressWarnings(min(vec[rho<0]))
-  
-  xg = seq(gridrange[1]*sd,gridrange[2]*sd,length=gridpts)
-  fun = function(x) { tnorm.surv(z,x,sd,vlo,vup,bits) }
-  
-  int = grid.search(xg,fun,alpha/2,1-alpha/2,gridpts,griddepth)
-  tailarea = c(fun(int[1]),1-fun(int[2]))
-  
-  if (flip) {
-    int = -int[2:1]
-    tailarea = tailarea[2:1]
-  }
-  
-  return(list(int=int,tailarea=tailarea))
-}
 
 
 tnorm.surv <- function(z, mean, sd, a, b, bits=NULL) {
@@ -664,6 +847,15 @@ ff <- function(z) {
            (z^3*sqrt(2*pi)+14.38718147*z*z+31.53531977*z+2*12.77436324))
 }
 
+dual1d_Dmat = function(m){
+  D = matrix(0, nrow = m-1, ncol = m)
+  for(ii in 1:(m-1)){
+    D[ii,ii] = -1
+    D[ii,ii+1] = 1
+  }
+  return(D)
+}
+
 svdsolve <- function(A,b, rtol=1e-7) {
   s = svd(A)
   di = s$d
@@ -673,44 +865,14 @@ svdsolve <- function(A,b, rtol=1e-7) {
   return(list(x=s$v%*%(di*(t(s$u)%*%b)),q=sum(ii),s=s))
 }
 
-Sign <- function(x) {
-  return(-1+2*(x>=0))
-}
-
 Seq = function(a,b) {
   if (a<=b) return(a:b)
   else return(integer(0))
 }
 
-get.states = function(action.obj){
-  
-  # Obtain a list of actions at each step.
-  actionlists = sapply(1:length(action.obj),function(ii) action.obj[1:ii] )
-  
-  # Helper function to extract the final state after running through (a list of) actions
-  get.final.state = function(actionlist){
-    if(length(actionlist)==1) return(actionlist)
-    to.delete = c()
-    for(abs.coord in unique(abs(actionlist))){
-      all.coord.actions = which(abs(actionlist)==abs.coord)
-      if( length(all.coord.actions) > 1 ){
-        if( length(all.coord.actions) %%2 ==1){
-          to.delete = c(to.delete, all.coord.actions[1:(length(all.coord.actions)-1)])
-        } else {
-          to.delete = c(to.delete, all.coord.actions)
-        }
-      }
-    }
-    if(!is.null(to.delete)){
-      return(actionlist[-to.delete])
-    } else {
-      return(actionlist)
-    }
-  }
-  states = lapply(actionlists, get.final.state)
-  states = c(NA,states)
-  
-  return(states)
+# Returns the sign of x, with Sign(0)=1.
+Sign <- function(x) {
+  return(-1+2*(x>=0))
 }
 
 asrowmat = function(obj){
@@ -721,38 +883,57 @@ asrowmat = function(obj){
   return(objmat)
 }
 
-
 ################################################
 
+justin_code <- function(y0){
+  D = dual1d_Dmat(length(y0))
+  f0  = dualpathSvd2(y0, D=D, 5, approx=T)
+  
+  ## Get naive poyhedron (fixed stop time of 1)
+  Gobj = getGammat.naive(obj = f0, y = y0, condition.step = 1)
+  G = Gobj$Gammat
+  u = Gobj$u
+  
+  ## Form contrast and segment test p-value
+  states = get.states(f0$action)
+  stoptime = 1
+  final.model = states[[stoptime+1]]
+  ii = 1
+  this.sign = f0$pathobj$s[which(f0$pathobj$B == final.model[ii])]
+  my.v.lrt = make.v.tf.fp(test.knot = final.model[ii],
+                          adj.knot  = final.model,
+                          test.knot.sign = this.sign,
+                          D=D)
+  
+  pval = poly.pval(y=y0, G=G, u=u, v=my.v.lrt, sigma=sigma)$pv
+  
+  list(G = G, u = u, pval = pval, v = my.v.lrt)
+}
 
 test_that("dimension of gamma is the same", {
   set.seed(10)
+  sigma = .1; n = 100; lev1 = 0; lev2 = 3
+  beta0 = rep(c(lev1,lev2),each=n/2)
+  y = beta0 + rnorm(n, 0,sigma)
+  
   #use justin's code
-  n <- 10
-  y <- rnorm(n, 0, 1)
-  D <- makeDmat(n, ord = 0)
-  mypath <- dualpathSvd2(y, D, 1, approx = T)
-  G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
-  d <- getdvec(mypath, y, 1, 1, type = "segment")
-  pval <- pval.fl1d(y, G$Gammat, d, 1)
+  justin <- justin_code(y)
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)
   res <- polyhedra(obj)
   
-  expect_true(all(dim(G$Gammat) == dim(res$gamma)))
+  expect_true(all(dim(justin$G) == dim(res$gamma)))
 })
 
 test_that("dimension of gamma is the same", {
   set.seed(10)
+  sigma = .1; n = 100; lev1 = 0; lev2 = 3
+  beta0 = rep(c(lev1,lev2),each=n/2)
+  y = beta0 + rnorm(n, 0,sigma)
+  
   #use justin's code
-  n <- 10
-  y <- rnorm(n, 0, 1)
-  D <- makeDmat(n, ord = 0)
-  mypath <- dualpathSvd2(y, D, 1, approx = T)
-  G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
-  d <- getdvec(mypath, y, 1, 1, type = "segment")
-  pval <- pval.fl1d(y, G$Gammat, d, 1) 
+  justin <- justin_code(y)
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)
@@ -761,8 +942,8 @@ test_that("dimension of gamma is the same", {
   match_vec <- numeric(nrow(res$gamma))
   match_value <- numeric(nrow(res$gamma))
   for(i in 1:nrow(res$gamma)){
-    vec <- sapply(1:nrow(G$Gammat), function(x){
-      sqrt(sum((G$Gammat[x,] - res$gamma[i,])^2))
+    vec <- sapply(1:nrow(justin$G), function(x){
+      sqrt(sum((justin$G[x,] - res$gamma[i,])^2))
     })
     
     match_vec[i] <- which.min(vec)
