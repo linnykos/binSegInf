@@ -70,5 +70,5 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   
   denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
   if(denom < tol_zero) denom <- tol_zero
-  as.numeric(Rmpfr::mpfr((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom), precBits = precBits)
+  as.numeric(Rmpfr::mpfr((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom, precBits = precBits))
 }
