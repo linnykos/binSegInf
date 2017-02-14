@@ -950,7 +950,7 @@ makesegment  = function(breaks, k, klater, n){
 
 ################################################
 
-justin_code <- function(y){
+justin_code <- function(y, sigma, v = NA){
   D = dual1d_Dmat(length(y))
   f0  = dualpathSvd2(y, D=D, 5, approx=T)
   
@@ -965,26 +965,26 @@ justin_code <- function(y){
   final.model = states[[stoptime+1]]
   ii = 1
   this.sign = f0$pathobj$s[which(f0$pathobj$B == final.model[ii])]
-  my.v.lrt = make.v.tf.fp(test.knot = final.model[ii],
+  if(all(is.na(v))){
+    v = make.v.tf.fp(test.knot = final.model[ii],
                           adj.knot  = final.model,
                           test.knot.sign = this.sign,
                           D=D)
+  }
+
+  pval = poly.pval(y=y, G=G, u=u, v=v, sigma=sigma)$pv
   
-  #my.v.lrt = get_v_1dfusedlasso(f0, y, 1, 1, type = "segment", length(y))
-  
-  pval = poly.pval(y=y, G=G, u=u, v=my.v.lrt, sigma=sigma)$pv
-  
-  list(G = G, u = u, pval = pval, v = my.v.lrt)
+  list(G = G, u = u, pval = pval, v = v)
 }
 
 test_that("dimension of gamma is the same", {
   set.seed(10)
-  sigma = .1; n = 100; lev1 = 0; lev2 = 3
+  sigma = 1; n = 100; lev1 = 0; lev2 = 3
   beta0 = rep(c(lev1,lev2),each=n/2)
   y = beta0 + rnorm(n, 0,sigma)
   
   #use justin's code
-  justin <- justin_code(y)
+  justin <- justin_code(y, sigma)
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)
@@ -995,12 +995,12 @@ test_that("dimension of gamma is the same", {
 
 test_that("rows of gamma is the same", {
   set.seed(10)
-  sigma = .1; n = 100; lev1 = 0; lev2 = 3
+  sigma = 1; n = 100; lev1 = 0; lev2 = 3
   beta0 = rep(c(lev1,lev2),each=n/2)
-  y = beta0 + rnorm(n, 0,sigma)
+  y = beta0 + rnorm(n, 0, sigma)
   
   #use justin's code
-  justin <- justin_code(y)
+  justin <- justin_code(y, sigma)
   
   #use our code
   obj <- fLasso_fixedSteps(y, 1)

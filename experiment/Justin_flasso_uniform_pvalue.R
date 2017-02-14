@@ -17,15 +17,11 @@ for(i in 1:1000){
   pval_vec2[i] <- pvalue(y, poly, contrast)
   
   #use justin's code
-  D <- makeDmat(n, ord = 0)
-  mypath <- dualpathSvd2(y, D, 1, approx = T)
-  G <- getGammat.naive(obj = mypath, y = y, condition.step = 1)
-  #d <- getdvec(mypath, y, 1, 1, type = "segment")
-  #pval_vec[i] <- pval.fl1d(y, G$Gammat, d, 1)
-  pval_vec[i] <- pval.fl1d(y, G$Gammat, contrast, 1)
+  pval_vec[i] <- justin_code(y, 1, contrast)$pval
   
   if(i %% 100 == 0) cat('*')
 }
+
 
 par(mfrow = c(1,3))
 qqplot(pval_vec, seq(0, 1, length.out = length(pval_vec)), 
