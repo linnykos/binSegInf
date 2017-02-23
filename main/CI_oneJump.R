@@ -42,7 +42,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     
     res <- confidence_interval_ss(y, contrast)
     
-    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj))
+    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj), 
+      sum((obj$y.fit)^2)/n)
   }
 }
 

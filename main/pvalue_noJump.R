@@ -32,7 +32,7 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     contrast <- contrast_vector_ss(obj, 1)
     
     res <- pvalue_ss(y, contrast)
-    c(res, jumps(obj))
+    c(res, jumps(obj), sum((obj$y.fit)^2)/n)
   }
 }
 

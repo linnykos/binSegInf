@@ -47,8 +47,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     res_a <- pvalue_ss(y, contrast_a)
     res_b <- pvalue_ss(y, contrast_b)
     
-    c(res, jumps(obj),
-      res_a, res_b, jumps(obj2, sorted = T))
+    c(res, jumps(obj), sum((obj$y.fit - truth)^2)/n,
+      res_a, res_b, jumps(obj2, sorted = T), sum((obj2$y.fit - truth)^2)/n)
   }
 }
 
