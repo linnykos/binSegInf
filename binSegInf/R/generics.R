@@ -47,12 +47,19 @@ jump_lambda <- function(obj, ...) {UseMethod("jump_lambda")}
 #' Generic function to get a matrix of jumps and signs
 #'
 #' @param obj  object
-#' @param ... additional parameters
+#' @param sorted boolean
 #'
 #' @return 2-column matrix of jumps and signs
 #' @export
-jump_sign <- function(obj, ...) {UseMethod("jump_sign")}
-
+jump_sign <- function(obj, sorted = F){
+  vec <- jumps(obj, sorted = sorted)
+  mat <- matrix(NA, length(vec), 2)
+  colnames(mat) = c("Jump", "Sign")
+  mat[,"Jump"]<- vec
+  mat[,"Sign"] <- sign(apply(cbind(obj$y.fit[vec+1], -obj$y.fit[vec]), 1, sum))
+  
+  mat
+}
 
 .list_comparison <- function(obj) {UseMethod(".list_comparison")}
 .get_length <- function(obj) {UseMethod(".get_length")}

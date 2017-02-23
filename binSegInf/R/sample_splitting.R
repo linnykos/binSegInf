@@ -13,13 +13,13 @@ sample_splitting <- function(y, method, ...){
   idx <- seq(2, n, by = 2)
   
   #estimate on half the data
-  res <- jump_sign(method(y[idx], ...))
+  res <- jumps(method(y[idx], ...))
   
   #readjust the changepoints
-  res$Jump <- res$Jump*2
+  res <- res*2
   
   #average the points on the second half of the data
-  structure(list(jumps = res$Jump, sign = res$Sign, n = n, 
+  structure(list(jumps = res, y.fit = .refit_sample_split(y, res), n = n, 
                  method = deparse(substitute(method))), class = "ss")
 }
 
@@ -37,7 +37,7 @@ sample_splitting <- function(y, method, ...){
 #' @export
 jumps.ss <- function(obj, sorted = F, ...){
   idx <- obj$jumps
-  if(sorted) sort(idx) else idx
+  if(sorted) as.numeric(sort(idx)) else as.numeric(idx)
 }
 
 #' Generate contrast bector
@@ -54,7 +54,8 @@ contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   n <- obj$n
   jump.vec <- jumps(obj, sorted)
   jump <- jump.vec[jump.idx]
-  jump_sign <- obj$sign[which(obj$jump == jump)]
+  jump_mat <- jump_sign(obj)
+  jump_sign <- jump_mat[which(jump_mat[,"Jump"] == jump), "Sign"]
 
   #figure out the indices to use in the contrast
   jumpSorted.vec <- c(1, jumps(obj, T), n)
@@ -124,4 +125,36 @@ confidence_interval_ss <- function(y, contrast, sigma = 1, alpha = 0.95){
   
   interval_length <- abs(stats::qnorm((1-alpha)/2))*sqrt(sigma^2/n_pos + sigma^2/n_neg)
   c((pos_mean - neg_mean) - interval_length, (pos_mean - neg_mean) + interval_length)
+}
+
+#########################################
+
+.refit_sample_split <- function(y, jump){
+  n <- length(y)
+  y.fit <- numeric(n)
+  
+  jump <- c(0, sort(jump), ceiling((n-1)/2)*2)
+  jump <- sort(unique(jump))
+  
+  for(i in 1:(length(jump)-1)){
+    #find the indices 
+    cur_idx <- seq(jump[i]+2, jump[i+1], by = 2)
+    cur_all_idx <- seq(jump[i]+1, jump[i+1])
+    
+    y.fit[cur_all_idx] <- mean(y[cur_idx])
+  }
+  
+  #fill out missing values
+  while(any(is.na(y.fit))){
+    idx <- which(is.na(y.fit))
+    if(length(idx) > 0){
+      for(i in idx){
+        upper <- min(n, i+1)
+        lower <- max(1, i-1)
+        y.fit[i] <- mean(y.fit[c(lower,upper)], na.rm = T)
+      }
+    }
+  }
+  
+  y.fit
 }

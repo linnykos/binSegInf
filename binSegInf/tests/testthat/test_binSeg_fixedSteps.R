@@ -230,20 +230,3 @@ test_that(".refit_binseg is correct", {
   
   expect_true(all(res == c(rep(3, 5), rep(103, 5))))
 })
-
-######################################
-
-## jump_sign.bsFs is correct
-
-test_that("jump_sign.bsFs returns a valid matrix", {
-  set.seed(10)
-  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
-  obj <- binSeg_fixedSteps(y, 3)
-  
-  res <- jump_sign(obj)
-  
-  expect_true(all(dim(res) == c(3,2)))
-  expect_true(all(res[,1] %% 1 == 0))
-  expect_true(all(res[,1] > 0))
-  expect_true(all(unique(res[,2]) %in% c(-1,1)))
-})

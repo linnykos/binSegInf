@@ -42,8 +42,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     res <- pvalue_ss(y, contrast)
     
     obj2 <- sample_splitting(y, method = method, numSteps = 2)
-    contrast_a <- contrast_vector_ss(obj, 1, sorted = T)
-    contrast_b <- contrast_vector_ss(obj, 2, sorted = T)
+    contrast_a <- contrast_vector_ss(obj2, 1, sorted = T)
+    contrast_b <- contrast_vector_ss(obj2, 2, sorted = T)
     res_a <- pvalue_ss(y, contrast_a)
     res_b <- pvalue_ss(y, contrast_b)
     
