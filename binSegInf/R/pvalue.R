@@ -23,7 +23,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 }
 
 .compute_truncGaus_terms <- function(y, polyhedra, contrast, sigma){
-  z <- as.numeric(contrast %*% y)
+  z <- as.numeric(contrast %*% y) * attr(contrast, "sign")
   
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))

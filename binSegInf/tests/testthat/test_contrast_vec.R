@@ -14,6 +14,24 @@ test_that("contrast_vector works", {
   expect_true(all(res[11:15] == 1/5))
 })
 
+test_that("contrast_vector is signed positive", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(-5, 5), rep(6, 5)) + 0.01*rnorm(20)
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- contrast_vector(obj, 2, sorted = T)
+  expect_true(attr(res, "sign") == 1)
+})
+
+test_that("contrast_vector is signed negative", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(-5, 5), rep(6, 5)) + 0.01*rnorm(20)
+  obj <- binSeg_fixedSteps(y, 2)
+  
+  res <- contrast_vector(obj, 1, sorted = T)
+  expect_true(attr(res, "sign") == -1)
+})
+
 ################################
 
 ## .contrast_vector_segment is correct

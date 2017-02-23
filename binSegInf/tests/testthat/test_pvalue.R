@@ -93,6 +93,30 @@ test_that("pvalue is not 1 when the signal is extremely large", {
   expect_true(res < 1e-4)
 })
 
+test_that("p value is correct in reverse for binSeg", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(-50, 10)) + rnorm(20)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  poly <- polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- pvalue(y, poly, contrast)
+  expect_true(res < .1)
+})
+
+test_that("p value is correct in reverse for fLasso", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(-50, 10)) + rnorm(20)
+  obj <- fLasso_fixedSteps(y, 1)
+  
+  poly <- polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res <- pvalue(y, poly, contrast)
+  expect_true(res < .1)
+})
+
 ############################
 
 ## .truncated_gauss_cdf is correct
@@ -120,7 +144,8 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly for binseg",
   contrast <- contrast_vector(obj, 1)
   
   res <- .compute_truncGaus_terms(y, poly, contrast, 1)
-  expect_true(res$a <= contrast%*%y & res$b >= contrast%*%y)
+  expect_true(res$a <= contrast%*%y*attr(contrast, "sign") & 
+                res$b >= contrast%*%y*attr(contrast, "sign"))
   
   trials <- 100
   for(i in 1:trials){
@@ -128,7 +153,8 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly for binseg",
     y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
     
-    bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)
+    bool1 <- (res2$a <= contrast%*%y.tmp*attr(contrast, "sign") & 
+                res2$b >= contrast%*%y.tmp*attr(contrast, "sign"))
     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
     expect_true(bool1 == bool2)
   }
@@ -143,7 +169,8 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly for flasso",
   contrast <- contrast_vector(obj, 1)
   
   res <- .compute_truncGaus_terms(y, poly, contrast, 1)
-  expect_true(res$a <= contrast%*%y & res$b >= contrast%*%y)
+  expect_true(res$a <= contrast%*%y*attr(contrast, "sign") & 
+                res$b >= contrast%*%y*attr(contrast, "sign"))
   
   trials <- 100
   for(i in 1:trials){
@@ -151,7 +178,8 @@ test_that(".compute_truncGaus_terms preserves vlo and vup correctly for flasso",
     y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     res2 <- .compute_truncGaus_terms(y.tmp, poly, contrast, 1)
     
-    bool1 <- (res2$a <= contrast%*%y.tmp & res2$b >= contrast%*%y.tmp)
+    bool1 <- (res2$a <= contrast%*%y.tmp*attr(contrast, "sign") & 
+                res2$b >= contrast%*%y.tmp*attr(contrast, "sign"))
     bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
     expect_true(bool1 == bool2)
   }
