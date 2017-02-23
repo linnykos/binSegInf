@@ -54,6 +54,7 @@ contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   n <- obj$n
   jump.vec <- jumps(obj, sorted)
   jump <- jump.vec[jump.idx]
+  jump_sign <- obj$sign[which(obj$jump == jump)]
 
   #figure out the indices to use in the contrast
   jumpSorted.vec <- c(1, jumps(obj, T), n)
@@ -76,6 +77,7 @@ contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   v <- rep(0, n)
   v[pos_idx] <- 1/length(pos_idx); v[neg_idx] <- -1/length(neg_idx)
   
+  attr(v, "sign") <- jump_sign
   v
 }
 

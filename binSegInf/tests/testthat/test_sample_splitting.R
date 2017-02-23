@@ -129,6 +129,27 @@ test_that("contrast_vector_ss properly when jump is at 98", {
   expect_true(all(which(res < 0) == seq(3, 97, by = 2)))
   expect_true(all(which(res > 0) == 99))
 })
+
+test_that("contrast_vector_ss is signed positive", {
+  set.seed(10)
+  y <- c(rep(0, 50), rep(5, 50)) + 0.1*rnorm(100)
+  
+  obj <- sample_splitting(y, binSeg_fixedSteps, numSteps = 1)
+  
+  res <- contrast_vector_ss(obj, 1)
+  expect_true(attr(res, "sign") == 1)
+})
+
+test_that("contrast_vector_ss is signed negative", {
+  set.seed(10)
+  y <- c(rep(0, 50), rep(-5, 50)) + 0.1*rnorm(100)
+  
+  obj <- sample_splitting(y, binSeg_fixedSteps, numSteps = 1)
+  
+  res <- contrast_vector_ss(obj, 1)
+  expect_true(attr(res, "sign") == -1)
+})
+
 #####################################
 
 ## pvalue_ss is correct
