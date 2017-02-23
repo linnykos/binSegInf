@@ -248,3 +248,33 @@ test_that("confidence_interval_ss has the right coverage", {
   expect_true(0.95*trials - 3*sd_est <= res)
   expect_true(res <= 0.95*trials + 3*sd_est)
 })
+
+########################
+
+## .refit_sample_split is correct
+
+test_that(".refit_sample_split works", {
+  set.seed(10)
+  y <- rnorm(100)
+  jump <- c(4,10,58)
+  res <- .refit_sample_split(y, jump)
+  
+  expect_true(length(unique(res)) == 4)
+  expect_true(all(res[1:4] == mean(y[c(2,4)])))
+  expect_true(all(res[5:10] == mean(y[seq(6,10,by=2)])))
+  expect_true(all(res[11:58] == mean(y[seq(12,58,by=2)])))
+  expect_true(all(res[59:100] == mean(y[seq(60,100,by=2)])))
+})
+
+test_that(".refit_sample_split works on the boundary", {
+  set.seed(10)
+  y <- rnorm(100)
+  jump <- c(2,10,98)
+  res <- .refit_sample_split(y, jump)
+  
+  expect_true(length(unique(res)) == 4)
+  expect_true(all(res[1:2] == y[2]))
+  expect_true(all(res[3:10] == mean(y[seq(4,10,by=2)])))
+  expect_true(all(res[11:98] == mean(y[seq(12,98,by=2)])))
+  expect_true(all(res[99:100] == y[100]))
+})
