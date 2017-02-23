@@ -4,7 +4,7 @@
 \alias{confidence_interval}
 \title{Confidence interval from post-selection inference}
 \usage{
-confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
+confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
   gridsize = 250, alternative = c("two.sided", "one.sided"))
 }
 \arguments{
@@ -16,7 +16,9 @@ confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
 
 \item{sigma}{numeric to denote the sd of the residuals}
 
-\item{alpha}{numeric between 0 and 1 with default of 0.05}
+\item{alpha}{numeric between 0 and 1 with default of 0.95. This is the
+significance level, guaranteeing that alpha percentage
+of the intervals will cover the true parameter.}
 
 \item{gridsize}{numeric to denote how fine of a grid to invert the hypothesis
 test}

@@ -20,7 +20,7 @@ sample_splitting <- function(y, method, ...){
   structure(list(jumps = res, n = n, method = deparse(substitute(method))), class = "ss")
 }
 
-#' Get jumps from bsFs objects
+#' Get jumps from ss objects
 #' 
 #' Enumerates the jumps. Sorted = F will return the jumps in order
 #' of occurance in the binSeg algorithm. Sorted = T will list the jumps
@@ -69,7 +69,9 @@ contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   v
 }
 
-#' P-values for post-selection inference
+#' P-values for sample splitting
+#' 
+#' This is limited to one-sided p-values currently
 #'
 #' @param y numeric vector
 #' @param contrast contrast numeric vector
@@ -86,10 +88,22 @@ pvalue_ss <- function(y, contrast){
   if(is.na(neg_sd)) neg_sd <- 0
   
   z <- (pos_mean - neg_mean)/(sqrt(pos_sd/n_pos + neg_sd/n_neg))
-  2*stats::pnorm(-abs(z))
+  stats::pnorm(-abs(z))
 }
 
-confidence_interval_ss <- function(y, contrast, alpha){
+#' Confidence interval for sample splitting
+#' 
+#' This is limited to two-sided confidence intervals currently
+#'
+#' @param y numeric vector
+#' @param contrast contrast numeric vector
+#' @param alpha numeric between 0 and 1 with default of 0.95. This is the
+#' significance level, guaranteeing that alpha percentage
+#' of the intervals will cover the true parameter.
+#'
+#' @return 
+#' @export
+confidence_interval_ss <- function(y, contrast, alpha = 0.95){
   pos_idx <- which(contrast > 0); neg_idx <- which(contrast < 0)
   n_pos <- length(pos_idx); n_neg <- length(neg_idx)
   pos_mean <- mean(y[pos_idx]); neg_mean <- mean(y[neg_idx])

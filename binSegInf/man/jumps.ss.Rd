@@ -2,7 +2,7 @@
 % Please edit documentation in R/sample_splitting.R
 \name{jumps.ss}
 \alias{jumps.ss}
-\title{Get jumps from bsFs objects}
+\title{Get jumps from ss objects}
 \usage{
 \method{jumps}{ss}(obj, sorted = F, ...)
 }

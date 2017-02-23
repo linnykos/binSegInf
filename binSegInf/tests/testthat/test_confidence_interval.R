@@ -28,6 +28,20 @@ test_that("confidence_interval has right coverage non-zero", {
   expect_true(3 <= res[2]+.5)
 })
 
+test_that("confidence_interval gets wider as alpha increases", {
+  set.seed(10)
+  y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  poly <- polyhedra(obj)
+  contrast <- contrast_vector(obj, 1)
+  
+  res1 <- confidence_interval(y, poly, contrast, gridsize = 100, alpha = 0.95)
+  res2 <- confidence_interval(y, poly, contrast, gridsize = 100, alpha = 0.5)
+  
+  expect_true(diff(res1) >= diff(res2))
+})
+
 test_that("confidence interval one and two-sided are related", {
   set.seed(10)
   y <-  c(rep(0, 10), rep(3, 10)) + rnorm(20)

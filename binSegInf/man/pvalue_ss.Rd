@@ -2,7 +2,7 @@
 % Please edit documentation in R/sample_splitting.R
 \name{pvalue_ss}
 \alias{pvalue_ss}
-\title{P-values for post-selection inference}
+\title{P-values for sample splitting}
 \usage{
 pvalue_ss(y, contrast)
 }
@@ -15,5 +15,5 @@ pvalue_ss(y, contrast)
 a numeric p-value between 0 and 1
 }
 \description{
-P-values for post-selection inference
+This is limited to one-sided p-values currently
 }
