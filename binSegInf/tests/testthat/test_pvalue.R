@@ -117,6 +117,20 @@ test_that("p value is correct in reverse for fLasso", {
   expect_true(res < .1)
 })
 
+test_that("p value is correct for a bump signal", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(50, 10), rep(0, 10)) + rnorm(30)
+  obj <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj)
+  
+  contrast1 <- contrast_vector(obj, 1, sorted = T)
+  res1 <- pvalue(y, poly, contrast1)
+  contrast2 <- contrast_vector(obj, 2, sorted = T)
+  res2 <- pvalue(y, poly, contrast2)
+  
+  expect_true(all(c(res1, res2) < .1))
+})
+
 ############################
 
 ## .truncated_gauss_cdf is correct
