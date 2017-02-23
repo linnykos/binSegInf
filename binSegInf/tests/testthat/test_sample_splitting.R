@@ -166,6 +166,19 @@ test_that("pvalue_ss works", {
   expect_true(res < 0.05)
 })
 
+test_that("pvalue_ss works for the reverse direction", {
+  set.seed(10)
+  y <- c(rep(0, 50), rep(-5, 50)) + 0.1*rnorm(100)
+  
+  obj <- sample_splitting(y, binSeg_fixedSteps, numSteps = 1)
+  v <- contrast_vector_ss(obj, 1)
+  
+  res <- pvalue_ss(y, v)
+  expect_true(length(res) == 1)
+  expect_true(res < 0.05)
+})
+
+
 test_that("pvalue_ss is roughly uniform under no signal", {
   trials <- 500
   res_vec <- numeric(trials)

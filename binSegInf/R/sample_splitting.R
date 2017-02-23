@@ -98,6 +98,9 @@ pvalue_ss <- function(y, contrast, sigma = 1){
   pos_mean <- mean(y[pos_idx]); neg_mean <- mean(y[neg_idx])
   
   z <- (pos_mean - neg_mean)/(sqrt(sigma^2/n_pos + sigma^2/n_neg))
+  
+  if(attr(contrast, "sign") == -1) z <- -z
+  
   1 - stats::pnorm(z)
 }
 
