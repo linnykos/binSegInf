@@ -96,6 +96,7 @@ jump_sign.flFs <- function(obj, sorted = F, ...){
     mat <- mat[idx,]
   }
   
+  colnames(mat) <- c("Jump", "Sign")
   mat
 }
 

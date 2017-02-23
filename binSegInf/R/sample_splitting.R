@@ -13,13 +13,14 @@ sample_splitting <- function(y, method, ...){
   idx <- seq(2, n, by = 2)
   
   #estimate on half the data
-  res <- jumps(method(y[idx], ...))
+  res <- jump_sign(method(y[idx], ...))
   
   #readjust the changepoints
-  res <- res*2
+  res$Jump <- res$Jump*2
   
   #average the points on the second half of the data
-  structure(list(jumps = res, n = n, method = deparse(substitute(method))), class = "ss")
+  structure(list(jumps = res$Jump, sign = res$Sign, n = n, 
+                 method = deparse(substitute(method))), class = "ss")
 }
 
 #' Get jumps from ss objects

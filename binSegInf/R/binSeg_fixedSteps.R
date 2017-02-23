@@ -107,6 +107,7 @@ jump_sign.bsFs <- function(obj, sorted = F, ...){
     mat <- mat[idx,]
   }
   
+  colnames(mat) <- c("Jump", "Sign")
   mat
 }
 
