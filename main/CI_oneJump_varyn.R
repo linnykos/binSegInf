@@ -33,18 +33,38 @@ rule_closure <- function(gridsize = 100, method = binSeg_fixedSteps){
   }
 }
 
+rule_ss_closure <- function(method = binSeg_fixedSteps){
+  function(vec){
+    n <- vec[4]
+    dat <- CpVector(n, vec[1:2], vec[3])
+    y <- dat$data
+    
+    obj <- sample_splitting(y, method = method, numSteps = 1)
+    contrast <- contrast_vector_ss(obj, 1)
+    
+    res <- confidence_interval_ss(y, contrast)
+    
+    c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj))
+  }
+}
+
+
 ############################
 
 rule_bsFs <- rule_closure(50, method = binSeg_fixedSteps)
 rule_flFs <- rule_closure(50, method = fLasso_fixedSteps)
+rule_ss <- rule_ss_closure(method = binSeg_fixedSteps)
 criterion <- function(x, vec){x}
 
-bsFs_1JumpCI <- simulationGenerator(rule_bsFs, paramMat, criterion,
+bsFs_1JumpCI_nvary <- simulationGenerator(rule_bsFs, paramMat, criterion,
   trials, cores)
 save.image(file = paste0("res/CI_oneJump_vary_n_", Sys.Date(), ".RData"))
 
-flFs_1JumpCI <- simulationGenerator(rule_flFs, paramMat, criterion,
+flFs_1JumpCI_nvary <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
+save.image(file = paste0("res/CI_oneJump_varyn_", Sys.Date(), ".RData"))
 
+ss_1JumpCI_nvary <- simulationGenerator(rule_ss, paramMat, criterion,
+                                          trials, cores)
 save.image(file = paste0("res/CI_oneJump_varyn_", Sys.Date(), ".RData"))
 quit(save = "no")

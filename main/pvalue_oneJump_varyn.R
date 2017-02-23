@@ -28,10 +28,26 @@ rule_closure <- function(method = binSeg_fixedSteps){
   }
 }
 
+rule_ss_closure <- function(method = binSeg_fixedSteps){
+  function(vec){
+    n <- vec[4]
+    dat <- CpVector(n, vec[1:2], vec[3])
+    y <- dat$data
+    
+    obj <- sample_splitting(y, method = method, numSteps = 1)
+    contrast <- contrast_vector_ss(obj, 1)
+    
+    res <- pvalue_ss(y, contrast)
+    
+    c(res, jumps(obj))
+  }
+}
+
 ############################
 
 rule_bsFs <- rule_closure(method = binSeg_fixedSteps)
 rule_flFs <- rule_closure(method = fLasso_fixedSteps)
+rule_ss <- rule_ss_closure(method = binSeg_fixedSteps)
 criterion <- function(x, vec){x}
 
 bsFs_1JumpPValue_nvary <- simulationGenerator(rule_bsFs, paramMat, criterion,
@@ -40,6 +56,11 @@ save.image(file = paste0("res/pvalue_oneJump_varyn_", Sys.Date(), ".RData"))
 
 flFs_1JumpPValue_nvary <- simulationGenerator(rule_flFs, paramMat, criterion,
   trials, cores)
-
 save.image(file = paste0("res/pvalue_oneJump_varyn_", Sys.Date(), ".RData"))
+
+ss_1JumpPValue_nvary <- simulationGenerator(rule_ss, paramMat, criterion,
+                                      trials, cores)
+save.image(file = paste0("res/pvalue_oneJump_varyn_", Sys.Date(), ".RData"))
+
+
 quit(save = "no")

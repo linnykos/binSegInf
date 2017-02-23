@@ -94,6 +94,7 @@ test_that("confidence int. should give a left point less than right", {
   expect_true(res[1] <= res[2])
 })
 
+
 #####################################
 
 ## .select_index is correct
