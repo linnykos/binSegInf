@@ -16,4 +16,3 @@ void
 Generic function that fails noisily with a stop message if the object is 
 invalid. Otherwise, nothing happens.
 }
-

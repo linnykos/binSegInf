@@ -21,4 +21,3 @@ Enumerates the cusum for each jump. Sorted = F will return the jumps in order
 of occurance in the binSeg algorithm. Sorted = T will list the jumps
 in numeric order
 }
-

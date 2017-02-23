@@ -27,4 +27,3 @@ a numeric p-value between 0 and 1
 \description{
 P-values for post-selection inference
 }
-

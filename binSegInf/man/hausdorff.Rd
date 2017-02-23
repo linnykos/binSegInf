@@ -24,4 +24,3 @@ the hausdorff returns max_(a in set1) min_(b in set2) |a-b|.
 \details{
 If either sets are empty, NA is returned.
 }
-

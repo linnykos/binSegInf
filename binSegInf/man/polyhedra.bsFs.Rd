@@ -17,4 +17,3 @@ An object of class polyhedra
 \description{
 Forms both Gamma matrix and u vector
 }
-

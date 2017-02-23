@@ -17,4 +17,3 @@ matrix of summary statistics
 \description{
 Summary of Node object
 }
-

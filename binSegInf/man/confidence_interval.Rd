@@ -30,4 +30,3 @@ a vector of two numbers, the lower and upper end of the confidence interval
 \description{
 Confidence interval from post-selection inference
 }
-

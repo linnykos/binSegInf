@@ -64,7 +64,7 @@ test_that("pvalue_ss works", {
   obj <- sample_splitting(y, binSeg_fixedSteps, numSteps = 1)
   v <- contrast_vector_ss(obj, 1)
   
-  res <- pvalue_ss(y, obj, v)
+  res <- pvalue_ss(y, v)
   expect_true(length(res) == 1)
   expect_true(res < 0.05)
 })

@@ -15,4 +15,3 @@ TRUE if valid
 \description{
 Check whether tree is valid or not
 }
-

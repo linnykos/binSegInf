@@ -21,4 +21,3 @@ y must not have duplicated values. This is to avoid
 degenerate behavior of binary segmentation. The reported \code{y.fit}
 is set the lambda where the (k+1)th jump is about to appear.
 }
-

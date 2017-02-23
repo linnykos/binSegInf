@@ -1,3 +1,11 @@
+#' Sample splitting 
+#'
+#' @param y data vector
+#' @param method estimator on the first split
+#' @param ... additional arguments
+#'
+#' @return ss object
+#' @export
 sample_splitting <- function(y, method, ...){
   n <- length(y)
   idx <- seq(2, n, by = 2)
@@ -12,11 +20,33 @@ sample_splitting <- function(y, method, ...){
   structure(list(jumps = res, n = n, method = deparse(substitute(method))), class = "ss")
 }
 
+#' Get jumps from bsFs objects
+#' 
+#' Enumerates the jumps. Sorted = F will return the jumps in order
+#' of occurance in the binSeg algorithm. Sorted = T will list the jumps
+#' in numeric order
+#'
+#' @param obj bsFs object
+#' @param sorted boolean
+#' @param ... not used
+#'
+#' @return vector of jumps
+#' @export
 jumps.ss <- function(obj, sorted = F, ...){
   idx <- obj$jumps
   if(sorted) sort(idx) else idx
 }
 
+#' Generate contrast bector
+#' 
+#' Only does segment tests
+#'
+#' @param obj object
+#' @param jump.idx index among the list of jumps to jump at
+#' @param sorted boolean on whether or not jumps should be sorted
+#'
+#' @return numeric vector
+#' @export
 contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   n <- obj$n
   jump.vec <- jumps(obj, sorted)
@@ -39,7 +69,14 @@ contrast_vector_ss <- function(obj, jump.idx, sorted = F){
   v
 }
 
-pvalue_ss <- function(y, obj, contrast){
+#' P-values for post-selection inference
+#'
+#' @param y numeric vector
+#' @param contrast contrast numeric vector
+#'
+#' @return a numeric p-value between 0 and 1
+#' @export
+pvalue_ss <- function(y, contrast){
   pos_idx <- which(contrast > 0); neg_idx <- which(contrast < 0)
   n_pos <- length(pos_idx); n_neg <- length(neg_idx)
   pos_mean <- mean(y[pos_idx]); neg_mean <- mean(y[neg_idx])

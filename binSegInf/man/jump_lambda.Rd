@@ -17,4 +17,3 @@ vector of lambdas
 \description{
 Generic function to count the number of jump lambdas
 }
-
