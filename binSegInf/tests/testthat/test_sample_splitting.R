@@ -68,3 +68,21 @@ test_that("pvalue_ss works", {
   expect_true(length(res) == 1)
   expect_true(res < 0.05)
 })
+
+###################################
+
+## confidence_interval_ss is correct
+
+test_that("confidence_interval_ss works", {
+  set.seed(10)
+  y <- c(rep(0, 50), rep(5, 50)) + 0.1*rnorm(100)
+  
+  obj <- sample_splitting(y, binSeg_fixedSteps, numSteps = 1)
+  v <- contrast_vector_ss(obj, 1)
+  
+  res <- confidence_interval_ss(y, v, 0.95)
+  
+  expect_true(length(res) == 2)
+  expect_true(is.numeric(res))
+  expect_true(res[1] <= 5 & 5 <= res[2])
+})

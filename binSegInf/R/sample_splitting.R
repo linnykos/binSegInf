@@ -88,3 +88,16 @@ pvalue_ss <- function(y, contrast){
   z <- (pos_mean - neg_mean)/(sqrt(pos_sd/n_pos + neg_sd/n_neg))
   2*stats::pnorm(-abs(z))
 }
+
+confidence_interval_ss <- function(y, contrast, alpha){
+  pos_idx <- which(contrast > 0); neg_idx <- which(contrast < 0)
+  n_pos <- length(pos_idx); n_neg <- length(neg_idx)
+  pos_mean <- mean(y[pos_idx]); neg_mean <- mean(y[neg_idx])
+  pos_sd <- stats::sd(y[pos_idx]); neg_sd <- stats::sd(y[neg_idx])
+  
+  if(is.na(pos_sd)) pos_sd <- 0
+  if(is.na(neg_sd)) neg_sd <- 0
+  
+  interval_length <- abs(stats::qnorm((1-alpha)/2))*sqrt(pos_sd/n_pos + neg_sd/n_neg)
+  c((pos_mean - neg_mean) - interval_length, (pos_mean - neg_mean) + interval_length)
+}
