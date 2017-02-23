@@ -4,12 +4,14 @@
 \alias{confidence_interval_ss}
 \title{Confidence interval for sample splitting}
 \usage{
-confidence_interval_ss(y, contrast, alpha = 0.95)
+confidence_interval_ss(y, contrast, sigma = 1, alpha = 0.95)
 }
 \arguments{
 \item{y}{numeric vector}
 
 \item{contrast}{contrast numeric vector}
+
+\item{sigma}{numeric to denote the sd of the residuals}
 
 \item{alpha}{numeric between 0 and 1 with default of 0.95. This is the
 significance level, guaranteeing that alpha percentage

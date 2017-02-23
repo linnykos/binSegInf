@@ -17,5 +17,5 @@ sample_splitting(y, method, ...)
 ss object
 }
 \description{
-Sample splitting
+Even points are for finding the changepoints. Odd points are used for testing.
 }

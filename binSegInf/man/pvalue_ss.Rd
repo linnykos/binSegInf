@@ -4,16 +4,19 @@
 \alias{pvalue_ss}
 \title{P-values for sample splitting}
 \usage{
-pvalue_ss(y, contrast)
+pvalue_ss(y, contrast, sigma = 1)
 }
 \arguments{
 \item{y}{numeric vector}
 
 \item{contrast}{contrast numeric vector}
+
+\item{sigma}{numeric to denote the sd of the residuals}
 }
 \value{
 a numeric p-value between 0 and 1
 }
 \description{
-This is limited to one-sided p-values currently
+This is limited to one-sided p-values currently, and the null-mean
+is set to be 0.
 }
