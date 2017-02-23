@@ -87,6 +87,18 @@ summary.flFs <- function(object, ...){
   object$model
 }
 
+jump_sign.flFs <- function(obj, sorted = F, ...){
+  mat <- summary(obj)
+  mat <- mat[,c("Index", "Sign")]
+  
+  if(sorted){
+    idx <- order(mat$Index)
+    mat <- mat[idx,]
+  }
+  
+  mat
+}
+
 .refit_flasso <- function(y, model.mat){
   n <- length(y)
   D <- .form_Dmatrix(n)

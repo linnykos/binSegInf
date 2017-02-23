@@ -205,3 +205,20 @@ test_that(".compute_fused_denominator can return all 0's", {
    
 })
 
+##############################
+
+## jump_sign.flFs is correct
+
+test_that("jump_sign.flFs returns a valid matrix", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 5), rep(6, 5)) + 0.01*rnorm(20)
+  obj <- fLasso_fixedSteps(y, 3)
+  
+  res <- jump_sign(obj)
+  
+  expect_true(all(dim(res) == c(3,2)))
+  expect_true(all(res[,1] %% 1 == 0))
+  expect_true(all(res[,1] > 0))
+  expect_true(all(unique(res[,2]) %in% c(-1,1)))
+})
+

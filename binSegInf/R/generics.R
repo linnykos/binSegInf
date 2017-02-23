@@ -44,5 +44,15 @@ jump_cusum <- function(obj, ...) {UseMethod("jump_cusum")}
 #' @export
 jump_lambda <- function(obj, ...) {UseMethod("jump_lambda")}
 
+#' Generic function to get a matrix of jumps and signs
+#'
+#' @param obj  object
+#' @param ... additional parameters
+#'
+#' @return 2-column matrix of jumps and signs
+#' @export
+jump_sign <- function(obj, ...) {UseMethod("jump_sign")}
+
+
 .list_comparison <- function(obj) {UseMethod(".list_comparison")}
 .get_length <- function(obj) {UseMethod(".get_length")}

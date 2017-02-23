@@ -97,6 +97,19 @@ summary.bsFs <- function(object, ...){
   summary(object$tree)
 }
 
+jump_sign.bsFs <- function(obj, sorted = F, ...){
+  mat <- summary(obj)
+  mat <- mat[,c("Breakpoint", "Cusum")]
+  mat$Cusum <- sign(mat$Cusum)
+  
+  if(sorted){
+    idx <- order(mat$Breakpoint)
+    mat <- mat[idx,]
+  }
+  
+  mat
+}
+
 .refit_binseg <- function(y, jumps){
   stopifnot(max(jumps) < length(y), min(jumps) > 0)
   stopifnot(all(jumps %% 1 == 0), length(jumps) == length(unique(jumps)))
