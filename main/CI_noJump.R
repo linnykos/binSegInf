@@ -1,4 +1,4 @@
-source("simulation_header.R")
+source("../main/simulation_header.R")
 
 trials <- 1000
 n <- 100
