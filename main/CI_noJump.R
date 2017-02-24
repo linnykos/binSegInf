@@ -6,7 +6,7 @@ cores <- 20
 
 paramMat <- as.matrix(0)
 
-rule_closure <- function(n, gridsize = 100, method = binSeg_fixedSteps){
+rule_closure <- function(n, gridsize = 250, method = binSeg_fixedSteps){
   function(void){
     dat <- CpVector(n, 0, NA)
     y <- dat$data
@@ -42,8 +42,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
 
 ############################
 
-rule_bsFs <- rule_closure(n, 50, method = binSeg_fixedSteps)
-rule_flFs <- rule_closure(n, 50, method = fLasso_fixedSteps)
+rule_bsFs <- rule_closure(n, 250, method = binSeg_fixedSteps)
+rule_flFs <- rule_closure(n, 250, method = fLasso_fixedSteps)
 rule_ss <- rule_ss_closure(n, method = binSeg_fixedSteps)
 criterion <- function(x, vec){x}
 

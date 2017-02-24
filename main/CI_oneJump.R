@@ -10,7 +10,7 @@ jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
 jump.loc <- seq(0, 1, length.out = num.loc)[2:(num.loc-1)]
 paramMat <- as.matrix(expand.grid(0, jump.height, jump.loc))
 
-rule_closure <- function(n, gridsize = 100, method = binSeg_fixedSteps){
+rule_closure <- function(n, gridsize = 250, method = binSeg_fixedSteps){
   function(vec){
     dat <- CpVector(n, vec[1:2], vec[3])
     y <- dat$data
@@ -42,6 +42,7 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     
     res <- confidence_interval_ss(y, contrast)
     
+    truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
     c(abs(contrast %*% y), abs(contrast %*% truth), res[1:2], jumps(obj), 
       sum((obj$y.fit)^2)/n)
   }
@@ -49,8 +50,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
 
 ############################
 
-rule_bsFs <- rule_closure(n, 50, method = binSeg_fixedSteps)
-rule_flFs <- rule_closure(n, 50, method = fLasso_fixedSteps)
+rule_bsFs <- rule_closure(n, 250, method = binSeg_fixedSteps)
+rule_flFs <- rule_closure(n, 250, method = fLasso_fixedSteps)
 rule_ss <- rule_ss_closure(n, method = binSeg_fixedSteps)
 criterion <- function(x, vec){x}
 
