@@ -61,13 +61,13 @@ criterion <- function(x, vec){x}
 
 bsFs_1JumpPValue <- simulationGenerator(rule_bsFs, paramMat, criterion,
                                         trials, cores)
-save.image(file = paste0("../results/pvalue_oneJump_", Sys.Date(), ".RData"))
+save.image(file = paste0("../results/pvalue_twoJump_", Sys.Date(), ".RData"))
 
 flFs_1JumpPValue <- simulationGenerator(rule_flFs, paramMat, criterion,
                                         trials, cores)
-save.image(file = paste0("../results/pvalue_oneJump_", Sys.Date(), ".RData"))
+save.image(file = paste0("../results/pvalue_twoJump_", Sys.Date(), ".RData"))
 
 ss_1JumpPValue <- simulationGenerator(rule_ss, paramMat, criterion,
                                       trials, cores)
-save.image(file = paste0("../results/pvalue_oneJump_", Sys.Date(), ".RData"))
+save.image(file = paste0("../results/pvalue_twoJump_", Sys.Date(), ".RData"))
 quit(save = "no")

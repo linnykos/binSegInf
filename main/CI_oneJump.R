@@ -1,6 +1,6 @@
 source("../main/simulation_header.R")
 
-trials <- 1000
+trials <- 150
 num.height <- 21
 num.loc <- 11
 n <- 100
