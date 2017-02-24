@@ -32,6 +32,22 @@ test_that("contrast_vector is signed negative", {
   expect_true(attr(res, "sign") == -1)
 })
 
+test_that("contrast_vector agrees with jump direction when there's 1 jump", {
+  len <- 250
+
+  for(i in 1:len){
+    set.seed(i*10)
+    y <- rnorm(20)
+    obj <- binSeg_fixedSteps(y, 1)
+    sign1 <- sign(summary(obj)[,"Cusum"])
+
+    poly <- polyhedra(obj)
+    contrast <- contrast_vector(obj, 1)
+    
+    expect_true(attr(contrast, "sign") == sign1)
+  }
+})
+
 ################################
 
 ## .contrast_vector_segment is correct

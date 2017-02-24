@@ -15,6 +15,24 @@ test_that("p value is high power for correct changepoint", {
 })
 
 test_that("p value are roughly uniform", {
+  len <- 250
+  pvalue_null.vec <- numeric(len)
+  
+  for(i in 1:len){
+    set.seed(i*10)
+    y <- rnorm(20)
+    obj <- binSeg_fixedSteps(y, 1)
+    
+    poly <- polyhedra(obj)
+    contrast <- contrast_vector(obj, 1)
+    
+    pvalue_null.vec[i] <- pvalue(y, poly, contrast)
+  }
+  
+  expect_true(sum(abs(sort(pvalue_null.vec) - seq(0, 1, length.out = 250))) <= 5)
+})
+
+test_that("p value are roughly uniform compared to alt", {
   len <- 50
   pvalue_null.vec <- numeric(len)
   pvalue_alt.vec <- numeric(len)

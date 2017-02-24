@@ -28,7 +28,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))
   
-  rho <- as.numeric(polyhedra$gamma %*% contrast) / vv
+  rho <- as.numeric(polyhedra$gamma %*% contrast * attr(contrast, "sign")) / vv
   vec <- as.numeric((polyhedra$u - polyhedra$gamma %*% y + rho * z)/rho)
   
   if(any(rho > 0)) vlo <- max(vec[rho > 0]) else vlo <- -Inf
