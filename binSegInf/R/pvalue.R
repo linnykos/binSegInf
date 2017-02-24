@@ -7,17 +7,20 @@
 #' @param null_mean the null-hypothesis mean to test against
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
+#' @param precBits precision of Rmpfri
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
 pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
-  alternative = c("one.sided", "two.sided")){
+  alternative = c("one.sided", "two.sided"), precBits = NA){
+  
   alternative <- match.arg(alternative, c("one.sided", "two.sided"))
+  if(alternative == "two.sided") attr(contrast, "sign") <- 1
   
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
   res <- sapply(null_mean, function(x){.truncated_gauss_cdf(terms$term, mu = x, 
-    sigma = terms$sigma, a = terms$a, b = terms$b)})
+    sigma = terms$sigma, a = terms$a, b = terms$b, precBits = precBits)})
   
   if(alternative == "one.sided") res else 2*min(res, 1-res)
 }
@@ -37,7 +40,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_prec = 1e-2){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_prec = 1e-2, precBits = NA){
   if(b < a) stop("b must be greater or equal to a")
   
   val <- numeric(length(value))
@@ -50,13 +53,20 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   z_scaled <- (value[idx]-mu)/sigma
   denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
   numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
-  
+
   val[idx] <- numerator/denom
-  issue <- is.na(val[idx]) | any(denom < tol_prec) | any(numerator < tol_prec) |
+  
+  #fix any NAs first
+  issue <- any(is.na(val[idx]) | is.nan(val[idx]))
+  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                                                  mu, sigma, a, b, 10)
+  
+  #fix any source of possible imprecision
+  issue <- any(denom < tol_prec) | any(numerator < tol_prec) |
     any(val[idx] < tol_prec) | any(val[idx] > 1-tol_prec)
   
-  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
-                                                               mu, sigma, a, b)
+  if(any(issue) & !is.na(precBits)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                               mu, sigma, a, b, precBits)
   
   val
 }

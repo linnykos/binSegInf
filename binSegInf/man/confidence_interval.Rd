@@ -5,7 +5,8 @@
 \title{Confidence interval from post-selection inference}
 \usage{
 confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
-  gridsize = 250, alternative = c("two.sided", "one.sided"))
+  gridsize = 250, alternative = c("two.sided", "one.sided"),
+  precBits = NA)
 }
 \arguments{
 \item{y}{numeric vector}
@@ -25,6 +26,8 @@ test}
 
 \item{alternative}{string of either "one.sided" or "two.sided" for the 
 alternative. If one.sided, the alternative means the test statistic is positive.}
+
+\item{precBits}{precision of Rmpfri}
 }
 \value{
 a vector of two numbers, the lower and upper end of the confidence interval

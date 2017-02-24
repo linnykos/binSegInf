@@ -11,16 +11,17 @@
 #' test
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
+#' @param precBits precision of Rmpfri
 #'
 #' @return a vector of two numbers, the lower and upper end of the confidence interval
 #' @export
 confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
-  gridsize = 250, alternative = c("two.sided", "one.sided")){
+  gridsize = 250, alternative = c("two.sided", "one.sided"), precBits = NA){
   alternative <- match.arg(alternative, c("two.sided", "one.sided"))
   
   diff <- max(y) - min(y)
   seq.val <- seq(-2*diff, 2*diff, length.out = gridsize)
-  pvalue <- pvalue(y, polyhedra, contrast, sigma, null_mean = seq.val)
+  pvalue <- pvalue(y, polyhedra, contrast, sigma, null_mean = seq.val, precBits = precBits)
   
   if(alternative == "two.sided"){
     idx <- c(.select_index(pvalue, (1-alpha)/2, T), .select_index(pvalue, 1-(1-alpha)/2, F))

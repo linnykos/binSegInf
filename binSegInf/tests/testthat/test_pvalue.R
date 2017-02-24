@@ -29,7 +29,7 @@ test_that("p value are roughly uniform", {
     pvalue_null.vec[i] <- pvalue(y, poly, contrast)
   }
   
-  expect_true(sum(abs(sort(pvalue_null.vec) - seq(0, 1, length.out = 250))) <= 5)
+  expect_true(sum(abs(sort(pvalue_null.vec) - seq(0, 1, length.out = 250))) <= 7)
 })
 
 test_that("p value are roughly uniform compared to alt", {

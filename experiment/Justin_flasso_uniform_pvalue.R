@@ -17,7 +17,7 @@ for(i in 1:1000){
   pval_vec2[i] <- pvalue(y, poly, contrast)
   
   #use justin's code
-  pval_vec[i] <- justin_code(y, 1, contrast)$pval
+  pval_vec[i] <- justin_code(y, 1, attr(contrast, "sign") * contrast)$pval
   
   if(i %% 100 == 0) cat('*')
 }

@@ -2,7 +2,6 @@
 
 context("Test flasso implementation against genlassoinf")
 
-
 dualpathSvd2 <- function(y, D, approx=FALSE, maxsteps=2000, minlam=0,
                          rtol=1e-7, btol=1e-7, verbose=FALSE, object=NULL,
                          ctol=1e-10, cdtol=1e-4, do.gc=F){
@@ -1021,4 +1020,28 @@ test_that("rows of gamma is the same", {
   expect_true(all(match_value < 1e-4))
 })
 
+test_that("both methods give uniform pvalues", {
+  trials <- 100
+  pval_vec <- numeric(trials)
+  pval_vec2 <- numeric(trials)
+
+  for(i in 1:100){
+    set.seed(10*i)
+    n <- 100
+    y <- rnorm(n, 0, 1)
+    
+    #use my code
+    obj <- fLasso_fixedSteps(y, 1)
+    poly <- polyhedra(obj, y)
+    contrast <- contrast_vector(obj, 1)
+    pval_vec2[i] <- pvalue(y, poly, contrast)
+    
+    #use justin's code
+    pval_vec[i] <- justin_code(y, 1, attr(contrast, "sign") * contrast)$pval
+  }
+  
+  expect_true(sum(abs(pval_vec - pval_vec2)) < 1e-5)
+  expect_true(sum(abs(sort(pval_vec) - seq(0, 1, length.out = trials))) < 3)
+  expect_true(sum(abs(sort(pval_vec2) - seq(0, 1, length.out = trials))) < 3)
+})
 
