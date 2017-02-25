@@ -83,6 +83,28 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
   }
 })
 
+test_that("binSeg does not crash in one-jump one-length case but estimate 2 jumps", {
+  set.seed(10)
+  y <- c(-5, rep(0,9)) + 0.05*rnorm(10)
+  
+  obj <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
+test_that("binSeg does not crash when there is multiple splits and first one is singleton", {
+  set.seed(2)
+  vec <- c(0, 0.05)
+  dat <- CpVector(20, vec[c(1,2,1)], c(1/3, 2/3))
+  y <- dat$data
+  
+  obj2 <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj2)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
 ###############################
 
 ## .vector_matrix_signedDiff is correct

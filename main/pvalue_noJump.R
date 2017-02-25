@@ -13,7 +13,7 @@ rule_closure <- function(n, method = binSeg_fixedSteps){
     
     obj <- method(y, 1)
   
-    poly <- polyhedra(obj, y)
+    poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
     if(any(poly$gamma %*% y < poly$u)) stop()

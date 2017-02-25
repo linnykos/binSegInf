@@ -17,7 +17,7 @@ rule_closure <- function(n, gridsize = 250, method = binSeg_fixedSteps){
     
     obj <- method(y, 1)
   
-    poly <- polyhedra(obj, y)
+    poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
   
     res <- tryCatch({

@@ -14,12 +14,14 @@ rule_closure <- function(n, method = binSeg_fixedSteps){
     y <- dat$data
     
     obj <- method(y, 1)
-    poly <- polyhedra(obj, y)
+    poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     res <- pvalue(y, poly, contrast)
     
+    print(y)
     obj2 <- method(y, 2)
-    poly2 <- polyhedra(obj2, y)
+    print(obj2)
+    poly2 <- polyhedra(obj2)
     contrast_a <- contrast_vector(obj2, 1, sorted = T)
     contrast_b <- contrast_vector(obj2, 2, sorted = T)
     res_a <- pvalue(y, poly2, contrast_a)

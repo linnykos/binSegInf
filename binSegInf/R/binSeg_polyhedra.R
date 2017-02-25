@@ -8,7 +8,7 @@
 #' @return An object of class polyhedra
 #' @export
 polyhedra.bsFs <- function(obj, ...){
- is_valid(obj)
+  is_valid(obj)
   
   n <- .get_startEnd(obj$tree$name)[2] 
   numSteps <- obj$numSteps
