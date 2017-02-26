@@ -151,6 +151,23 @@ test_that("binSeg works with many jumps", {
   expect_true(length(res$tree$leaves) == 11)
 })
 
+test_that("binSeg behaves like in sbs in wbs package", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(2, 10), rep(1, 10)) + 0.01*rnorm(30)
+  
+  target.res <- wbs::sbs(y)
+  target.mat <- target.res$res[order(target.res$res[,"min.th"], decreasing = T),][1:5,]
+  
+  res <- binSeg_fixedSteps(y, 5)
+  summ <- summary(res)
+  
+  expect_true(all(sort(target.mat[,"s"]) == sort(summ$Start)))
+  expect_true(all(sort(target.mat[,"e"]) == sort(summ$End)))
+  expect_true(all(sort(target.mat[,"cpt"]) == sort(summ$Breakpoint)))
+  expect_true(sum(abs(sort(target.mat[,"CUSUM"], decreasing = T) + 
+      sort(summ$Cusum, decreasing = F))) < 1e-4)
+})
+
 #################################
 
 ## .cusum_contrast_full is correct

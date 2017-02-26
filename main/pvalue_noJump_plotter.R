@@ -12,15 +12,15 @@ samp.selector <- function(lis, type = NA, func = function(x){x}){
   which(bool.vec)
 }
 
-idx <- samp.selector(bsFs_0JumpPValue[1])
-
 ##############################3
 
 par(mfrow = c(1,2))
+idx <- samp.selector(bsFs_0JumpPValue[1])
 hist(bsFs_0JumpPValue[[1]][1,idx], freq = F, main = "Binary Segmentation", col = "gray", 
   breaks = 20, xlab = "p-value")
 lines(density(bsFs_0JumpPValue[[1]][1,idx], cut = 0), col = "red", lwd = 2)
 
+idx <- samp.selector(flFs_0JumpPValue[1])
 hist(flFs_0JumpPValue[[1]][1,idx], freq = F, main = "Fused Lasso", col = "gray", 
   breaks = 20, xlab = "p-value")
 lines(density(flFs_0JumpPValue[[1]][1,idx], cut = 0), col = "red", lwd = 2)
@@ -28,10 +28,12 @@ lines(density(flFs_0JumpPValue[[1]][1,idx], cut = 0), col = "red", lwd = 2)
 ############################
 
 par(mfrow = c(1,2))
+idx <- samp.selector(bsFs_0JumpPValue[1])
 qqplot(bsFs_0JumpPValue[[1]][1,idx], seq(0, 1, length.out = ncol(bsFs_0JumpPValue[[1]][,idx])), 
   pch = 16, xlab = "Actual quantile", ylab = "Theoretical quantile")
 lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)
 
+idx <- samp.selector(flFs_0JumpPValue[1])
 qqplot(flFs_0JumpPValue[[1]][1,idx], seq(0, 1, length.out = ncol(flFs_0JumpPValue[[1]][,idx])), 
   pch = 16, xlab = "Actual quantile", ylab = "Theoretical quantile")
 lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)

@@ -41,4 +41,3 @@ must be distinct integers. Otherwise, an error will be thrown.
 Here, func is a function that dictates the noise model. For example, the
 default is rnorm.
 }
-

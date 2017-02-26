@@ -19,4 +19,3 @@ a set of numeric integers.
 \description{
 Here, an idx i is a changepoint if i+1 != i.
 }
-

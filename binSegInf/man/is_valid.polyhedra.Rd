@@ -15,4 +15,3 @@ TRUE if valid
 \description{
 Check if polyhedra is valid
 }
-

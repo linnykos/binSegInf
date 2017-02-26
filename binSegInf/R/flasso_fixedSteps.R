@@ -101,15 +101,16 @@ summary.flFs <- function(object, ...){
   nonactive.idx <- c(1:(n-1))[-model.mat$Index]
   u.vec[nonactive.idx] <- a.vec - lambda*b.vec
   
-  as.numeric(y - t(.form_Dmatrix(n))%*%u.vec)
+  as.numeric(y - Matrix::crossprod(.form_Dmatrix(n)[-n,], u.vec))
 }
 
+#is square
 .form_Dmatrix <- function(n){
-  t(sapply(1:(n-1), function(x){
-    vec <- rep(0, n)
-    vec[c(x, x+1)] <- c(-1,1)
-    vec
-  }))
+  i <- rep(1:(n-1), each = 2)
+  j <- c(1, rep(2:(n-1), each = 2), n)
+  x <- rep(c(-1, 1), times = n-1)
+  
+  Matrix::sparseMatrix(i, j, x = x, triangular= TRUE)
 }
 
 .select_nonactive <- function(n, vec){
@@ -118,43 +119,19 @@ summary.flFs <- function(object, ...){
 }
 
 .compute_fused_numerator <- function(D, idx, y){
-  stopifnot(is.numeric(D), is.matrix(D), is.numeric(y))
-  stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
-  stopifnot(min(idx) >= 1, max(idx) <= length(y) - 1)
-  stopifnot(ncol(D) == length(y), nrow(D) == length(y) - 1)
-  
-  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
-  Dy <- D[idx,,drop = F]%*%y
-  
-  .svd_solve(DDT, Dy)
+  as.numeric(.compute_fused_numerator_polyhedra(D, idx) %*% y)
 }
 
 .compute_fused_denominator <- function(D, idx, model.mat){
-  stopifnot(is.numeric(D), is.matrix(D))
   stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
   stopifnot(min(idx) >= 1, max(idx) <= ncol(D) - 1)
-  stopifnot(ncol(D) == nrow(D) + 1)
   
   if(length(idx) == nrow(D) || length(model.mat) == 0 || any(is.na(model.mat$Index))) 
-    return(rep(0, nrow(D)))
+    return(rep(0, nrow(D) - 1))
   
   active.idx <- model.mat$Index; sign.vec <- model.mat$Sign
-  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
-  DDTs <- D[idx,,drop = F] %*% t(D[active.idx,,drop = F]) %*% sign.vec
+  DDT <- Matrix::tcrossprod(D[idx,,drop = F])
+  DDTs <- Matrix::tcrossprod(D[idx,,drop = F], D[active.idx,,drop = F]) %*% sign.vec
   
-  .svd_solve(DDT, DDTs)
-}
-
-#solves Ax = b for A as a PSD matrix. Equivalently, (A.inv)b
-.svd_solve <- function(A, b, tol = 1e-7){
-  stopifnot(is.matrix(A), is.numeric(A), is.numeric(b))
-  stopifnot(nrow(A) == length(b))
-  
-  s <- svd(A)
-  d <- s$d
-  stopifnot(all(d > -tol)) #ensure A is PSD
-  bool <- (d > tol)
-  d[bool] <- 1/d[bool]; d[!bool] <- 0
-  
-  as.numeric(s$v %*% (d * t(s$u) %*% b))
+  as.numeric(Matrix::solve(DDT, DDTs))
 }

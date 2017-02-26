@@ -15,4 +15,3 @@ TRUE if valid
 \description{
 is_valid for bsFs
 }
-

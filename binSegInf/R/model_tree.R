@@ -41,7 +41,7 @@ is_valid.Node <- function(obj){
 jumps.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
-  res <- sapply(leaves, function(x){obj$FindNode(x)$breakpoint})
+  res <- sapply(leaves, function(x){data.tree::FindNode(obj, x)$breakpoint})
   if(sorted) sort(res) else res
 }
 
@@ -60,7 +60,7 @@ jumps.Node <- function(obj, sorted = F, ...){
 jump_cusum.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
-  res <- sapply(leaves, function(x){obj$FindNode(x)$cusum})
+  res <- sapply(leaves, function(x){data.tree::FindNode(obj, x)$cusum})
   
   if(sorted){
     jumps <- jumps(obj, sorted = T)
@@ -101,7 +101,7 @@ summary.Node <- function(object, ...){
 .find_leadingBreakpoint <- function(tree){
   leaves.names <- .get_leaves_names(tree)
   cusum.vec <- sapply(leaves.names, function(x){
-    tree$FindNode(x)$cusum
+    data.tree::FindNode(tree, x)$cusum
   })
   
   leaves.names[which.max(abs(cusum.vec))]

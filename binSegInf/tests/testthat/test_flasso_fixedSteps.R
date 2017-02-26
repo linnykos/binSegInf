@@ -54,6 +54,31 @@ test_that("fLasso gets the right 4 jumps", {
   expect_true(all(res$model$Lambda == sort(res$model$Lambda, decreasing = T)))
 })
 
+test_that("fLasso behaves as in fusedlasso1d in genlasso package", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(2, 10), rep(1, 10)) + 0.01*rnorm(30)
+  
+  target.res <- genlasso::fusedlasso1d(y)
+  target.vec <- coef(target.res, df = 6)$beta
+  target.changepoints <- which(abs(diff(target.vec)) > 1e-4)
+  
+  res <- fLasso_fixedSteps(y, 5)
+  
+  expect_true(all(sort(target.changepoints) == sort(res$model$Index)))
+  expect_true(sum(abs(target.vec - res$y.fit)) < 1e-4)
+})
+
+test_that("fLasso can handle large problems", {
+  set.seed(10)
+  y <- c(rep(0, 1000), rep(1, 1000)) + 0.01*rnorm(2000)
+  
+  start <- proc.time()[3]
+  target.res <- genlasso::fusedlasso1d(y)
+  end <- proc.time()[3]
+  
+  expect_true(abs(end - start) <= 180)
+})
+
 ##############################
 
 ## jumps.flFs is correct
@@ -104,14 +129,14 @@ test_that(".refit_flasso produces a reasonable fit", {
 test_that(".form_Dmatrix forms a correct matrix", {
   res <- .form_Dmatrix(10)
   
-  expect_true(all(dim(res) == c(9,10)))
+  expect_true(all(dim(res) == c(9,10)) | all(dim(res) == c(10,10)))
   
   res2 <- matrix(0, 9, 10)
   for(i in 1:9){
     res2[i,c(i,i+1)] <- c(-1,1)
   }
   
-  expect_true(all(res == res2))
+  expect_true(all(res[1:9,] == res2))
 })
 
 #############################
@@ -133,23 +158,6 @@ test_that(".select_nonactive returns full vector", {
   vec <- rep(NA, 10)
   res <- .select_nonactive(20, vec)
   expect_true(all(res == 1:19))
-})
-
-###############################
-
-## .svd_solve is correct
-
-test_that(".svd_solve solves correctly", {
-  A <- matrix(1:25, 5, 5)
-  A <- (t(A) + A)/2
-  x <- c(1:5)
-  b <- A%*%x
-  
-  res <- .svd_solve(A, b)
-  
-  expect_true(length(res) == 5)
-  expect_true(sum(abs(x-res)) < 1e-7)
-  expect_true(!is.matrix(res))
 })
 
 ####################################
@@ -196,4 +204,3 @@ test_that(".compute_fused_denominator can return all 0's", {
   expect_true(all(res == 0))
    
 })
-

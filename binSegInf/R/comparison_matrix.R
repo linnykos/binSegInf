@@ -49,6 +49,13 @@
   stopifnot(nodeName %in% leaves.names)
   leaves.names <- leaves.names[leaves.names != nodeName]
   
+  #remove leaves if start = end
+  idx <- sapply(leaves.names, function(x){
+    tmp <- strsplit(x, split = "-")
+    if(tmp[[1]][1] == tmp[[1]][2]) return(FALSE) else return(TRUE)
+  })
+  if(length(idx) > 0) leaves.names <- leaves.names[which(idx)]
+  
   if(length(leaves.names) == 0){
     return(NA)
   } else {

@@ -14,6 +14,9 @@ r_binary_packages:
     - plyr
     - hash
     - Rmpfr
+    - wbs
+    - genlasso
+    - Matrix
 
 after_success:
   - Rscript -e 'library(covr); codecov()'
