@@ -3,7 +3,7 @@ source("../main/simulation_header.R")
 trials <- 1000
 num.height <- 21
 n <- 100
-cores <- 20
+cores <- NA
 
 jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
 paramMat <- as.matrix(expand.grid(0, jump.height))
@@ -18,9 +18,7 @@ rule_closure <- function(n, method = binSeg_fixedSteps){
     contrast <- contrast_vector(obj, 1)
     res <- pvalue(y, poly, contrast)
     
-    print(y)
     obj2 <- method(y, 2)
-    print(obj2)
     poly2 <- polyhedra(obj2)
     contrast_a <- contrast_vector(obj2, 1, sorted = T)
     contrast_b <- contrast_vector(obj2, 2, sorted = T)

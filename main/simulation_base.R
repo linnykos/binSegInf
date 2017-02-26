@@ -6,9 +6,9 @@ simulationGenerator <- function(rule, paramMat, criterion, trials,
   res <- lapply(1:nrow(paramMat), function(x){
     cat(paste0("Row ", x, " started!\n"))
 
-    fun <- function(y){set.seed(y); criterion(rule(paramMat[x,]), paramMat[x,])}
+    fun <- function(y, verbose = F){if(verbose) print(y); set.seed(y); criterion(rule(paramMat[x,]), paramMat[x,])}
     if(is.na(cores)){
-      sapply(1:trials, fun)
+      sapply(1:trials, fun, verbose = T)
     } else {
       .adjustFormat(foreach(trial = 1:trials) %dopar% fun(trial))
     }
