@@ -57,7 +57,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   
   #old <- val[idx]
   #if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
-                                                                mu, sigma, a, b)
+                                                                ## mu, sigma, a, b)
   # if(any(issue)) {
   #   type <- numeric(0)
   #   if(any(denom < tol_prec)) type <- paste0(type, 1)
