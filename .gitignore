@@ -6,3 +6,7 @@
 *.out
 .Rproj.user
 .Rd
+*.Rd
+*~
+\#*#
+.#*
