@@ -91,6 +91,13 @@ test_that(".threeColumnMatrix_from_nodeVec can exclude a value", {
   expect_true(all(res == cbind(1, 1:3, 5)))
 })
 
+test_that(".threeColumnMatrix_from_nodeVec has a midpoint even if excluded", {
+  res <- .threeColumnMatrix_from_nodeVec(c(1,2), 1)
+  
+  expect_true(all(dim(res) == c(1,3)))
+  expect_true(all(res == c(1,1,2)))
+})
+
 ############################################
 
 ## .threeColumnMatrix_from_nodeMatrix is correct

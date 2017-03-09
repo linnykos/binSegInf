@@ -117,6 +117,20 @@ test_that("binSeg does not crash when there is multiple splits and last one is s
   expect_true(all(poly$gamma %*% y >= poly$u))
 })
 
+test_that("binSeg works when there are 2 changepoints", {
+  vec <- c(0, 0.05)
+  n <- 100
+  method <- binSeg_fixedSteps
+  
+  set.seed(104)
+  dat <- CpVector(n, vec[c(1,2,1)], c(1/3, 2/3))
+  y <- dat$data
+  obj <- method(y, 2)
+  poly <- polyhedra(obj)
+  
+  expect_true(class(poly) == "polyhedra")
+})
+
 ###############################
 
 ## .vector_matrix_signedDiff is correct

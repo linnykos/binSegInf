@@ -40,6 +40,7 @@
   } else{
     mid.vec <- vec[1]:(vec[2]-1)
     mid.vec <- mid.vec[mid.vec != exclude]
+    if(length(mid.vec) == 0) return(numeric(0))
     cbind(vec[1], mid.vec, vec[2])
   }
 }
