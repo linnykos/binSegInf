@@ -3,7 +3,7 @@ source("../main/simulation_header.R")
 trials <- 1000
 num.height <- 21
 n <- 100
-cores <- NA
+cores <- 20
 
 jump.height <- exp(seq(log(0.05), log(5), length.out = num.height))
 paramMat <- as.matrix(expand.grid(0, jump.height))
@@ -46,6 +46,8 @@ rule_ss_closure <- function(n, method = binSeg_fixedSteps){
     contrast_b <- contrast_vector_ss(obj2, 2, sorted = T)
     res_a <- pvalue_ss(y, contrast_a)
     res_b <- pvalue_ss(y, contrast_b)
+    
+    truth <- binSegInf:::.formMeanVec(n, dat$jump.height, dat$jump.idx)
     
     c(res, jumps(obj), sum((obj$y.fit - truth)^2)/n,
       res_a, res_b, jumps(obj2, sorted = T), sum((obj2$y.fit - truth)^2)/n)
