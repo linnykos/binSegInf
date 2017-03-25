@@ -17,4 +17,3 @@ vector of cusums
 \description{
 Generic function to count the number of jump cusum
 }
-

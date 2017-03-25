@@ -57,9 +57,9 @@ flMat <- form.matrix(flFs_1JumpCI)
 
 par(mfrow = c(1,2))
 image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Binary Segmentation")
+  ylab = "Size of n", main = "Binary Segmentation")
 image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Fused Lasso")
+  ylab = "Size of n", main = "Fused Lasso")
 
 ####################################
 
@@ -70,10 +70,10 @@ zlim <- c(min(bsMat, flMat), max(bsMat, flMat))
 #plot the unconditional length in absolute scale
 par(mfrow = c(1,2))
 image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Binary Segmentation")
+  ylab = "Size of n", main = "Binary Segmentation")
 contour(.detangle_matrix(bsMat), add = T, levels = 1, lwd = 3)
 image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Fused Lasso")
+  ylab = "Size of n", main = "Fused Lasso")
 contour(.detangle_matrix(flMat), add = T, levels = 1, lwd = 3)
 
 ######################################
@@ -84,9 +84,9 @@ flMat <- form.matrix(flFs_1JumpCI, resp.func = resp.power)
 
 par(mfrow = c(1,2))
 image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Binary Segmentation")
+  ylab = "Size of n", main = "Binary Segmentation")
 image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index", 
-  ylab = "Jump Height", main = "Fused Lasso")
+  ylab = "Size of n", main = "Fused Lasso")
 
 ###############################################
 

@@ -18,7 +18,7 @@ binSeg_fixedSteps <- function(y, numSteps){
   for(steps in 1:numSteps){
     leaves.names <- .get_leaves_names(tree)
     for(i in 1:length(leaves.names)){
-      leaf <- tree$FindNode(leaves.names[i])
+      leaf <- data.tree::FindNode(tree, leaves.names[i])
       
       res <- .find_breakpoint(y, leaf$start, leaf$end)
       
@@ -26,7 +26,7 @@ binSeg_fixedSteps <- function(y, numSteps){
     }
     
     node.name <- .find_leadingBreakpoint(tree)
-    node.selected <- tree$FindNode(node.name)
+    node.selected <- data.tree::FindNode(tree, node.name)
     node.selected$active <- steps
      
     node.pairs <- .split_node(node.selected)

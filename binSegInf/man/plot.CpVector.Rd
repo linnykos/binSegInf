@@ -30,4 +30,3 @@ res <- CpVector(n = 100, jump.height = 1:4, jump.loc = c(.25,.5,.75))
 defaultPlotDefaults()
 plot(res, ylab = "Value", xlab = "n")
 }
-

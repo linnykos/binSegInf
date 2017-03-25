@@ -17,4 +17,3 @@ An object of class polyhedra
 \description{
 Generic function to generate polyhedra
 }
-

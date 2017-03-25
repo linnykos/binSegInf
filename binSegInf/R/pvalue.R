@@ -7,13 +7,15 @@
 #' @param null_mean the null-hypothesis mean to test against
 #' @param alternative string of either "one.sided" or "two.sided" for the 
 #' alternative. If one.sided, the alternative means the test statistic is positive.
-#' @param precBits the number of bits used to compute the p value
+#' @param precBits precision of Rmpfri
 #'
 #' @return a numeric p-value between 0 and 1
 #' @export
 pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
-  alternative = c("one.sided", "two.sided"), precBits = 10){
+  alternative = c("one.sided", "two.sided"), precBits = NA){
+  
   alternative <- match.arg(alternative, c("one.sided", "two.sided"))
+  if(alternative == "two.sided") attr(contrast, "sign") <- 1
   
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
@@ -24,12 +26,12 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 }
 
 .compute_truncGaus_terms <- function(y, polyhedra, contrast, sigma){
-  z <- as.numeric(contrast %*% y)
+  z <- as.numeric(contrast %*% y) * attr(contrast, "sign")
   
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))
   
-  rho <- as.numeric(polyhedra$gamma %*% contrast) / vv
+  rho <- as.numeric(polyhedra$gamma %*% contrast * attr(contrast, "sign")) / vv
   vec <- as.numeric((polyhedra$u - polyhedra$gamma %*% y + rho * z)/rho)
   
   if(any(rho > 0)) vlo <- max(vec[rho > 0]) else vlo <- -Inf
@@ -38,23 +40,45 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol = 1e-5, 
-  precBits = 10){
+.truncated_gauss_cdf <- function(value, mu, sigma, a, b, tol_prec = 1e-2, precBits = NA){
   if(b < a) stop("b must be greater or equal to a")
   
-  sapply(value, function(x){
-    if(x <= a) { 
-      0
-    } else if(x >= b){
-      1
-    } else {
-      a <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
-      b <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
-      z <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
+  val <- numeric(length(value))
+  val[value <= a] <- 0
+  val[value >= b] <- 1
+  idx <- intersect(which(value >= a), which(value <= b))
+  if(length(idx) == 0) return(val)
+  
+  a_scaled <- (a-mu)/sigma; b_scaled <- (b-mu)/sigma
+  z_scaled <- (value[idx]-mu)/sigma
+  denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
+  numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
 
-      denom <- Rmpfr::pnorm(b) - Rmpfr::pnorm(a)
-      if(denom < tol) denom <- tol
-      as.numeric((Rmpfr::pnorm(b) - Rmpfr::pnorm(z))/denom)
-    }
-  })
+  val[idx] <- numerator/denom
+  
+  #fix any NAs first
+  issue <- any(is.na(val[idx]) | is.nan(val[idx]))
+  if(any(issue)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                                                  mu, sigma, a, b, 10)
+  
+  #fix any source of possible imprecision
+  issue <- any(denom < tol_prec) | any(numerator < tol_prec) |
+    any(val[idx] < tol_prec) | any(val[idx] > 1-tol_prec)
+  
+  if(any(issue) & !is.na(precBits)) val[idx[issue]] <- .truncated_gauss_cdf_Rmpfr(value[idx[issue]], 
+                                                               mu, sigma, a, b, precBits)
+  
+  val
+}
+
+.truncated_gauss_cdf_Rmpfr <- function(value, mu, sigma, a, b, tol_zero = 1e-5,
+                                       precBits = 10){
+  
+  a_scaled <- Rmpfr::mpfr((a-mu)/sigma, precBits = precBits)
+  b_scaled <- Rmpfr::mpfr((b-mu)/sigma, precBits = precBits)
+  z_scaled <- Rmpfr::mpfr((value-mu)/sigma, precBits = precBits)  
+  
+  denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
+  if(denom < tol_zero) denom <- tol_zero
+  as.numeric(Rmpfr::mpfr((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom, precBits = precBits))
 }

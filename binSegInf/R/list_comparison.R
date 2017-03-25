@@ -7,10 +7,10 @@
   tree2 <- .create_node(1, obj$tree$end)
 
   for(i in 1:numSteps){
-    breakpoint <- obj$tree$FindNode(active.vec[i])$breakpoint
+    breakpoint <- data.tree::FindNode(obj$tree, active.vec[i])$breakpoint
     comp.lis[[i]] <- .form_comparison(tree2, active.vec[i], breakpoint)
 
-    node.selected <- tree2$FindNode(active.vec[i])
+    node.selected <- data.tree::FindNode(tree2, active.vec[i])
     node.selected$breakpoint <- breakpoint
     
     node.pairs <- .split_node(node.selected)

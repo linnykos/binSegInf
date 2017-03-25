@@ -1,0 +1,798 @@
+---
+title: "Simulation Results"
+output: html_document
+---
+
+We investigate 3 methods in this writeup: binary segmentation with fixed number
+of steps, fused lasso with fixed number of steps, and sample splitting (using the
+even samples for fitting via binary segmentation with fixed number
+of steps, odd samples for testing).
+
+## No Jump Simulations
+
+```{r, echo=FALSE}
+rm(list=ls())
+load("../results/pvalue_noJump_2017-02-23.RData")
+
+n <- 100
+alpha <- 0.05
+.rotate <- function(mat){t(mat)[,nrow(mat):1]}
+
+samp.selector <- function(lis, type = NA, func = function(x){x}){
+  if(is.na(type)) return(1:ncol(lis[[1]]))
+
+  bool.vec <- sapply(lis[[1]][2,], func)
+  which(bool.vec)
+}
+```
+
+Throughout this section, there is no jump, $n=100$ and $\sigma=1$.
+
+**Selection**
+
+We can investigate where the jumps lie.
+
+```{r, echo = FALSE}
+par(mfrow = c(1,3))
+hist(bsFs_0JumpPValue[[1]][2,], col = "gray", breaks = 20,
+  xlab = "Binary Segmentation", main = "")
+hist(flFs_0JumpPValue[[1]][2,], col = "gray", breaks = 20,
+  xlab = "Fused Lasso", main = "")
+plot(bsFs_0JumpPValue[[1]][2,], flFs_0JumpPValue[[1]][2,], pch = 16, cex = 2,
+  xlab = "Binary Segmentation", ylab = "Fused Lasso")
+lines(c(0,100), c(0,100), col = "red", lwd = 2)
+```
+
+**P Values** 
+These are one-sided p-values. We plot the QQ plots.
+
+```{r, echo = FALSE}
+par(mfrow = c(1,3))
+idx <- samp.selector(bsFs_0JumpPValue[1])
+qqplot(bsFs_0JumpPValue[[1]][1,idx], seq(0, 1, length.out = ncol(bsFs_0JumpPValue[[1]][,idx])), 
+  pch = 16, xlab = "Actual quantile", ylab = "Theoretical quantile", main = "Binary Segmentation")
+lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)
+
+idx <- samp.selector(flFs_0JumpPValue[1])
+qqplot(flFs_0JumpPValue[[1]][1,idx], seq(0, 1, length.out = ncol(flFs_0JumpPValue[[1]][,idx])), 
+  pch = 16, xlab = "Actual quantile", ylab = "Theoretical quantile", main = "Fused Lasso")
+lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)
+
+idx <- samp.selector(ss_0JumpPValue[1])
+qqplot(ss_0JumpPValue[[1]][1,idx], seq(0, 1, length.out = ncol(ss_0JumpPValue[[1]][,idx])), 
+  pch = 16, xlab = "Actual quantile", ylab = "Theoretical quantile", main = "Sample Split")
+lines(x = c(0,1), y = c(0, 1), col = "red", lwd = 2)
+```
+
+<!-- We can also investigate if there is any relationship between the p-values. -->
+<!-- ```{r, echo = F} -->
+<!-- plot(bsFs_0JumpPValue[[1]][1,idx], flFs_0JumpPValue[[1]][1,idx], pch = 16, cex = 2, -->
+<!--   xlab = "Binary Segmentation", ylab = "Fused Lasso") -->
+<!-- ``` -->
+
+**Confidence Interval**
+
+```{r, echo = F}
+rm(list=ls())
+load("../results/CI_noJump_2017-02-24.RData")
+
+n <- 100
+.rotate <- function(mat){t(mat)[,nrow(mat):1]}
+
+samp.selector <- function(lis, type = NA, func = function(x){TRUE}){
+  if(is.na(type)) return(1:ncol(lis[[1]]))
+
+  bool.vec <- sapply(lis[[1]][2,], func)
+  which(bool.vec)
+}
+
+compute.confidence <- function(mat){
+  if(nrow(mat) >= 6) good.trials <- which(mat[6,] == 0) else good.trials <- 1:ncol(mat)
+  coverage.vec <- apply(mat[,good.trials], 2, function(x){
+    if(0 >= x[2] & 0 <= x[3]) TRUE else FALSE
+  })
+  
+  sum(coverage.vec)/ncol(mat[,good.trials])
+}
+
+compute.CIlength <- function(mat, keep.NA = F){
+  if(keep.NA) good.trials <- 1:ncol(mat) else good.trials <- which(mat[6,] == 0)
+  res <- apply(mat[,good.trials], 2, function(x){x[3]-x[2]})
+  
+  res[is.infinite(res)] <- NA
+  res
+}
+```
+
+We can compute the coverage for Binary Segmentation and Fused Lasso
+respectively.
+
+```{r}
+compute.confidence(bsFs_0JumpCI[[1]])
+compute.confidence(flFs_0JumpCI[[1]])
+compute.confidence(ss_0JumpCI[[1]])
+```
+
+We can also plot the quantiles of the confidence interval width. Here, the red
+line denotes the expected length between the 97.5\% and 2.5\% quantiles of a 
+standard Gaussian. 
+
+```{r, echo = F}
+
+bs.ci <- compute.CIlength(bsFs_0JumpCI[[1]])
+fl.ci <- compute.CIlength(flFs_0JumpCI[[1]])
+ss.ci <- compute.CIlength(ss_0JumpCI[[1]], keep.NA = T)
+y.max <- max(bs.ci, fl.ci)
+
+par(mfrow = c(1,3))
+plot(sort(bs.ci), pch = 16, ylab = "CI width", ylim = c(0, y.max), main = "Binary Segmentation")
+expected.diff <- qnorm(.975)-qnorm(.025)
+lines(c(-1e5,1e5), rep(expected.diff, 2), col = "red", lwd = 2)
+
+plot(sort(fl.ci), pch = 16, ylab = "CI width", ylim = c(0, y.max), main = "Fused Lasso")
+expected.diff <- qnorm(.975)-qnorm(.025)
+lines(c(-1e5,1e5), rep(expected.diff, 2), col = "red", lwd = 2)
+
+plot(sort(ss.ci), pch = 16, ylab = "CI width", ylim = c(0, y.max), main = "Sample Split")
+expected.diff <- qnorm(.975)-qnorm(.025)
+lines(c(-1e5,1e5), rep(expected.diff, 2), col = "red", lwd = 2)
+```
+
+```{r, echo = F}
+plot.intervals <- function(lis, limit = 50, ylim = NA, ...){
+  idx1 <- samp.selector(lis, ...)
+  res <- lis[[1]]
+  if(nrow(res) >= 6) idx2 <- which(res[6,] == 0) else idx2 <- 1:ncol(res)
+  idx3 <- unique(which(0>=res[3,]), which(0<=res[2,]))
+  idx <- setdiff(intersect(idx1, idx2), idx3)
+  if(length(idx) > limit) idx <- idx[1:limit]
+  
+  if(any(is.na(ylim))) ylim = c(min(res[2,idx]), max(res[3,idx]))
+  
+  plot(NA, xlim = c(1, length(idx)), ylim = ylim,
+    xlab = "Index", ylab = "Value")
+  for(i in 1:length(idx)){
+    if(0 >= res[2,idx[i]] & 0 <= res[3,idx[i]]){
+      col = 4
+    } else {
+      col = 2
+    }
+    
+    lines(x = rep(i,2), y = c(res[2,idx[i]], res[3,idx[i]]), col = col, lwd = 2)
+    points(i, 0, col = 1, cex = 2, pch = 16)
+    points(i, res[1,idx[i]], col = col, cex = 1, pch = 16)
+  }
+  
+  invisible()
+}
+```
+
+We can also visualize the two-sided confidence intervals. 
+
+```{r, echo = F}
+par(mfrow = c(1,3))
+plot.intervals(bsFs_0JumpCI, limit = 25, ylim = c(-5,4))
+title(main = "Binary Segmentation")
+
+plot.intervals(flFs_0JumpCI, limit = 25, ylim = c(-5,4))
+title(main = "Fused Lasso")
+
+plot.intervals(ss_0JumpCI, limit = 25, ylim = c(-5,4))
+title(main = "Sample Split")
+```
+
+
+## One Jump Simulation. Fixed n, varying location and height
+
+
+```{r, echo = F}
+rm(list=ls())
+load("../results/pvalue_oneJump_2017-02-24.RData")
+
+n <- 100
+alpha <- 0.05
+
+.detangle_matrix <- function(mat){
+  x = as.numeric(colnames(mat))
+  y = as.numeric(rownames(mat))
+  z = t(mat)
+
+  list(x = x, y = y, z = z)
+}
+
+samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){
+  if(is.na(type)) return(1:ncol(lis[[1]]))
+
+  bool.vec <- sapply(lis[[1]][2,], func, y = true.loc)
+  which(bool.vec)
+}
+
+true.location <- function(lis){
+  jump.percent  <-  as.numeric(strsplit(names(lis)[1],split = "-")[[1]][3])
+  round(n*jump.percent)
+}
+
+form.matrix <- function(res, alpha, resp.func = resp.power, ...){
+  mat  <- matrix (0, ncol = length(jump.loc), nrow = length (jump.height))
+  colnames(mat) <- as.character(jump.loc)
+  rownames(mat) <- as.character(jump.height)
+
+  for (i in 1:length(res)){
+    true.loc <- true.location(res[i])
+
+    idx <- samp.selector(res[i], true.loc, ...)
+    mat[i] <- resp.func(res[[i]], idx, true.loc)
+  }
+
+  mat
+}
+
+#some default resp.func
+resp.power <- function(res, idx, true.loc){
+  length(which(res[1,idx] <= alpha))/length(idx)
+}
+resp.exact <- function(res, idx, true.loc){
+  length(idx)/ncol(res)
+}
+resp.variance <- function(res, idx, true.loc){
+  mean(abs(res[2,idx]-true.loc))/n
+}
+```
+
+
+Here, $n=100$, $\sigma = 1$. The jump height varies from 0.05 to 5, and
+the jump location varies from 10, 20, ... 90. We stop both binary
+segmentation and fused lasso after one jump. The left-side of the mean signal
+is always at 0, and the right-side of the mean signal is strictly positive.
+
+**Selection**
+
+We can plot the selected jump location for different settings.
+First, let's do a jump height of 0.5 at location 10.
+
+```{r, echo = F}
+par(mfrow = c(1,2))
+hist(bsFs_1JumpPValue[[11]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Binary Segmentation", main = "Height 0.5, at 10")
+hist(flFs_1JumpPValue[[11]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Fused Lasso", main = "Height 0.5, at 10")
+```
+
+Next, we can do jump height of 1.9 at location 10.
+
+```{r, echo = F}
+par(mfrow = c(1,2))
+hist(bsFs_1JumpPValue[[17]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Binary Segmentation", main = "Height 1.9, at 10")
+hist(flFs_1JumpPValue[[17]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Fused Lasso", main = "Height 1.9, at 10")
+```
+
+Next, we can do jump height of 0.5 at location 50.
+
+```{r, echo = F}
+par(mfrow = c(1,2))
+hist(bsFs_1JumpPValue[[95]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Binary Segmentation", main = "Height 0.5, at 50")
+hist(flFs_1JumpPValue[[95]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Fused Lasso", main = "Height 0.5, at 50")
+```
+
+Next, we can do jump height of 1.9 at location 50.
+
+```{r, echo = F}
+par(mfrow = c(1,2))
+hist(bsFs_1JumpPValue[[101]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Binary Segmentation", main = "Height 1.9, at 50")
+hist(flFs_1JumpPValue[[101]][2,], xlim = c(0, 100), breaks = 20, col = "gray",
+  xlab = "Fused Lasso", main = "Height 1.9, at 50")
+```
+
+We can also plot a heatmap of when each method gets the right jump exactly. Here,
+the $y$-axis is plotted in absolute jump height. In these heatmaps (and more to come),
+red denotes small values and white denotes large values. Hence, we want as much yellow in the
+plot as possible.
+
+```{r, echo = F}
+vec <- c("ss_1JumpPValue", "bsFs_1JumpPValue", "flFs_1JumpPValue")
+name_vec <- c("Sample Split", "Binary Segmentation", "Fused Lasso")
+
+par(mfrow = c(1,3))
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha, type = T, resp.func = resp.exact)
+  image(.detangle_matrix(mat), zlim = c(0,1), xlab = "Jump Index",
+    ylab = "Jump Height", main = name_vec[i])
+  contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.5, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.25, lwd = 3)
+}
+```
+
+We can also color the plot where each square is determined by the mean absolute
+distance from the estimated jump to the true jump. Here, the $y$-axis
+is the log-scale to emphasize the difference. We want as much red in these plot as possible.
+
+```{r, echo = F}
+vec <- c("ss_1JumpPValue", "bsFs_1JumpPValue", "flFs_1JumpPValue")
+name_vec <- c("Sample Split", "Binary Segmentation", "Fused Lasso")
+
+zlim <- c(Inf, -Inf)
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha, resp.func = resp.variance)
+  zlim[1] <- min(zlim[1], min(mat)); zlim[2] <- max(zlim[2], max(mat))
+}
+
+par(mfrow = c(1,3))
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha, resp.func = resp.variance)
+  rownames(mat) <- as.character(log(as.numeric(rownames(mat))))
+  image(.detangle_matrix(mat), zlim = zlim, xlab = "Jump Index",
+    ylab = "log Jump Height", main = name_vec[i])
+  contour(.detangle_matrix(mat), add = T, levels = 0.05, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.15, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.25, lwd = 3)
+}
+
+```
+
+
+**P Values**
+
+These are one-sided p-values.
+We can plot the unconditional power where the $y$-axis in the image
+is the log jump height. We want as much white as possible.
+
+```{r, echo = F}
+vec <- c("ss_1JumpPValue", "bsFs_1JumpPValue", "flFs_1JumpPValue")
+name_vec <- c("Sample Split", "Binary Segmentation", "Fused Lasso")
+
+par(mfrow = c(1,3))
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha)
+  rownames(mat) <- as.character(log(as.numeric(rownames(mat))))
+  image(.detangle_matrix(mat), zlim = c(0,1), xlab = "Jump Index",
+    ylab = "log Jump Height", main = name_vec[i])
+  contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.5, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.25, lwd = 3)
+}
+```
+
+<!-- For zoom-in, we can also plot the conditional power, where the condition -->
+<!-- is only looking at selecting the right jump. -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpPValue, alpha, type = T) -->
+<!-- flMat <- form.matrix(flFs_1JumpPValue, alpha, type = T) -->
+
+<!-- rownames(bsMat) <- as.character(log(as.numeric(rownames(bsMat)))) -->
+<!-- rownames(flMat) <- as.character(log(as.numeric(rownames(flMat)))) -->
+
+<!-- # unconditional plot with y-axis in absolute -->
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index", -->
+<!--   ylab = "Log Jump Height", main = "Binary Segmentation") -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 0.95, lwd = 3) -->
+
+<!-- image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index", -->
+<!--   ylab = "Log Jump Height", main = "Fused Lasso") -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 0.95, lwd = 3) -->
+<!-- ``` -->
+
+<!-- **Confidence Interval** -->
+
+<!-- ```{r, echo = F} -->
+<!-- rm(list=ls()) -->
+<!-- load("../results/CI_oneJump_2016-11-30.RData") -->
+
+<!-- n <- 100 -->
+
+<!-- .detangle_matrix <- function(mat){ -->
+<!--   x = as.numeric(colnames(mat)) -->
+<!--   y = as.numeric(rownames(mat)) -->
+<!--   z = t(mat) -->
+
+<!--   list(x = x, y = y, z = z) -->
+<!-- } -->
+
+<!-- samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){ -->
+<!--   if(is.na(type)) return(1:ncol(lis[[1]])) -->
+
+<!--   bool.vec <- sapply(lis[[1]][5,], func, y = true.loc) -->
+<!--   which(bool.vec) -->
+<!-- } -->
+
+
+<!-- form.matrix <- function(res, resp.func = resp.coverage, ...){ -->
+<!--   mat  <- matrix (0, ncol = length(jump.loc), nrow = length (jump.height)) -->
+<!--   colnames(mat) <- as.character(jump.loc) -->
+<!--   rownames(mat) <- as.character(jump.height) -->
+
+<!--   for (i in 1:length(res)){ -->
+<!--     jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3]) -->
+<!--     true.loc  <- round(n*jump.percent) -->
+
+<!--     idx1 <- samp.selector(res[i], true.loc, ...) -->
+<!--     idx2 <- which(res[[i]][7,] == 0) -->
+<!--     idx3 <- unique(which(res[[i]][1,]>=res[[i]][4,]), which(res[[i]][1,]<=res[[i]][3,])) -->
+<!--     idx <- setdiff(intersect(idx1, idx2), idx3) -->
+<!--     mat[i] <- resp.func(res[[i]], idx, true.loc) -->
+<!--   } -->
+
+<!--   mat -->
+<!-- } -->
+
+<!-- resp.coverage <- function(res, idx, true.loc){ -->
+<!--   length(intersect(which(res[2,idx] >= res[3,idx]),  -->
+<!--     which(res[2,idx] <= res[4,idx])))/length(idx) -->
+<!-- } -->
+<!-- resp.length <- function(res, idx, true.loc){ -->
+<!--   if(length(idx) == 0) return(0) -->
+<!--   len.vec <- apply(res[,idx,drop = F], 2, function(x){x[4] - x[3]}); mean(len.vec) -->
+<!-- } -->
+<!-- resp.power <- function(res, idx, true.loc, n){ -->
+<!--   length(unique(c(which(0 <= res[3,idx]), which(0 >= res[4,idx]))))/length(idx) -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- These are two-sided confidence intervals. -->
+<!-- We plot coverage with absolute jump height on the $y$-axis. (Not much -->
+<!-- to see since the coverage is around 0.95) -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpCI) -->
+<!-- flMat <- form.matrix(flFs_1JumpCI) -->
+
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index",  -->
+<!--   ylab = "Jump Height", main = "Binary Segmentation") -->
+<!-- image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index",  -->
+<!--   ylab = "Jump Height", main = "Fused Lasso") -->
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- quantile(bsMat) #quantile of values for binary segmentation across all simulations -->
+<!-- quantile(flMat) #same for fused lasso -->
+<!-- ``` -->
+
+<!-- We can also plot the average length of the confidence interval with -->
+<!-- the log jump height on the $y$-axis. -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpCI, resp.func = resp.length) -->
+<!-- flMat <- form.matrix(flFs_1JumpCI, resp.func = resp.length) -->
+<!-- zlim <- c(min(bsMat, flMat), max(bsMat, flMat)) -->
+<!-- rownames(bsMat) <- as.character(log(as.numeric(rownames(bsMat)))) -->
+<!-- rownames(flMat) <- as.character(log(as.numeric(rownames(flMat)))) -->
+
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "log Jump Height", main = "Binary Segmentation") -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 3, lwd = 3) -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 1.5, lwd = 3) -->
+
+<!-- image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "log Jump Height", main = "Fused Lasso") -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 3, lwd = 3) -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 1.5, lwd = 3) -->
+<!-- ``` -->
+
+<!-- We can also plot the conditional length conditioned on selecting the right -->
+<!-- jump. -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpCI, resp.func = resp.length, type = T) -->
+<!-- flMat <- form.matrix(flFs_1JumpCI, resp.func = resp.length, type = T) -->
+
+<!-- zlim <- c(min(bsMat, flMat), max(bsMat, flMat)) -->
+<!-- rownames(bsMat) <- as.character(log(as.numeric(rownames(bsMat)))) -->
+<!-- rownames(flMat) <- as.character(log(as.numeric(rownames(flMat)))) -->
+
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "log Jump Height", main = "Binary Segmentation") -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 3, lwd = 3) -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 1.5, lwd = 3) -->
+
+<!-- image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "log Jump Height", main = "Fused Lasso") -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 3, lwd = 3) -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 1.5, lwd = 3) -->
+<!-- ``` -->
+
+<!-- We can plot the intervals for when the jump height is 5 at location 50. -->
+
+<!-- ```{r, echo = F} -->
+<!-- plot.intervals <- function(lis, limit = 50, ...){ -->
+<!--   idx1 <- samp.selector(lis, ...) -->
+<!--   res <- lis[[1]] -->
+<!--   idx2 <- which(res[7,] == 0) -->
+<!--   idx3 <- unique(which(res[1,]>=res[4,]), which(res[1,]<=res[3,])) -->
+<!--   idx <- setdiff(intersect(idx1, idx2), idx3) -->
+<!--   if(length(idx) > limit) idx <- idx[1:limit] -->
+
+<!--   plot(NA, xlim = c(1, length(idx)), ylim = c(min(res[3,idx]), max(res[4,idx])), -->
+<!--     xlab = "Index", ylab = "Value") -->
+<!--   for(i in 1:length(idx)){ -->
+<!--     if(res[2,idx[i]] >= res[3,idx[i]] & res[2,idx[i]] <= res[4,idx[i]]){ -->
+<!--       col = 4 -->
+<!--     } else { -->
+<!--       col = 2 -->
+<!--     } -->
+
+<!--     lines(x = rep(i,2), y = c(res[3,idx[i]], res[4,idx[i]]), col = col, lwd = 2) -->
+<!--     points(i, res[2,idx[i]], col = 1, cex = 2, pch = 16) -->
+<!--     points(i, res[1,idx[i]], col = col, cex = 1, pch = 16) -->
+<!--   } -->
+
+<!--   invisible() -->
+<!-- } -->
+
+<!-- ## confidence intervals -->
+<!-- par(mfrow = c(1,2)) -->
+<!-- plot.intervals(bsFs_1JumpCI[105], limit = 25) -->
+<!-- title(main = "Binary Segmentation") -->
+
+<!-- plot.intervals(flFs_1JumpCI[105], limit = 25) -->
+<!-- title(main = "Fused Lasso") -->
+<!-- ``` -->
+
+
+## One Jump Simulation. Fixed height, varying n and location
+
+```{r, echo = F}
+rm(list=ls())
+load("../results/pvalue_oneJump_varyn_2017-02-23.RData")
+
+alpha <- 0.05
+
+.detangle_matrix <- function(mat){
+  x = as.numeric(colnames(mat))
+  y = as.numeric(rownames(mat))
+  z = t(mat)
+  
+  list(x = x, y = y, z = z)
+}
+
+samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){
+  if(is.na(type)) return(1:ncol(lis[[1]]))
+  
+  bool.vec <- sapply(lis[[1]][2,], func, y = true.loc)
+  which(bool.vec)
+}
+
+form.matrix <- function(res, alpha, resp.func = resp.power, ...){
+  mat  <- matrix (0, nrow = length(jump.loc), ncol = length(n.vec))
+  rownames(mat) <- as.character(jump.loc)
+  colnames(mat) <- as.character(n.vec)
+
+  for (i in 1:length(res)){
+    jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3])
+    n <- as.numeric(strsplit(names(res)[i], split = "-")[[1]][4])
+    true.loc  <- round(n*jump.percent)
+    
+    idx <- samp.selector(res[i], true.loc, ...)
+    mat[i] <- resp.func(res[[i]], idx, true.loc, n)
+  }
+  
+  t(mat)
+}
+
+#some default resp.func
+resp.power <- function(res, idx, true.loc, n){
+  length(which(res[1,idx] <= alpha))/length(idx)
+}
+resp.exact <- function(res, idx, true.loc, n){
+  length(idx)/ncol(res)
+}
+resp.variance <- function(res, idx, true.loc, n){
+  mean(abs(res[2,idx]-true.loc))/n
+}
+```
+
+Here, the jump height is fixed to be 0.25 and $n$ varies from 10 to 1000.
+As before, the jump location varies from 10, 20, ... 90.
+
+**Selection**
+
+We can plot the mean absolute difference between the selected jump and
+the true jump divided by $n$. We plot the log of $n$ on the $y$-axis. We want this
+notion of ``spread'' to be as low as possible when n is small. In the following plot,
+red is small, white/yellow is big.
+
+```{r, echo = F}
+vec <- c("ss_1JumpPValue_nvary", "bsFs_1JumpPValue_nvary", "flFs_1JumpPValue_nvary")
+name_vec <- c("Sample Split", "Binary Segmentation", "Fused Lasso")
+
+##compute zlim first pass
+zlim <- c(Inf, -Inf)
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha, resp.func = resp.variance)
+  zlim[1] <- min(zlim[1], min(mat)); zlim[2] <- max(zlim[2], max(mat))
+}
+
+par(mfrow = c(1,3))
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha, resp.func = resp.variance)
+  rownames(mat) <- as.character(log(as.numeric(rownames(mat))))
+
+  image(.detangle_matrix(mat), zlim = zlim, xlab = "Jump Index", 
+    ylab = "log Size of n", main = name_vec[i])
+  contour(.detangle_matrix(mat), add = T, levels = 0.15, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.25, lwd = 3)
+}
+
+```
+
+
+**P Values**
+
+These are one-sided p-values.
+We can plot the unconditional power where the $y$-axis in the image
+is the log jump height. We want as much white as possible.
+
+```{r, echo = F}
+vec <- c("ss_1JumpPValue_nvary", "bsFs_1JumpPValue_nvary", "flFs_1JumpPValue_nvary")
+name_vec <- c("Sample Split", "Binary Segmentation", "Fused Lasso")
+
+par(mfrow = c(1,3))
+for(i in 1:3){
+  mat <- form.matrix(eval(as.name(paste(vec[i]))), alpha)
+  rownames(mat) <- as.character(log(as.numeric(rownames(mat))))
+  image(.detangle_matrix(mat), zlim = c(0,1), xlab = "Jump Index",
+    ylab = "log Size of n", main = name_vec[i])
+  contour(.detangle_matrix(mat), add = T, levels = 0.95, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.5, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.25, lwd = 3)
+  contour(.detangle_matrix(mat), add = T, levels = 0.1, lwd = 3)
+}
+```
+
+<!-- We first plot the power unconditionally where the absolute $n$ is shown on -->
+<!-- the $y$-axis. -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpPValue_nvary, alpha) -->
+<!-- flMat <- form.matrix(flFs_1JumpPValue_nvary, alpha) -->
+
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = c(0,1), xlab = "Jump Index",  -->
+<!--   ylab = "Size of n", main = "Binary Segmentation") -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 0.95, lwd = 3) -->
+
+<!-- image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index",  -->
+<!--   ylab = "Size of n", main = "Fused Lasso") -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 0.95, lwd = 3) -->
+<!-- ``` -->
+
+
+<!-- **Confidence Intervals** -->
+
+<!-- ```{r, echo = F} -->
+<!-- rm(list=ls()) -->
+<!-- load("../results/CI_oneJump_varyn_2016-12-01.RData") -->
+
+<!-- .detangle_matrix <- function(mat){ -->
+<!--   x = as.numeric(colnames(mat)) -->
+<!--   y = as.numeric(rownames(mat)) -->
+<!--   z = t(mat) -->
+
+<!--   list(x = x, y = y, z = z) -->
+<!-- } -->
+
+<!-- samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){ -->
+<!--   if(is.na(type)) return(1:ncol(lis[[1]])) -->
+
+<!--   bool.vec <- sapply(lis[[1]][2,], func, y = true.loc) -->
+<!--   which(bool.vec) -->
+<!-- } -->
+
+<!-- form.matrix <- function(res, alpha, resp.func = resp.coverage, ...){ -->
+<!--   mat  <- matrix (0, nrow = length(jump.loc), ncol = length(n.vec)) -->
+<!--   rownames(mat) <- as.character(jump.loc) -->
+<!--   colnames(mat) <- as.character(n.vec) -->
+
+<!--   for (i in 1:length(res)){ -->
+<!--     jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3]) -->
+<!--     n <- as.numeric(strsplit(names(res)[i], split = "-")[[1]][4]) -->
+<!--     true.loc  <- round(n*jump.percent) -->
+
+<!--     idx1 <- samp.selector(res[i], true.loc, ...) -->
+<!--     idx2 <- which(res[[i]][7,] == 0) -->
+<!--     idx3 <- unique(which(res[[i]][1,]>=res[[i]][4,]), which(res[[i]][1,]<=res[[i]][3,])) -->
+<!--     idx <- setdiff(intersect(idx1, idx2), idx3) -->
+
+<!--     mat[i] <- resp.func(res[[i]], idx, true.loc, n) -->
+<!--   } -->
+
+<!--   t(mat) -->
+<!-- } -->
+
+<!-- #some default resp.func -->
+<!-- resp.coverage <- function(res, idx, true.loc, n){ -->
+<!--   length(intersect(which(res[2,idx] >= res[3,idx]),  -->
+<!--     which(res[2,idx] <= res[4,idx])))/length(idx) -->
+<!-- } -->
+<!-- resp.length <- function(res, idx, true.loc, n){ -->
+<!--   len.vec <- apply(res[,idx], 2, function(x){x[4] - x[3]}); mean(len.vec) -->
+<!-- } -->
+<!-- resp.power <- function(res, idx, true.loc, n){ -->
+<!--   length(unique(c(which(0 <= res[3,idx]), which(0 >= res[4,idx]))))/length(idx) -->
+<!-- } -->
+
+<!-- compute.CIlength <- function(mat, keep.NA = F){ -->
+<!--   if(keep.NA) good.trials <- 1:ncol(mat) else good.trials <- which(mat[6,] == 0) -->
+<!--   res <- apply(mat[,good.trials], 2, function(x){x[3]-x[2]}) -->
+
+<!--   res[is.infinite(res)] <- NA -->
+<!--   res -->
+<!-- } -->
+<!-- ``` -->
+
+<!-- We can plot the length of the interval unconditionally. -->
+
+<!-- ```{r, echo = F} -->
+<!-- bsMat <- form.matrix(bsFs_1JumpCI, resp.func = resp.length) -->
+<!-- flMat <- form.matrix(flFs_1JumpCI, resp.func = resp.length) -->
+<!-- zlim <- c(min(bsMat, flMat), max(bsMat, flMat)) -->
+
+<!-- #plot the unconditional length in absolute scale -->
+<!-- par(mfrow = c(1,2)) -->
+<!-- image(.detangle_matrix(bsMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "Size of n", main = "Binary Segmentation") -->
+<!-- contour(.detangle_matrix(bsMat), add = T, levels = 1, lwd = 3) -->
+<!-- image(.detangle_matrix(flMat), zlim = zlim, xlab = "Jump Index",  -->
+<!--   ylab = "Size of n", main = "Fused Lasso") -->
+<!-- contour(.detangle_matrix(flMat), add = T, levels = 1, lwd = 3) -->
+<!-- ``` -->
+
+<!-- ## Two Jump (Bump) Simulation. Fixed location and n, varying height -->
+<!-- ```{r, echo = F} -->
+<!-- rm(list=ls()) -->
+<!-- load("../results/pvalue_twoJump_2017-02-24.RData") -->
+
+<!-- alpha <- 0.05 -->
+
+<!-- .detangle_matrix <- function(mat){ -->
+<!--   x = as.numeric(colnames(mat)) -->
+<!--   y = as.numeric(rownames(mat)) -->
+<!--   z = t(mat) -->
+
+<!--   list(x = x, y = y, z = z) -->
+<!-- } -->
+
+<!-- samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){ -->
+<!--   if(is.na(type)) return(1:ncol(lis[[1]])) -->
+
+<!--   bool.vec <- sapply(lis[[1]][2,], func, y = true.loc) -->
+<!--   which(bool.vec) -->
+<!-- } -->
+
+<!-- form.matrix <- function(res, alpha, resp.func = resp.power, ...){ -->
+<!--   mat  <- matrix (0, nrow = length(jump.loc), ncol = length(n.vec)) -->
+<!--   rownames(mat) <- as.character(jump.loc) -->
+<!--   colnames(mat) <- as.character(n.vec) -->
+
+<!--   for (i in 1:length(res)){ -->
+<!--     jump.percent  <-  as.numeric(strsplit(names(res)[i],split = "-")[[1]][3]) -->
+<!--     n <- as.numeric(strsplit(names(res)[i], split = "-")[[1]][4]) -->
+<!--     true.loc  <- round(n*jump.percent) -->
+
+<!--     idx <- samp.selector(res[i], true.loc, ...) -->
+<!--     mat[i] <- resp.func(res[[i]], idx, true.loc, n) -->
+<!--   } -->
+
+<!--   t(mat) -->
+<!-- } -->
+
+<!-- #some default resp.func -->
+<!-- resp.power <- function(res, idx, true.loc, n){ -->
+<!--   length(which(res[1,idx] <= alpha))/length(idx) -->
+<!-- } -->
+<!-- resp.exact <- function(res, idx, true.loc, n){ -->
+<!--   length(idx)/ncol(res) -->
+<!-- } -->
+<!-- resp.variance <- function(res, idx, true.loc, n){ -->
+<!--   mean(abs(res[2,idx]-true.loc))/n -->
+<!-- } -->
+<!-- ``` -->

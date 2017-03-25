@@ -24,4 +24,3 @@ numeric vector
 \description{
 Generate contrast bector
 }
-

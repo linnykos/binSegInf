@@ -4,9 +4,9 @@
 \alias{confidence_interval}
 \title{Confidence interval from post-selection inference}
 \usage{
-confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
+confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
   gridsize = 250, alternative = c("two.sided", "one.sided"),
-  precBits = 10)
+  precBits = NA)
 }
 \arguments{
 \item{y}{numeric vector}
@@ -17,7 +17,9 @@ confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
 
 \item{sigma}{numeric to denote the sd of the residuals}
 
-\item{alpha}{numeric between 0 and 1 with default of 0.05}
+\item{alpha}{numeric between 0 and 1 with default of 0.95. This is the
+significance level, guaranteeing that alpha percentage
+of the intervals will cover the true parameter.}
 
 \item{gridsize}{numeric to denote how fine of a grid to invert the hypothesis
 test}
@@ -25,7 +27,7 @@ test}
 \item{alternative}{string of either "one.sided" or "two.sided" for the 
 alternative. If one.sided, the alternative means the test statistic is positive.}
 
-\item{precBits}{the number of bits used to compute the p value}
+\item{precBits}{precision of Rmpfri}
 }
 \value{
 a vector of two numbers, the lower and upper end of the confidence interval
@@ -33,4 +35,3 @@ a vector of two numbers, the lower and upper end of the confidence interval
 \description{
 Confidence interval from post-selection inference
 }
-

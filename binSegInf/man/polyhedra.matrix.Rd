@@ -19,4 +19,3 @@ object of class polyhedra
 \description{
 Generate polyhedra
 }
-

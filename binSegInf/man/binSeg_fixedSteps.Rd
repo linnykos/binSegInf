@@ -18,4 +18,3 @@ a bsFs object
 y must not have duplicated values. This is to avoid
 degenerate behavior of binary segmentation
 }
-

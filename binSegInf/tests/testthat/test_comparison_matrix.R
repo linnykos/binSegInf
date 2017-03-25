@@ -65,6 +65,15 @@ test_that(".get_leaves_matrix_excluding returns NA if only one leaf", {
   expect_true(is.na(.get_leaves_matrix_excluding(obj, "1-30")))
 })
 
+test_that(".get_leaves_matrix_excluding works for singleton leaves", {
+  set.seed(10)
+  y <- c(-5, rep(0,9)) + 0.05*rnorm(10)
+  
+  obj <- binSeg_fixedSteps(y, 1)
+  
+  expect_true(is.na(.get_leaves_matrix_excluding(obj$tree, 
+                                                 .get_leaves_names(obj$tree)[2])))
+})
 #########################################
 
 ## .threeColumnMatrix_from_nodeVec is correct
@@ -80,6 +89,13 @@ test_that(".threeColumnMatrix_from_nodeVec can exclude a value", {
   
   expect_true(all(dim(res) == c(3,3)))
   expect_true(all(res == cbind(1, 1:3, 5)))
+})
+
+test_that(".threeColumnMatrix_from_nodeVec has a midpoint even if excluded", {
+  res <- .threeColumnMatrix_from_nodeVec(c(1,2), 1)
+  
+  expect_true(all(dim(res) == c(1,3)))
+  expect_true(all(res == c(1,1,2)))
 })
 
 ############################################
@@ -111,7 +127,7 @@ test_that(".form_comparison works", {
   
   obj2 <- binSeg_fixedSteps(y, 2)
   node <- .enumerate_splits(obj2$tree)[2]
-  breakpoint <- obj2$tree$FindNode(node)$breakpoint
+  breakpoint <- data.tree::FindNode(obj2$tree, node)$breakpoint
   
   expect_true(node == "21-40")
   expect_true(breakpoint == 30)

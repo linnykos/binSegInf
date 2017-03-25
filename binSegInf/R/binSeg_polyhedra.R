@@ -8,7 +8,7 @@
 #' @return An object of class polyhedra
 #' @export
 polyhedra.bsFs <- function(obj, ...){
- is_valid(obj)
+  is_valid(obj)
   
   n <- .get_startEnd(obj$tree$name)[2] 
   numSteps <- obj$numSteps
@@ -42,7 +42,7 @@ polyhedra.bsFs <- function(obj, ...){
     -rep(1, nrow(lose.contrast)))
   
   # add inequalities to compare splits to 0 (ensure correct sign)
-  rbind(res, res2, sign.win * win.contrast)
+  rbind(res, res2)
 }
 
 .vector_matrix_signedDiff <- function(vec, mat, sign.vec, sign.mat){

@@ -16,4 +16,3 @@ all the default graphical parameters. Useful for standardizing the figures.
 \details{
 This sets the graphical parameters, "pch", "cex", "family" and "mar".
 }
-

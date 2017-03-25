@@ -40,6 +40,7 @@
   } else{
     mid.vec <- vec[1]:(vec[2]-1)
     mid.vec <- mid.vec[mid.vec != exclude]
+    if(length(mid.vec) == 0) return(numeric(0))
     cbind(vec[1], mid.vec, vec[2])
   }
 }
@@ -48,6 +49,13 @@
   leaves.names <- .get_leaves_names(tree)
   stopifnot(nodeName %in% leaves.names)
   leaves.names <- leaves.names[leaves.names != nodeName]
+  
+  #remove leaves if start = end
+  idx <- sapply(leaves.names, function(x){
+    tmp <- strsplit(x, split = "-")
+    if(tmp[[1]][1] == tmp[[1]][2]) return(FALSE) else return(TRUE)
+  })
+  if(length(idx) > 0) leaves.names <- leaves.names[which(idx)]
   
   if(length(leaves.names) == 0){
     return(NA)

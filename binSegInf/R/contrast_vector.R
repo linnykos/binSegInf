@@ -19,11 +19,17 @@ contrast_vector <- function(obj, jump.idx, sorted = F,
   jump <- jump.vec[jump.idx]
   n <- .get_length(obj)
   
+  jump_mat <- jump_sign(obj)
+  jump_sign <- jump_mat[which(jump_mat[,"Jump"] == jump), "Sign"]
+  
   if(type == "segment") {
-    .contrast_vector_segment(obj, jump, n)
+    v <- .contrast_vector_segment(obj, jump, n)
   } else {
-    .contrast_vector_spike(obj, jump, n)
+    v <- .contrast_vector_spike(obj, jump, n)
   }
+  
+  attr(v, "sign") <- jump_sign
+  v
 }
 
 .get_length.bsFs <- function(obj){

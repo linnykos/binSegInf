@@ -13,7 +13,7 @@ polyhedra.flFs <- function(obj, ...){
   D <- .form_Dmatrix(n)
 
   for(i in 1:k){
-    gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:k,])
+    gamma.row.lis[[i]] <- .gammaRows_from_flasso(n, D, obj$model[1:i,])
   }
 
   mat <- do.call(rbind, gamma.row.lis)
@@ -24,32 +24,29 @@ polyhedra.flFs <- function(obj, ...){
   sign.win <- model$Sign[nrow(model)]
   if(nrow(model) == 1){ 
     idx <- 1:(n-1) 
+    denominator.vec <- .compute_fused_denominator(D, idx, model[-1,])
   } else {
     idx <- .select_nonactive(n, model$Index[1:(nrow(model) - 1)])
+    denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
   }
 
   numerator.mat <- .compute_fused_numerator_polyhedra(D, idx)
-  denominator.vec <- .compute_fused_denominator(D, idx, model[1:(nrow(model) - 1),])
   active.idx <- which(idx == model$Index[nrow(model)])
 
   contrasts <- .form_contrast_flasso(numerator.mat, denominator.vec, sign.win, active.idx)
 
-  res1 <- .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, 
+  .vector_matrix_signedDiff(contrasts$win, contrasts$lose, 1, 
     rep(1, nrow(contrasts$lose)))
-
-  rbind(res1, contrasts$win)
 }
 
 .compute_fused_numerator_polyhedra <- function(D, idx){
-  stopifnot(is.numeric(D), is.matrix(D))
   stopifnot(all(idx %% 1 == 0), !any(duplicated(idx)))
   stopifnot(min(idx) >= 1, max(idx) <= nrow(D))
-  stopifnot(ncol(D) == nrow(D) + 1)
   
-  DDT <- D[idx,,drop = F]%*%t(D[idx,,drop = F])
+  DDT <- Matrix::tcrossprod(D[idx,,drop = F])
   Didx <- D[idx,,drop = F]
   
-  MASS::ginv(DDT)%*%Didx
+  Matrix::solve(DDT)%*%Didx
 }
 
 .form_contrast_flasso <- function(numerator.mat, denominator.vec,
@@ -65,5 +62,5 @@ polyhedra.flFs <- function(obj, ...){
   lose1 <- numerator.mat[-active.idx,]/(1 + pos.denom)
   lose2 <- numerator.mat[-active.idx,]/(-1 + neg.denom)
 
-  list(win = win, lose = rbind(lose1, lose2))
+  list(win = win, lose = rbind(as.matrix(lose1), as.matrix(lose2)))
 }

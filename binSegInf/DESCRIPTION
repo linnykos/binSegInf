@@ -13,7 +13,10 @@ Imports:
     data.tree,
     hash,
     Rmpfr,
-    MASS
+    MASS,
+    wbs,
+    genlasso,
+    Matrix
 Suggests:
     testthat
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1

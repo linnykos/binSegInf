@@ -14,7 +14,7 @@ n <- 100
 samp.selector <- function(lis, true.loc, type = NA, func = function(x,y){x == y}){
   if(is.na(type)) return(1:ncol(lis[[1]]))
   
-  bool.vec <- sapply(lis[[1]][2,], func, y = true.loc)
+  bool.vec <- sapply(lis[[1]][5,], func, y = true.loc)
   which(bool.vec)
 }
 
@@ -42,7 +42,8 @@ resp.coverage <- function(res, idx, true.loc){
     which(res[2,idx] <= res[4,idx])))/length(idx)
 }
 resp.length <- function(res, idx, true.loc){
-  len.vec <- apply(res[,idx], 2, function(x){x[4] - x[3]}); mean(len.vec)
+  if(length(idx) == 0) return(0)
+  len.vec <- apply(res[,idx,drop = F], 2, function(x){x[4] - x[3]}); mean(len.vec)
 }
 resp.power <- function(res, idx, true.loc, n){
   length(unique(c(which(0 <= res[3,idx]), which(0 >= res[4,idx]))))/length(idx)
@@ -106,7 +107,7 @@ image(.detangle_matrix(flMat), zlim = c(0,1), xlab = "Jump Index",
 #######################################################
 
 plot.intervals <- function(lis, limit = 50, ...){
-  idx1 <- samp.selector(lis, true.loc, ...)
+  idx1 <- samp.selector(lis, ...)
   res <- lis[[1]]
   idx2 <- which(res[7,] == 0)
   idx3 <- unique(which(res[1,]>=res[4,]), which(res[1,]<=res[3,]))

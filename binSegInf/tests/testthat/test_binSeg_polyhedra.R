@@ -4,7 +4,7 @@ context("Test binSeg_polyhedra")
 
 test_that("polyhedra.bsFs works", {
   set.seed(10)
-  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
+  y <- c(rep(1, 50), rep(10, 25), rep(5, 25)) + rnorm(100)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- polyhedra(obj)
@@ -18,7 +18,7 @@ test_that("polyhedra.bsFs works", {
 
 test_that("it is invalid if a few inequalities are flipped",{
   set.seed(10)
-  y <- c(rep(1, 10), rep(10, 5), rep(5, 5)) + rnorm(20)
+  y <- c(rep(1, 50), rep(10, 25), rep(5, 25)) + rnorm(100)
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- polyhedra(obj)
@@ -31,7 +31,7 @@ test_that("it is invalid if a few inequalities are flipped",{
 
 test_that("having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
-  y <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+  y <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
   obj <- binSeg_fixedSteps(y,2)
 
   model.jumps <- jumps(obj)
@@ -43,7 +43,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
     model.jumps.tmp <- jumps(obj.tmp)
@@ -58,7 +58,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
 
 test_that("same model iff the inequalities are satisfied for no signal model", {
   set.seed(5)
-  y <- rnorm(10)
+  y <- rnorm(100)
   obj <- binSeg_fixedSteps(y,2)
 
   model.jumps <- jumps(obj)
@@ -70,7 +70,7 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,5), rep(-2,2), rep(-1,3)) + rnorm(10)
+    y.tmp <- c(rep(0,50), rep(-2,20), rep(-1,30)) + rnorm(100)
     obj.tmp <- binSeg_fixedSteps(y.tmp,2)
 
     model.jumps.tmp <- jumps(obj.tmp)
@@ -81,6 +81,54 @@ test_that("same model iff the inequalities are satisfied for no signal model", {
 
     expect_true(bool1 == bool2)
   }
+})
+
+test_that("binSeg does not crash in one-jump one-length case but estimate 2 jumps", {
+  set.seed(10)
+  y <- c(-5, rep(0,9)) + 0.05*rnorm(10)
+  
+  obj <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
+test_that("binSeg does not crash when there is multiple splits and first one is singleton", {
+  set.seed(2)
+  vec <- c(0, 0.05)
+  dat <- CpVector(20, vec[c(1,2,1)], c(1/3, 2/3))
+  y <- dat$data
+  
+  obj2 <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj2)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
+test_that("binSeg does not crash when there is multiple splits and last one is singleton", {
+  set.seed(21)
+  vec <- c(0, 0.05)
+  dat <- CpVector(100, vec[c(1,2,1)], c(1/3, 2/3))
+  y <- dat$data
+  
+  obj2 <- binSeg_fixedSteps(y, 2)
+  poly <- polyhedra(obj2)
+  
+  expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
+test_that("binSeg works when there are 2 changepoints", {
+  vec <- c(0, 0.05)
+  n <- 100
+  method <- binSeg_fixedSteps
+  
+  set.seed(104)
+  dat <- CpVector(n, vec[c(1,2,1)], c(1/3, 2/3))
+  y <- dat$data
+  obj <- method(y, 2)
+  poly <- polyhedra(obj)
+  
+  expect_true(class(poly) == "polyhedra")
 })
 
 ###############################
@@ -120,7 +168,7 @@ test_that(".gammaRows_from_comparisons works", {
   
   res <- .gammaRows_from_comparisons(vec, mat, 1, 10)
   
-  expect_true(all(dim(res) == c(17, 10)))
+  expect_true(all(dim(res) == c(16, 10)))
 })
 
 test_that(".gammaRow_from_comparisons is fulfilled by y", {
