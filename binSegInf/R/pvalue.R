@@ -82,3 +82,69 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   if(denom < tol_zero) denom <- tol_zero
   as.numeric(Rmpfr::mpfr((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom, precBits = precBits))
 }
+
+
+
+
+##' Temporarily added from selectiveInference package.
+poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
+  z = sum(v*y)
+  vv = sum(v^2)
+  sd = sigma*sqrt(vv)
+  
+  rho = G %*% v / vv
+  vec = (u - G %*% y + rho*z) / rho
+  vlo = suppressWarnings(max(vec[rho>0]))
+  vup = suppressWarnings(min(vec[rho<0]))
+
+  pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+  return(list(pv=pv,vlo=vlo,vup=vup))
+}
+
+
+##' Temporarily added from selectiveInference package.
+tnorm.surv <- function(z, mean, sd, a, b, bits=NULL) {
+  z = max(min(z,b),a)
+  
+  # Check silly boundary cases
+  p = numeric(length(mean))
+  p[mean==-Inf] = 0
+  p[mean==Inf] = 1
+  
+  # Try the multi precision floating point calculation first
+  o = is.finite(mean)
+  mm = mean[o]
+  pp = mpfr.tnorm.surv(z,mm,sd,a,b,bits) 
+
+  # If there are any NAs, then settle for an approximation
+  oo = is.na(pp)
+  if (any(oo)) pp[oo] = bryc.tnorm.surv(z,mm[oo],sd,a,b)
+  
+  p[o] = pp
+  return(p)
+}
+
+
+##' Temporarily added from selectiveInference package.
+##' Returns Prob(Z>z | Z in [a,b]), where mean can be a vector, using
+##' multi precision floating point calculations thanks to the Rmpfr package
+mpfr.tnorm.surv <- function(z, mean=0, sd=1, a, b, bits=NULL) {
+  # If bits is not NULL, then we are supposed to be using Rmpf
+  # (note that this was fail if Rmpfr is not installed; but
+  # by the time this function is being executed, this should
+  # have been properly checked at a higher level; and if Rmpfr
+  # is not installed, bits would have been previously set to NULL)
+  if (!is.null(bits)) {
+    z = Rmpfr::mpfr((z-mean)/sd, precBits=bits)
+    a = Rmpfr::mpfr((a-mean)/sd, precBits=bits)
+    b = Rmpfr::mpfr((b-mean)/sd, precBits=bits)
+    return(as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
+                      (Rmpfr::pnorm(b)-Rmpfr::pnorm(a))))
+  }
+  
+  # Else, just use standard floating point calculations
+  z = (z-mean)/sd
+  a = (a-mean)/sd
+  b = (b-mean)/sd
+  return((pnorm(b)-pnorm(z))/(pnorm(b)-pnorm(a)))
+}

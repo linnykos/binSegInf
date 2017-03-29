@@ -24,3 +24,24 @@ is_valid.polyhedra <- function(obj){
   
   TRUE
 }
+
+
+#' Generic for functions that combine same-type things.
+#' @param obj object
+combine <- function(obj, ...) {UseMethod("combine")}
+
+##' Combines several polyhedra to a single polyhedron
+##' @param ... polyhedra objects to add
+combine.polyhedra <- function(...){
+
+    polyobjs = list(...)
+    polyobjs = polyobjs[which(!sapply(polyobjs, is.null))]
+
+    ## Combine separately and return
+    newgamma = do.call(rbind, lapply(polyobjs, function(mypolyobj)mypolyobj$gamma))
+    newu = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
+
+    newpoly = polyhedra.matrix(obj = newgamma, u= newu)
+    stopifnot(is_valid.polyhedra(newpoly))
+    return(newpoly)
+}
