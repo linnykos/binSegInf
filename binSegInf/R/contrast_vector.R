@@ -28,8 +28,7 @@ contrast_vector <- function(obj, jump.idx, sorted = F,
     v <- .contrast_vector_spike(obj, jump, n)
   }
   
-  attr(v, "sign") <- jump_sign
-  v
+  v * jump_sign
 }
 
 .get_length.bsFs <- function(obj){

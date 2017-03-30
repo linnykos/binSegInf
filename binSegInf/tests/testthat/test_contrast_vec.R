@@ -20,7 +20,7 @@ test_that("contrast_vector is signed positive", {
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- contrast_vector(obj, 2, sorted = T)
-  expect_true(attr(res, "sign") == 1)
+  expect_true(res %*% y > 0)
 })
 
 test_that("contrast_vector is signed negative", {
@@ -29,7 +29,7 @@ test_that("contrast_vector is signed negative", {
   obj <- binSeg_fixedSteps(y, 2)
   
   res <- contrast_vector(obj, 1, sorted = T)
-  expect_true(attr(res, "sign") == -1)
+  expect_true(res %*% y > 0)
 })
 
 test_that("contrast_vector agrees with jump direction when there's 1 jump", {
@@ -44,7 +44,7 @@ test_that("contrast_vector agrees with jump direction when there's 1 jump", {
     poly <- polyhedra(obj)
     contrast <- contrast_vector(obj, 1)
     
-    expect_true(attr(contrast, "sign") == sign1)
+    expect_true(contrast %*% y > 0)
   }
 })
 

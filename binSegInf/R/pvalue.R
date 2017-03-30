@@ -15,7 +15,6 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
   alternative = c("one.sided", "two.sided"), precBits = NA){
   
   alternative <- match.arg(alternative, c("one.sided", "two.sided"))
-  if(alternative == "two.sided") attr(contrast, "sign") <- 1
   
   terms <- .compute_truncGaus_terms(y, polyhedra, contrast, sigma)
   
@@ -26,12 +25,12 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 }
 
 .compute_truncGaus_terms <- function(y, polyhedra, contrast, sigma){
-  z <- as.numeric(contrast %*% y) * attr(contrast, "sign")
+  z <- as.numeric(contrast %*% y)
   
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))
   
-  rho <- as.numeric(polyhedra$gamma %*% contrast * attr(contrast, "sign")) / vv
+  rho <- as.numeric(polyhedra$gamma %*% contrast) / vv
   vec <- as.numeric((polyhedra$u - polyhedra$gamma %*% y + rho * z)/rho)
   
   if(any(rho > 0)) vlo <- max(vec[rho > 0]) else vlo <- -Inf
