@@ -18,12 +18,10 @@ test_that("Intervals are collected correctly", {
 
 test_that("get_which_qualify() is correctly functioning", {
 
-    set.seed(0)
-    s=1
-    e=60
-    intervals = generate_intervals(s,e,10)
-    m = which(get_which_qualify(15,45,intervals))
-    expect_equal(sort(m), c(1,2,9))
+    n=60
+    intervals = generate_intervals(n,10, seed=0)
+    m = which(.get_which_qualify(15,45,intervals))
+    expect_equal(sort(m), c(2,3,4,10))
 })
 
 
@@ -33,18 +31,21 @@ test_that("make_se() is correctly functioning",{
     s=1
     e=60
     y = rnorm(rep(0,4,each=30),0,1)
-    intervals = generate_intervals(s,e,10)
-    m = which(get_which_qualify(s,e,intervals))
-    semat = .make_semat(m,intervals,y)
+    intervals = generate_intervals(length(y),10,seed=0)
+    m = which(.get_which_qualify(s,e,intervals))
+    semat = .make_semat(m,intervals,y,0)
 
     ## Separately obtain all cusums.
     all.s = lapply(intervals$se[m], function(se) se[1])
     all.e = lapply(intervals$se[m], function(se) se[2])
-    all.max.cusums.manual = unlist(Map(cusum, all.s, semat[,"b"], all.e, rep(list(y),length(m))))
+    ## all.max.cusums.manual = unlist(Map(cusum, all.s, semat[,"b"], all.e, rep(list(y),length(m))))
+    all.max.cusums.manual = unlist(Map(function(s,b,e,y)cusum(s=s,e=e,b=b,y=y),
+                                       all.s, semat[,"b"], all.e,
+                                       rep(list(y),length(m))))
+
 
     ## See
     expect_equal(semat[,"maxcusum"], all.max.cusums.manual)
-
 })
 
 
@@ -54,14 +55,16 @@ test_that(".make_semat() is correctly functioning", {
     s=1
     e=60
     y = rnorm(rep(0,4,each=30),0,1)
-    intervals = generate_intervals(s,e,10)
-    m = which(get_which_qualify(s,e,intervals))
-    semat = .make_semat(m,intervals,y)
+    intervals = generate_intervals(length(y),10,seed=0)
+    m = which(.get_which_qualify(s,e,intervals))
+    semat = .make_semat(m,intervals,y,0)
 
     ## Separately obtain all cusums
     all.s = lapply(intervals$se[m], function(se) se[1])
     all.e = lapply(intervals$se[m], function(se) se[2])
-    all.max.cusums.manual = unlist(Map(cusum, all.s, semat[,"b"], all.e, rep(list(y),length(m))))
+    all.max.cusums.manual = unlist(Map(function(s,b,e,y)cusum(s=s,e=e,b=b,y=y),
+                                       all.s, semat[,"b"], all.e,
+                                       rep(list(y),length(m))))
 
     ## See if the maximizing is correctly done, with respect to internal and
     ## externally created max cusums.
@@ -71,14 +74,14 @@ test_that(".make_semat() is correctly functioning", {
                  max(abs(semat[,"maxcusum"])))
 })
 
-test_that("wbs() doesn't produce environment |env| whose tree element env$tree has null elements",{
+test_that("wildBinSeg_fixedThresh() doesn't produce environment |env| whose tree element env$tree has null elements",{
 
 
     ## Test setting
     s=1
     e=60
     y = rnorm(rep(0,4,each=30),0,1)
-    env = wbs(y,1,return.env=TRUE)
+    env = wildBinSeg_fixedThresh(y,1,10,return.env=TRUE)
 
     ## See if the tree has any empty (NULL) elements
     expect_true(all(lapply(env$tree, length)>0))
@@ -86,7 +89,7 @@ test_that("wbs() doesn't produce environment |env| whose tree element env$tree h
 })
 
 
-test_that("wbs() gives the correct changepoint in a strong-signal case.", {
+test_that("wildBinSeg_fixedThresh() gives the correct changepoint in a strong-signal case.", {
 
     ## Test setting
     thresh=10
@@ -96,7 +99,7 @@ test_that("wbs() gives the correct changepoint in a strong-signal case.", {
     numInterval=100
 
     ## Run WBS
-    output = wbs(y, thresh, numInterval,seed=seed)
+    output = wildBinSeg_fixedThresh(y, thresh, numInterval,seed=seed)
 
     ## See if single upward changepoint is detected
     expect_equal(as.numeric(output$cp), 30)
@@ -113,8 +116,8 @@ test_that(".make_semat() finds breakpoints that are between the start and end po
     seed=0
     set.seed(seed)
     y = rep(c(0,10),each=30) + rnorm(60,0,1)
-    numInterval=100
-    generate_intervals(n,numInterval)
+    numInterval=10
+    intervals = generate_intervals(n,numInterval)
 
     ## Pick some indices and check breakpoints
     set.seed(0)
@@ -150,7 +153,7 @@ test_that("Single polyhedron is correct",{
     y <- mn + rnorm(n, 0, sigma)
 
     ## Run method, collect things
-    obj = wildBinSeg(y,1,numInterval=numInterval)
+    obj = wildBinSeg_fixedThresh(y,1,numInterval=numInterval)
   
     ## Collect a polyhedron
     poly <- polyhedra(obj)
@@ -175,7 +178,7 @@ test_that("Polyhedron is exactly correct",{
     
     ## Run method on original data |y0|, collect things.
     intervals = generate_intervals(n,numIntervals,seed)
-    obj = wildBinSeg_fixedThresh(y0, thresh, intervals=intervals, verbose=TRUE)
+    obj = wildBinSeg_fixedThresh(y0, thresh, intervals=intervals, verbose=FALSE)
     poly <- polyhedra.wbsFt(obj)
     
     ## Generate many new datasets from your polyhedron, see if they /all/ give
@@ -185,7 +188,7 @@ test_that("Polyhedron is exactly correct",{
         ## ynew <- mn + rnorm(n,0,sigma)
         ynew = y0 + rnorm(n,0,0.5)
         if(all(poly$gamma%*% (ynew) >= poly$u)){
-            print(jj)
+            ## print(jj)
             objnew =  wildBinSeg_fixedThresh(y=ynew, thresh=thresh, intervals=intervals)
             expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
         }
@@ -197,36 +200,37 @@ test_that("Polyhedron is exactly correct",{
 
 test_that("get_vup_vlo() produces numerator and denominator consistent with external p-value functions", {
     
-## Sample settings
-lev=3
-thresh=2
-numIntervals=10
-n=10
-sigma=1
+    ## Sample settings
+    lev=3
+    thresh=2
+    numIntervals=10
+    n=10
+    sigma=1
+    
+    ## Generate data
+    mn <- rep(c(0,lev), each=n/2)
+    set.seed(2)
+    y <- mn + rnorm(n, 0, sigma)
+    
+    ## Run method /once/, collect things
+    set.seed(3)
+    obj = wildBinSeg_fixedThresh(y,thresh, numIntervals)
+    if(length(obj$cp)==0)return(NULL)
+    
+    ## Collect a polyhedron
+    poly <- polyhedra(obj)
+    
+    ## Make one segment contrast
+    v = make_all_segment_contrasts(obj)[[1]]
+    
+    ## Partition the TG statistic 
+    a = partition_TG(y, polyhedra=poly, v=v, sigma=sigma, nullcontrast=0, bits=50)
 
-## Generate data
-mn <- rep(c(0,lev), each=n/2)
-set.seed(2)
-y <- mn + rnorm(n, 0, sigma)
+    ## Separately make the p-value
+    pv1 = poly.pval(y=y,v=v, G=poly$gamma, u=poly$u, sigma=sigma)$pv
 
-## Run method /once/, collect things
-set.seed(3)
-obj = wildBinSeg(y,thresh, numIntervals)
-if(length(obj$cp)==0)return(NULL)
-
-## Collect a polyhedron
-poly <- polyhedra(obj)
-
-## Make one segment contrast
-v = make_all_segment_contrasts(obj)[[1]]
-
-## Get p-value conditioned on drawn interval set
-
-## Partition the TG statistic 
-a = partition_TG(y, polyhedra=poly, v=v, sigma=sigma, nullcontrast=0, bits=50)
-
-## Check equality
-expect_equal(a$numer/a$denom, pv1)
-expect_equal(a$numer/a$denom, pv2)
+    ## Check equality
+    expect_equal(a$numer/a$denom, pv1)
+    ## expect_equal(a$numer/a$denom, pv2)
 
 })
