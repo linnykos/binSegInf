@@ -116,7 +116,6 @@ pvalue_ss <- function(y, contrast, sigma = 1){
 #' significance level, guaranteeing that alpha percentage
 #' of the intervals will cover the true parameter.
 #'
-#' @return 
 #' @export
 confidence_interval_ss <- function(y, contrast, sigma = 1, alpha = 0.95){
   pos_idx <- which(contrast > 0); neg_idx <- which(contrast < 0)

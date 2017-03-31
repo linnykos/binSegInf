@@ -103,10 +103,7 @@ get.power <- function(pvals, loc=n/2){
 ##' in the interval set $i$.
 ##' @param i changepoint set
 ##' @param cp single location
-##' @examples set.seed(1)
-##' i = generate_intervals(n=10,numIntervals=5)
-##' i.covers.cp(i,2)
-##' i.covers.cp(i,5)
+##' @return TRUE if \code{cp} is covered by \code{i}
 i.covers.cp <- function(i,cp){
     contained = (i$starts <= cp & cp<i$ends)
     return(any(contained))

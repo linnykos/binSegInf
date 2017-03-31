@@ -12,7 +12,7 @@ y <- mn + rnorm(n, 0, sigma)
 
 ## Run method /once/, collect things
 set.seed(3)
-obj = wildBinSeg(y,thresh, numIntervals)
+obj = wildBinSeg_fixedThresh(y,thresh, numIntervals)
 if(length(obj$cp)==0)return(NULL)
 
 ## Collect a polyhedron
@@ -25,15 +25,6 @@ v = make_all_segment_contrasts(obj)[[1]]
 pv1 = pvalue(y, poly, v, sigma)
 
 ## Get /randomized/ p-value /not/ conditional on interval set
-yo <- function(i){
-    print(i)
 pv2 <- randomized_wildBinSeg_pv(y = y, v = v,
                                 numIntervals = numIntervals,
-                                nsim.importance.sampling=1000)
-return(pv2)
-}
-
-pv2s = sapply(1:100, yo)
-hist(unlist(pv2s))
-print(pv1)
-print(pv2)
+                                nsim.is=1000, sigma=sigma)

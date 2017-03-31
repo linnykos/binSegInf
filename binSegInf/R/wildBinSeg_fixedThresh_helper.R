@@ -150,9 +150,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param seed seed number for random interval generation; defaults to NULL.
 ##' @param start.end.list Manual list of starts and ends. Literally an R list
 ##' with two equal length vectors, each named |start| and |end|
-##' @examples
-##' i = generate_intervals(10, 10)
-##' print(i)
+##' @return List containing starts and ends and intervals etc.
 generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL){
     
     ## Basic checks
@@ -271,7 +269,7 @@ unsigned_contrast <- function(s,b,e,n=NULL,y){
 ##' @param sn Sign (direction) of proposed breakpoint at |test.bps|; use +1 or -1.
 ##' @param n length of data.
 ##' @examples
-##' make_contrast(20,c(1,40),60)
+##' make_contrast(20,c(1,40),+1,60)
 ##' @export
 make_contrast = function(test.bp, adj.bps, sn, n){
 
@@ -293,6 +291,7 @@ make_contrast = function(test.bp, adj.bps, sn, n){
 ##' Helper function for making segment contrasts from a wildBinSeg object OR
 ##' bsFt object.
 ##' @param obj Result from running wbs()
+##' @export
 make_all_segment_contrasts <- function(obj){
 
     ## Basic checks:
@@ -307,13 +306,13 @@ make_all_segment_contrasts <- function(obj){
 
     ## Augment the changepoint set for convenience
     ord = order(obj$cp)
-    cp_aug = c(0,obj$cp[ord],n)
+    cp_aug = c(0,obj$cp[ord],length(obj$y))
     sn_aug = c(NA,obj$cp.sign[ord],NA)
     dlist = list()
 
     ## Make each contrast
     for(ii in (2:(length(cp_aug)-1))){
-        d = rep(0,n)
+        d = rep(0,length(obj$y))
         ind1 = (cp_aug[ii-1]+1):cp_aug[ii] ## 1 to 3, 4 to 9
         ind2 = (cp_aug[ii]+1):cp_aug[ii+1]
         d[ind1] = -1/length(ind1)

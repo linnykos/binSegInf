@@ -55,10 +55,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 #' 
 #' @return A list of two objects \code{V} and \code{u}, for the halfspaces in
 #'     represented as V'y>u
-#' 
-#' @examples 
-#' y = c(rnorm(10,0,1), rnorm(10,4,1))
-#' myineqs = halfspaces(s = 0, b = 10, e = 20, n = 20, y = y)
+
 halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
     if(verbose) cat("s,b,e are", s,b,e, fill=T)
     if(!(s <= b & b <= e)){
