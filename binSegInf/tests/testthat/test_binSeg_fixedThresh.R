@@ -20,8 +20,8 @@ test_that("Algorithm output is the same as wbs:sbs() each time", {
         thresh = runif(1,0,sigma)
 
         ## From wbs() from wbs package
-        w.cpt <- wbs::changepoints(w,th=thresh)
         w <- wbs::sbs(y0,th=thresh)
+        w.cpt <- wbs::changepoints(w,th=thresh)
         c1 = unlist(w.cpt$cpt.th)
        
         ## From our function
