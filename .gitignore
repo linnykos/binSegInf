@@ -5,3 +5,5 @@
 *.Rout
 *.out
 .Rproj.user
+.Rd
+*.Rd
