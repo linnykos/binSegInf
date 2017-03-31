@@ -53,3 +53,82 @@ polyhedra.bsFs <- function(obj, ...){
   
   t(sign.vec * vec - t(sign.mat * mat))
 }
+
+
+
+##' Function to collect polyhedra given some output from the
+##' binSeg_fixedThresh(), of class "bsFt".
+##' 
+##' @param obj object of bsFt class
+##' @param verbose Whether or not to print things.
+##'
+##' @return An object of class polyhedra
+polyhedra.bsFt = function(obj, verbose = F) {
+
+    ## Extracting things
+    Blist = obj$bs.output$Blist
+    blist = obj$bs.output$blist
+    slist = obj$bs.output$slist
+    elist = obj$bs.output$elist
+    selist = obj$bs.output$selist
+    zlist = obj$bs.output$zlist
+    Zlist = obj$bs.output$Zlist
+    y = obj$y
+    thresh = obj$thresh
+    n = length(y)
+
+    ## Initialize G and u
+    ii = 1
+    G = matrix(NA,nrow = nrow((Blist))*n, ncol = n)
+    u = rep(NA, nrow((Blist))*n)
+    nrow.G = 0
+
+
+    ## For each node in Blist, collect halfspaces.
+    for(my.j in 1:nrow((Blist))){
+        b = Blist[my.j, "val"]
+        z = Zlist[my.j, "val"]
+        j = Blist[my.j,"j"]-1
+        k = Blist[my.j,"k"]
+        if(verbose) cat('j,k is', j,k, fill=TRUE)
+        ## Extract s,e, check if terminal node
+        ind = which(selist[,"j"]==j&selist[,"k"]==k)
+        se = c(slist[ind,"val"], elist[ind,"val"])
+        is.terminal.node = !any(apply(blist[,c(1,2)],1,function(myrow)(myrow[1]==j+1)&&(myrow[2]==k)))
+
+        ## Collect halfspaces
+        my.halfspaces = halfspaces(s = se[1],
+                                   e = se[2],
+                                   b = b,
+                                   z=z,
+                                   thresh = thresh,
+                                   n = n,
+                                   y = y,
+                                   is.terminal.node = is.terminal.node)
+
+        newrows = my.halfspaces[["V"]]
+        newconst = my.halfspaces[["u"]]
+        
+        ## Move on if no comparisons were made i.e. lengths to left=2, right=1
+        if(dim(newrows)[1]==0) next
+            
+            ## Add to Gamma matrix
+            newrowinds = nrow.G + c(1:nrow(newrows))
+            if(any(newrowinds > nrow(G) )){
+                G = rbind(G, matrix(NA,nrow=nrow(G),ncol=n))
+                u = c(u, rep(NA,length(u)))
+            }
+            G[newrowinds,] = newrows
+            u[newrowinds] = newconst 
+            
+           ## Updates for loop
+            nrow.G = nrow.G + nrow(newrows)
+            ii = ii + 1
+    }
+    if(verbose) cat(fill=T)
+
+    ## Trim and return
+    G = trim(G,"row")
+    u = trim(u)
+    return(polyhedra(obj = G, u = u))
+}
