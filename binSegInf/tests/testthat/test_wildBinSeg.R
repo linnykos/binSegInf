@@ -206,7 +206,7 @@ test_that("get_vup_vlo() produces numerator and denominator consistent with exte
     numIntervals=10
     n=10
     sigma=1
-    
+   
     ## Generate data
     mn <- rep(c(0,lev), each=n/2)
     set.seed(2)
