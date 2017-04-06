@@ -151,6 +151,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param start.end.list Manual list of starts and ends. Literally an R list
 ##' with two equal length vectors, each named |start| and |end|
 ##' @return List containing starts and ends and intervals etc.
+##' @export
 generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL){
     
     ## Basic checks

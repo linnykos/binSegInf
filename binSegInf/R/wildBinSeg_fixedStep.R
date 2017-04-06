@@ -27,8 +27,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     intervals = .deduplicate_intervals(length(y), intervals)
     starts = intervals$starts
     ends = intervals$ends
-    
-   
+
     ## Initialize things
     A = T = c()
     S = E = B = Z = M = list()
@@ -39,16 +38,20 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     Scurr = add(Scurr,1,1,1)
     Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
-    ## Acurr[[1]] = c()
     G = matrix(NA, ncol = length(y), nrow = 2*length(y)*numSteps)
-    G.jk = cplist(numSteps+1) ## G.jk will store the row numbers for (j,k)
     
     ## At general step
-    for(mystep in 1:numSteps){
+    for(mystep in 2:(numSteps+1)){
+        if(mystep==4) browser()
 
         ## Goal is to get max.m, max.b, max.j, max.k
-        .get_max.mbc <- function(Tcurr){
-            max.m.b.cusums <- lapply(Tcurr, function(t){
+        .get_max.mbc <- function(Tcurr.without.null){
+            
+            ## Basic check
+            if(any(is.na(Tcurr.without.null))) stop("Input Tcurr should be rid of nulls!")
+
+            ## Get maximizing quantities
+            max.m.b.cusums <- lapply(Tcurr.without.null, function(t){
                 s = extract(Scurr,t[1],t[2])
                 e = extract(Ecurr,t[1],t[2])
                 ms = which(.get_which_qualify(s,e,intervals))
@@ -63,12 +66,14 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
                 return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
         }
 
-        mbc.list <- .get_max.mbc(Tcurr)
+        ## Rid of the null element (the first one)
+        Tcurr.without.null <- Tcurr[!sapply(Tcurr, is.null)]
+        mbc.list <- .get_max.mbc(Tcurr.without.null)
         if(all(sapply(mbc.list, is.null))) next
         
         ## Extract m,b,z,j,k 
         ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
-        jk.max <- Tcurr[[ind]]
+        jk.max <- Tcurr.without.null[[ind]]
         j.max <-  jk.max[1]
         k.max <-  jk.max[2]
         m.max <- mbc.list[[ind]]$max.m
@@ -81,17 +86,16 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         s.max <- extract(Scurr,j.max,k.max)
         e.max <- extract(Ecurr,j.max,k.max)
 
-        ## Change active and terminal set
-        Acurr[[mystep]] <- c(j.max,k.max)
-        Tcurr <- Tcurr[-ind]
-        stopifnot(length(Tcurr)==mystep-1)
-        Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
-        Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
-
         ## Change all other *Curr things 
         Bcurr <- add(Bcurr, j.max, k.max, b.max)
         Zcurr <- add(Zcurr, j.max, k.max, z.max)
         Mcurr <- add(Mcurr, j.max, k.max, m.max)
+
+        ## Change active and terminal set
+        Acurr[[mystep]] <- c(j.max,k.max)
+        Tcurr <- Tcurr.without.null[-ind]
+        Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
+        Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
 
         ## Take snapshot
         A[[mystep]] = trim(Acurr)
@@ -110,6 +114,10 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         
     }
 
+    names(B) = names(M) = names(Z) = names(A) = 
+    names(T) = names(S) = names(E) = paste("step", 0:numSteps)
+
+    print(B)
     ## Bundle 
     obj <- structure(list(A=A, T=T, S=S, E=E, B=B, Z=Z, M=M,
                           intervals=intervals, cp=(B[[length(B)]]) [,"val"],
