@@ -75,7 +75,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         b.max <- mbc.list[[ind]]$max.b
         z.max <- sign(mbc.list[[ind]]$max.cusum)
 
-        if(verbose) cat("At step", mystep, ", changepoint", b.max, "enters! from (s,e)=",s.max,e.max, fill=TRUE)
+        ## if(verbose) cat("At step", mystep, ", changepoint", b.max, "enters! from (s,e)=",s.max, e.max, fill=TRUE)
 
         ## Update S and E
         s.max <- extract(Scurr,j.max,k.max)

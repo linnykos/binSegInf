@@ -64,3 +64,19 @@ obj = wildBinSeg_fixedSteps(y,numSteps, intervals=intervals, verbose=TRUE)
 ## Apply IC rule, get stoptime and polyhedra for it.
 ic_wrapper(obj, y=y, sigma=sigma, returntype="polyhedra")
 ic_wrapper(obj, y=y, sigma=sigma, returntype="stoptime")
+
+
+## Collect a polyhedron
+poly <- polyhedra(obj)
+
+## Make contrasts
+vs = make_all_segment_contrasts(obj)
+
+## Do inference and return
+pv = sapply(vs, function(v){
+    pfun(y=y,v=v, G=poly$gamma, u=poly$u, sigma=sigma)$pv})
+
+## Optionally, compare it directly to a different pfun2
+pv2 = sapply(vs, function(v){ pfun2(y=y,v=v,poly=poly,sigma=sigma,
+                                    nsim.is=nsim.is, numIntervals=numIntervals)})
+

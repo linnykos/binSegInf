@@ -91,7 +91,7 @@ max_of_max_semat <- function(semat, obj){
 #'
 #' @return An object of class polyhedra
 #' @export
-polyhedra.wbsFt <- function(obj, ...){
+polyhedra.wbsFs <- function(obj, ...){
     
     ## Basic checks
     stopifnot(is_valid.wbsFt(obj))

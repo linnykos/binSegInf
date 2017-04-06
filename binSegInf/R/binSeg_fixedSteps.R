@@ -14,6 +14,7 @@ binSeg_fixedSteps <- function(y, numSteps){
     
   #initialization
   n <- length(y); tree <- .create_node(1, n)
+  cp <- c()
     
   for(steps in 1:numSteps){
     leaves.names <- .get_leaves_names(tree)
@@ -28,15 +29,16 @@ binSeg_fixedSteps <- function(y, numSteps){
     node.name <- .find_leadingBreakpoint(tree)
     node.selected <- data.tree::FindNode(tree, node.name)
     node.selected$active <- steps
-     
     node.pairs <- .split_node(node.selected)
     node.selected$AddChildNode(node.pairs$left)
     node.selected$AddChildNode(node.pairs$right)
   }
   
   y.fit <- .refit_binseg(y, jumps(tree))
-    
-  structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
+  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
+  cp <- jumps(obj)
+  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
+
 }
 
 #' is_valid for bsFs
