@@ -26,10 +26,11 @@ polyhedra.wbsFs <- function(obj, ...){
 ##' 
 ##' @return a polyhedra object with the selection event at that step.
 poly_from_snapshot <- function(obj, mystep){
+    
         ## Obtain snapshot
-        Tcurr <- obj$T[[mystep]]
-        Scurr <- obj$S[[mystep]]
-        Ecurr <- obj$E[[mystep]]
+        Tcurr <- obj$T[[paste("step",mystep)]]
+        Scurr <- obj$S[[paste("step",mystep)]]
+        Ecurr <- obj$E[[paste("step",mystep)]]
     
         ## For each terminal node, characterize the selection event of b.max in m.max.
         newpolylist <- lapply(Tcurr, function(t){
