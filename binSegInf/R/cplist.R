@@ -13,10 +13,10 @@ cplist <- function(nrow) {
 
 
 
-##' Make cplist object.
+##' Make cplist object from dataframe.
 ##' @param df data frame
-dataframe_to_cplist <- function(df){
-    return(structure(list(mat=df, last.row=0), class = "cplist"))
+df_to_cplist <- function(df){
+    return(structure(list(mat=rbind(df), last.row=nrow(rbind(df))), class = "cplist"))
 }
 
 ##' Check if object is of class "cplist"
@@ -185,8 +185,6 @@ trim.vec <- function(myvec){
 trim <- function(mything,...){
     class.of.my.thing = class(mything)
     if (class.of.my.thing %in% c("cplist")){
-        print("here")
-        browser()
         return(trim.cplist(mything))
     } else if(class.of.my.thing == "list"){
         return(trim.list(mything,...))
@@ -197,4 +195,13 @@ trim <- function(mything,...){
     } else {
         stop(paste("trim() doesn't know how to trim things of class:", class.of.my.thing))
     }
+}
+
+
+get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
+##' Extracts /last/ element of cplist. Mainly used in wbs-FS-polyhedra.
+##' @param cplist
+##' @return "val" value of the last row of cplist.
+get_last_row_val.cplist <- function(cplist){
+    return(cplist$mat[nrow(cplist$mat), "val"])
 }

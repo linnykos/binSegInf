@@ -66,8 +66,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         if(all(sapply(mbc.list, is.null))){
             if(verbose){
                 print(paste("There were no qualifying intervals during step ", mystep-1));
-                next
             }
+            next
         }
         
         ## Extract m,b,z,j,k 
@@ -93,14 +93,12 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
 
         ## Take snapshot
         A[[mystep]] = trim(Acurr)
-        print(class(Scurr))
-        print(class(trim(Scurr)))
         T[[mystep]] = trim(Tcurr)
-        S[[mystep]] = trim(Scurr)
-        E[[mystep]] = trim(Ecurr)
-        B[[mystep]] = trim(Bcurr)
-        Z[[mystep]] = trim(Zcurr)
-        M[[mystep]] = trim(Mcurr)
+        S[[mystep]] = df_to_cplist(trim(Scurr))
+        E[[mystep]] = df_to_cplist(trim(Ecurr))
+        B[[mystep]] = df_to_cplist(trim(Bcurr))
+        Z[[mystep]] = df_to_cplist(trim(Zcurr))
+        M[[mystep]] = df_to_cplist(trim(Mcurr))
         
         ## Change active and terminal set
         Acurr[[mystep]] <- c(j.max,k.max)
@@ -117,13 +115,14 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         
     }
 
-    names(B) = names(M) = names(Z) = names(A) = 
+    if(numSteps==1) A =list("step 0" = NULL, "step 1" = NULL);
+    names(B) = names(M) = names(Z) = 
     names(T) = names(S) = names(E) = paste("step", 0:(length(B)-1))
 
     ## Bundle 
     obj <- structure(list(A=A, T=T, S=S, E=E, B=B, Z=Z, M=M,
-                          intervals=intervals, cp=(B[[length(B)]]) [,"val"],
-                          cp.sign=(Z[[length(Z)]])[,"val"], numSteps=numSteps, y=y),
+                          intervals=intervals, cp=((B[[length(B)]])$mat)[,"val"],
+                          cp.sign=((Z[[length(Z)]])$mat)[,"val"], numSteps=numSteps, y=y),
                      class="wbsFs")
     return(obj)
 }
