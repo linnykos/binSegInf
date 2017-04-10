@@ -164,7 +164,7 @@ test_that("Single polyhedron is correct",{
 
 
 
-test_that("Polyhedron is exactly correct",{
+test_that("Fixed Threshold WBS Polyhedron is exactly correct",{
     ## Make this a test:
     numIntervals = 100 ## 10
     n = 10 ## 4
@@ -232,5 +232,43 @@ test_that("get_vup_vlo() produces numerator and denominator consistent with exte
     ## Check equality
     expect_equal(a$numer/a$denom, pv1)
     ## expect_equal(a$numer/a$denom, pv2)
+
+})
+
+
+test_that("Fixed Step Polyhedron is exactly correct",{
+    ## Make this a test:
+    ## numIntervals = 100 ## 10
+    numIntervals=10
+    n = 10 ## 4
+    lev = 0 
+    sigma = 1
+    mn <- rep(c(0,lev), each=n/2)
+    seed = 48
+    set.seed(seed)
+    thresh = 0
+    y0 <- mn + rnorm(n, 0, sigma)
+    numSteps = 5
+    
+    ## Run method on original data |y0|, collect things.
+    intervals = generate_intervals(n,numIntervals,seed)
+    obj = wildBinSeg_fixedSteps(y0,
+                                numSteps=numSteps,
+                                intervals=intervals,
+                                verbose=TRUE)
+    poly <- polyhedra.wbsFs(obj)
+    
+    ## Generate many new datasets from your polyhedron, see if they /all/ give
+    ## you the same fit. No need to do Gaussian generation of ynew.
+    for(jj in 100000:1001){
+        set.seed(jj)
+        ## ynew <- mn + rnorm(n,0,sigma)
+        ynew = y0 + rnorm(n,0,0.5)
+        if(all(poly$gamma%*% (ynew) >= poly$u)){
+            print(jj)
+            objnew =  wildBinSeg_fixedSteps(y=ynew,numSteps=numSteps ,intervals=intervals,verbose=FALSE)
+            expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
+        }
+    }
 
 })

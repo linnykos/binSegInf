@@ -48,18 +48,19 @@ mu = c(rep(0,n/2),rep(lev,n/2))
 sigma=1
 set.seed(0)
 y <- mu + rnorm(n)
-numSteps=3
+numSteps = 3
 set.seed(0)
+numIntervals=10
 intervals = generate_intervals(length(y), numIntervals)
-## end temporary
+
+## Run method /once/, collect things
+numSteps=5
+obj = wildBinSeg_fixedSteps(y, numSteps, intervals=intervals, verbose=TRUE)
 
 ## Fix method and pfun
 pfun = poly.pval
 pfun2 = randomized_wildBinSeg_pv
 
-## Run method /once/, collect things
-numSteps=5
-obj = wildBinSeg_fixedSteps(y,numSteps, intervals=intervals, verbose=TRUE)
 
 ## Apply IC rule, get stoptime and polyhedra for it.
 ic_wrapper(obj, y=y, sigma=sigma, returntype="polyhedra")
