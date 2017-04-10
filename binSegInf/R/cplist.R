@@ -12,6 +12,13 @@ cplist <- function(nrow) {
 }
 
 
+
+##' Make cplist object from dataframe.
+##' @param df data frame
+df_to_cplist <- function(df){
+    return(structure(list(mat=rbind(df), last.row=nrow(rbind(df))), class = "cplist"))
+}
+
 ##' Check if object is of class "cplist"
 is.cplist <- function(someobj){ inherits(someobj, "cplist") }
 
@@ -161,6 +168,7 @@ trim.mat <- function(mat, type = c("rowcol","row")){
 ##' Trims a list by deleting the last consecutive elements that are NULL.
 ##' @param mylist Some list.
 trim.list <- function(mylist, rid.null=FALSE){
+    if(length(mylist)==0)return()
     return(mylist[1:(max(which(!sapply(mylist, is.null))))])
 }
 
@@ -176,15 +184,24 @@ trim.vec <- function(myvec){
 ##' Function to trim matrices, lists or vectors.
 trim <- function(mything,...){
     class.of.my.thing = class(mything)
-    if(class.of.my.thing == "list"){
+    if (class.of.my.thing %in% c("cplist")){
+        return(trim.cplist(mything))
+    } else if(class.of.my.thing == "list"){
         return(trim.list(mything,...))
     } else if (class.of.my.thing %in% c("matrix","dgCMatrix", "dgeMatrix")){
         return(trim.mat(mything,...))
     } else if (class.of.my.thing %in% c("integer", "numeric", "logical")){
         return(trim.vec(mything,...))
-    } else if (class.of.my.thing %in% c("cplist")){
-        return(trim.cplist(mything))
     } else {
         stop(paste("trim() doesn't know how to trim things of class:", class.of.my.thing))
     }
+}
+
+
+get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
+##' Extracts /last/ element of cplist. Mainly used in wbs-FS-polyhedra.
+##' @param cplist
+##' @return "val" value of the last row of cplist.
+get_last_row_val.cplist <- function(cplist){
+    return(cplist$mat[nrow(cplist$mat), "val"])
 }

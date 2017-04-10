@@ -17,8 +17,10 @@ polyhedra.matrix <- function(obj, u, ...){
 #' @return TRUE if valid
 #' @export
 is_valid.polyhedra <- function(obj){
-  if(!is.numeric(obj$gamma) | !is.matrix(obj$gamma)) 
+  if(!is.numeric(obj$gamma) | !is.matrix(obj$gamma)) {
+    print(head(obj$gamma))
     stop("gamma is not a numeric matrix")
+  }
   if(!is.numeric(obj$u)) stop("u is not a numeric vector")
   if(nrow(obj$gamma) != length(obj$u)) stop("nrow(gamma) does not match length(u)")
   
@@ -36,12 +38,12 @@ combine.polyhedra <- function(...){
 
     polyobjs = list(...)
     polyobjs = polyobjs[which(!sapply(polyobjs, is.null))]
-
+    
     ## Combine separately and return
-    newgamma = do.call(rbind, lapply(polyobjs, function(mypolyobj)mypolyobj$gamma))
+    newgamma = do.call(rbind, lapply(polyobjs, function(mypolyobj) mypolyobj$gamma))
     newu = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
+    newpoly = structure(list(gamma = newgamma, u= newu), class = "polyhedra")
 
-    newpoly = polyhedra.matrix(obj = newgamma, u= newu)
     stopifnot(is_valid.polyhedra(newpoly))
     return(newpoly)
 }

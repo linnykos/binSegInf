@@ -219,6 +219,7 @@ getcusums <- function(s,e,y, unsigned=FALSE){
     type = match.arg(type)
     s <- intervals$starts[[m]]
     e <- intervals$ends[[m]]
+    ## cat("(s,e)=(",s,",",e,")",fill=TRUE)
     max.b.before.adding.s <- which.max(getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums)
     if(type=="cusums"){
         return(max(getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums))

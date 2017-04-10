@@ -25,10 +25,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     
     ## De-duplicate the intervals
     intervals = .deduplicate_intervals(length(y), intervals)
-    starts = intervals$starts
-    ends = intervals$ends
-    
-   
+
     ## Initialize things
     A = T = c()
     S = E = B = Z = M = list()
@@ -39,16 +36,17 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     Scurr = add(Scurr,1,1,1)
     Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
-    ## Acurr[[1]] = c()
     G = matrix(NA, ncol = length(y), nrow = 2*length(y)*numSteps)
-    G.jk = cplist(numSteps+1) ## G.jk will store the row numbers for (j,k)
     
     ## At general step
-    for(mystep in 1:numSteps){
+    for(mystep in 2:(numSteps+1)){
 
         ## Goal is to get max.m, max.b, max.j, max.k
         .get_max.mbc <- function(Tcurr){
+
+            ## Get maximizing quantities
             max.m.b.cusums <- lapply(Tcurr, function(t){
+                if(is.null(t)) return()
                 s = extract(Scurr,t[1],t[2])
                 e = extract(Ecurr,t[1],t[2])
                 ms = which(.get_which_qualify(s,e,intervals))
@@ -63,11 +61,18 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
                 return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
         }
 
+        ## Rid of the null element (the first one)
         mbc.list <- .get_max.mbc(Tcurr)
-        if(all(sapply(mbc.list, is.null))) next
+        if(all(sapply(mbc.list, is.null))){
+            if(verbose){
+                print(paste("There were no qualifying intervals during step ", mystep-1));
+            }
+            next
+        }
         
         ## Extract m,b,z,j,k 
         ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
+        ## jk.max <- Tcurr.without.null[[ind]]
         jk.max <- Tcurr[[ind]]
         j.max <-  jk.max[1]
         k.max <-  jk.max[2]
@@ -75,18 +80,11 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         b.max <- mbc.list[[ind]]$max.b
         z.max <- sign(mbc.list[[ind]]$max.cusum)
 
-        ## if(verbose) cat("At step", mystep, ", changepoint", b.max, "enters! from (s,e)=",s.max, e.max, fill=TRUE)
-
         ## Update S and E
         s.max <- extract(Scurr,j.max,k.max)
         e.max <- extract(Ecurr,j.max,k.max)
 
-        ## Change active and terminal set
-        Acurr[[mystep]] <- c(j.max,k.max)
-        Tcurr <- Tcurr[-ind]
-        stopifnot(length(Tcurr)==mystep-1)
-        Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
-        Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
+        if(verbose) cat("At step", mystep, ", changepoint", b.max, "enters! from (s,e)=",intervals$se[[m.max]], fill=TRUE)
 
         ## Change all other *Curr things 
         Bcurr <- add(Bcurr, j.max, k.max, b.max)
@@ -96,11 +94,18 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         ## Take snapshot
         A[[mystep]] = trim(Acurr)
         T[[mystep]] = trim(Tcurr)
-        S[[mystep]] = trim(Scurr)
-        E[[mystep]] = trim(Ecurr)
-        B[[mystep]] = trim(Bcurr)
-        Z[[mystep]] = trim(Zcurr)
-        M[[mystep]] = trim(Mcurr)
+        S[[mystep]] = df_to_cplist(trim(Scurr))
+        E[[mystep]] = df_to_cplist(trim(Ecurr))
+        B[[mystep]] = df_to_cplist(trim(Bcurr))
+        Z[[mystep]] = df_to_cplist(trim(Zcurr))
+        M[[mystep]] = df_to_cplist(trim(Mcurr))
+        
+        ## Change active and terminal set
+        Acurr[[mystep]] <- c(j.max,k.max)
+        Tcurr <- Tcurr[-ind]
+        Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
+        Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
+
 
         ## Prep Scurr and Ecurr for next step.
         Scurr <- add(Scurr, j.max+1, 2*k.max-1, s.max)
@@ -110,10 +115,14 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         
     }
 
+    if(numSteps==1) A =list("step 0" = NULL, "step 1" = NULL);
+    names(B) = names(M) = names(Z) = 
+    names(T) = names(S) = names(E) = paste("step", 0:(length(B)-1))
+
     ## Bundle 
     obj <- structure(list(A=A, T=T, S=S, E=E, B=B, Z=Z, M=M,
-                          intervals=intervals, cp=(B[[length(B)]]) [,"val"],
-                          cp.sign=(Z[[length(Z)]])[,"val"], numSteps=numSteps, y=y),
+                          intervals=intervals, cp=((B[[length(B)]])$mat)[,"val"],
+                          cp.sign=((Z[[length(Z)]])$mat)[,"val"], numSteps=numSteps, y=y),
                      class="wbsFs")
     return(obj)
 }
