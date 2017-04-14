@@ -4,5 +4,5 @@ sigma = 1
 ## obj = wildBinSeg_fixedSteps(y,10)
 obj <- list(cp = c(10,20,25,13,17,5))##Make some fake changepoints
 poly <- ic_wrapper(obj = obj, y = y, consec=2, maxsteps=length(cp), sigma,
-                   type = "bic", returntype = c("polyhedra"))
+                   type = "bic")$poly
 print(poly)

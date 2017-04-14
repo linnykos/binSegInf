@@ -236,6 +236,36 @@ test_that("get_vup_vlo() produces numerator and denominator consistent with exte
 })
 
 
+
+test_that("Fixed Step Polyhedron contains y (a really basic check)",{
+
+    ## First test
+    one_rep <- function(seed){
+        numIntervals=10
+        n = 10 ## 4
+        lev = 0 
+        sigma = 1
+        mn <- rep(c(0,lev), each=n/2)
+        seed = 48
+        set.seed(seed)
+        thresh = 0
+        y0 <- mn + rnorm(n, 0, sigma)
+        numSteps = 5
+        
+        ## Run method on original data |y0|, collect things.
+        intervals = generate_intervals(n,numIntervals,seed)
+        obj = wildBinSeg_fixedSteps(y0,
+                                    numSteps=numSteps,
+                                    intervals=intervals,
+                                    verbose=FALSE)
+        poly <- polyhedra.wbsFs(obj)
+    
+        ## Check that the polyhedron is in it.
+        expect_true(all(poly$gamma %*% cbind(y0) >= poly$u))
+    }
+
+}
+
 test_that("Fixed Step Polyhedron is exactly correct",{
     ## Make this a test:
     ## numIntervals = 100 ## 10
@@ -257,6 +287,9 @@ test_that("Fixed Step Polyhedron is exactly correct",{
                                 intervals=intervals,
                                 verbose=TRUE)
     poly <- polyhedra.wbsFs(obj)
+
+    ## Check that the polyhedron is in it.
+    stopifnot(all(poly$gamma %*% cbind(y0) >= poly$u))
     
     ## Generate many new datasets from your polyhedron, see if they /all/ give
     ## you the same fit. No need to do Gaussian generation of ynew.

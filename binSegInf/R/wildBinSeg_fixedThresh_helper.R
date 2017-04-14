@@ -295,13 +295,7 @@ make_contrast = function(test.bp, adj.bps, sn, n){
 ##' @export
 make_all_segment_contrasts <- function(obj){
 
-    ## Basic checks:
-    ## is_valid.XXX() throws error instead of FALSE, so I tried to wrap, but didn't work, moving on for now.
-    ## errorfun = function(){FALSE}
-    ## stopifnot(tryCatch({
-    ##     is_valid.wildBinSeg(obj)
-    ##     is_valid.bsFt(obj)}, error = errorfun ))
-
+    ## BAsic checks
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
 
@@ -353,57 +347,62 @@ make_all_segment_contrasts <- function(obj){
 ##' @param numIntervals number of WBS intervals you want /each time/. This
 ##'     should match what you used when applying wild binary segmentation on
 ##'     your observed dataset.
+##' @param thresh threshold.
+##' @param numSteps number of steps to take.
 ##' @param nsim.is Number of importance sampling samples you'd
 ##'     like to calculate.
-##' @param poly Not used
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, numIntervals, nsim.is, poly=NULL){
+randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL){
+
+    ## Basic checks
+    if(is.null(thresh) & is.null(numSteps))  stop("Provide one of | thresh| or |
+numSteps| (but not both)!")
+
+    if(!is.null(thresh) & !is.null(numSteps)) stop("Provide /only/ one of |
+thresh| or |numSteps|, not both!")
 
     ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(seed=NULL){
-
+    get_one <- function(seed=NULL, bits=bits){
 
         get_cp_from_segment_contrast <- function(v){
             which(dual1d_Dmat(length(v)+2)%*%c(0,v,0)!=0)[2]-1
         }
 
         ## Generate interval
-        ## cp = which.max(cumsum(v)) 
         cp <- get_cp_from_segment_contrast(v)
-
 
         i = generate_intervals(length(y), numIntervals, seed=seed)
         if(!i.covers.cp(i,cp)){return(NULL)}
 
         ## Run WBS and collect polyhedron
-        obj = wildBinSeg_fixedThresh(y,thresh, intervals=i)
+        if(!is.null(thresh)){
+            obj = wildBinSeg_fixedThresh(y,thresh, intervals=i)
+        } else {
+            obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i)
+        }
         if(length(obj$cp)==0){return(NULL)}
         poly <- polyhedra(obj)
         
-        ## Calculate (unnormalized) importance weight
-        a = partition_TG(y, poly, v, sigma)
-        W = a$denom
-
-        ## Calculate p-value
-        ## pv = pvalue(y,poly,v,sigma)
-        pv = poly.pval(y,G=poly$gamma,u=poly$u,v,sigma)
-        if(any(is.null(pv))) print(pv)
-
+        if(!all(poly$"gamma" %*%y >= poly$'u')) browser()
+        stopifnot(all(poly$gamma%*%y >= poly$u))
+        
         ## Calculate num & denom of TG
-        tg = partition_TG(y,poly,v,sigma, nullcontrast=0, bits=50)
+        ## poly.pval(y,poly$gamma,poly$u,v,sigma,bits=100)
+        if(!all(poly$"gamma" %*%y >= poly$'u')) browser()
+        tg = partition_TG(y,poly,v,sigma, nullcontrast=0, bits=100)
+        # stopifnot(all.equal(tg$pv, tg$numer/tg$denom))
 
         return(list(numer = tg$numer, denom = tg$denom, seed=seed))
     }
 
     ## Collect weighted p-values and their weights
-    pvlist = lapply(1:nsim.is, function(isim) get_one())
+    pvlist = lapply(1:nsim.is, function(isim) {get_one(bits=bits)})
     pvlist = .filternull(pvlist)
 
     if(length(pvlist)==0) return(NULL)
     
-    ## Calculate
-    ## print(pvlist)
+    ## Calculate p-value and return
     sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
     sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
     pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))

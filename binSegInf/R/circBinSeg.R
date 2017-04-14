@@ -82,6 +82,7 @@ circBinSeg_inner <- function(y, s, e, env){
         circBinSeg_inner(y=y,s=s2+1, e=e,  env=env)
 
     
+    }
 }
 
 
@@ -151,4 +152,3 @@ cbs_maximize <- function(y, s, e){
     return(s1 = ss[1], s2 = ss[2], maxcusumm = cusumms[ind.max])
 }
 
-##' Test for circular binary segmentation: 

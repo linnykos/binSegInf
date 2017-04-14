@@ -200,7 +200,7 @@ trim <- function(mything,...){
 
 get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
 ##' Extracts /last/ element of cplist. Mainly used in wbs-FS-polyhedra.
-##' @param cplist
+##' @param cplist A cplist object.
 ##' @return "val" value of the last row of cplist.
 get_last_row_val.cplist <- function(cplist){
     return(cplist$mat[nrow(cplist$mat), "val"])

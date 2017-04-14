@@ -114,9 +114,9 @@ tnorm.surv <- function(z, mean, sd, a, b, bits=NULL) {
   o = is.finite(mean)
   mm = mean[o]
   pp = mpfr.tnorm.surv(z,mm,sd,a,b,bits) 
-
   # If there are any NAs, then settle for an approximation
   oo = is.na(pp)
+  ## if(any(oo))browser()
   if (any(oo)) pp[oo] = bryc.tnorm.surv(z,mm[oo],sd,a,b)
   
   p[o] = pp
@@ -146,4 +146,33 @@ mpfr.tnorm.surv <- function(z, mean=0, sd=1, a, b, bits=NULL) {
   a = (a-mean)/sd
   b = (b-mean)/sd
   return((pnorm(b)-pnorm(z))/(pnorm(b)-pnorm(a)))
+}
+
+
+
+
+bryc.tnorm.surv <- function(z, mean=0, sd=1, a, b) {
+  z = (z-mean)/sd
+  a = (a-mean)/sd
+  b = (b-mean)/sd
+  n = length(mean)
+
+  term1 = exp(z*z)
+  o = a > -Inf
+  term1[o] = ff(a[o])*exp(-(a[o]^2-z[o]^2)/2)
+  term2 = rep(0,n)
+  oo = b < Inf
+  term2[oo] = ff(b[oo])*exp(-(b[oo]^2-z[oo]^2)/2)
+  p = (ff(z)-term2)/(term1-term2)
+
+  # Sometimes the approximation can give wacky p-values,
+  # outside of [0,1] ..
+  #p[p<0 | p>1] = NA
+  p = pmin(1,pmax(0,p))
+  return(p)
+}
+
+ff <- function(z) {
+  return((z^2+5.575192695*z+12.7743632)/
+         (z^3*sqrt(2*pi)+14.38718147*z*z+31.53531977*z+2*12.77436324))
 }

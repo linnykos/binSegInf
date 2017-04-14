@@ -10,7 +10,7 @@
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
   if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
-  if(any(duplicated(y))) stop("y must contain all unique values")
+  ## if(any(duplicated(y))) stop("y must contain all unique values")
     
   #initialization
   n <- length(y); tree <- .create_node(1, n)
@@ -113,7 +113,7 @@ summary.bsFs <- function(object, ...){
 }
 
 .find_breakpoint <- function(y, start, end){
-  stopifnot(!any(duplicated(y))) 
+  ## stopifnot(!any(duplicated(y))) 
   if(start > end) stop("start must be smaller than or equal to end")
   if(start == end) return(list(breakpoint = start, cusum = 0))
   

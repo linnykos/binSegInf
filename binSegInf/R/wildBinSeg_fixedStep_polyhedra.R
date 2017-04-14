@@ -29,8 +29,7 @@ polyhedra.wbsFs <- function(obj, ...){
 ##' 
 ##' @return a polyhedra object with the selection event at that step.
 poly_from_snapshot <- function(obj, mystep){
-    print(mystep)
-    ## if(mystep==3) browser()
+    
     ## Obtain snapshot
     Tcurr <- obj$T[[paste("step",mystep)]]
     Scurr <- obj$S[[paste("step",mystep)]]
@@ -52,7 +51,7 @@ poly_from_snapshot <- function(obj, mystep){
         ## Get start/end points
         s = extract(Scurr,t[1],t[2])
         e = extract(Ecurr,t[1],t[2])
-        ms = which(.get_which_qualify(s,e,intervals))
+        ms = which(.get_which_qualify(s,e,obj$intervals))
         if(length(ms)==0) return()
         
         
@@ -62,7 +61,8 @@ poly_from_snapshot <- function(obj, mystep){
         
         ## 2. Second, Compare /all other/ cusums to that of the grand max
         newrows2 = do.call(rbind, lapply(ms, function(m){
-            se = intervals$se[[m]]
+            ## cat("m is", m,fill=TRUE)
+            se = obj$intervals$se[[m]]
             s.to.e = (se[1]:se[2])
             other.bs = s.to.e[-which(s.to.e == se[2])] 
             if(m==max.m) other.bs = other.bs[other.bs!=max.b]
@@ -76,6 +76,7 @@ poly_from_snapshot <- function(obj, mystep){
                                          sweep(+rbind(other.cusum.contrasts), 2,
                                                max.cusum.contrast, "+" ))
             if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
+            ## cat("nrow is", nrow(subtracted.contrasts),fill=TRUE)
             return(subtracted.contrasts)
         }))
         newrows = rbind(newrows1, newrows2)
@@ -87,6 +88,7 @@ poly_from_snapshot <- function(obj, mystep){
         ## Return it as a polyhedron
         return(polyhedra.matrix(obj = newrows, u = newu))
     })
+
     
     return(do.call(combine.polyhedra, newpolylist))
 }

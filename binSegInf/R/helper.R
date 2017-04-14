@@ -128,43 +128,50 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
 ##' is in the polyhedron, conditional on PvperpY. i.e. the probability that Y
 ##' stays in the polyhedron, fixing n-1 dimensions of it.
 ##' @param y data
-##' @param polyhedra polyhedra object produced form \code{polyhedra(wbs_object)}
+##' @param poly polyhedra object produced form \code{polyhedra(wbs_object)}
 ##' @param sigma data noise (standard deviation)
 ##' @param nullcontrast the null value of \eqn{v^T\mu}, for \eqn{\mu = E(y)}.
 ##' @param v contrast vector
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, polyhedra, v, sigma, nullcontrast=0, bits=50){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
     
     ## Basic checks
     stopifnot(length(v)==length(y))
-    stopifnot(is_valid.polyhedra(polyhedra))
+    stopifnot(is_valid.polyhedra(poly))
     
     ## From selectiveinference package (todo: make it succinct)
-    G = polyhedra$gamma
-    u = polyhedra$u
-    mean=0
+    G = poly$gamma
+    u = poly$u
     
-    z = sum(v*y)
+    vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
   
     rho = G %*% v / vv
-    vec = (u - G %*% y + rho*z) / rho
-    a = vlo = suppressWarnings(max(vec[rho>0]))
-    b = vup = suppressWarnings(min(vec[rho<0]))
-    
+    vec = (u - G %*% y + rho*vy) / rho
+    vlo = suppressWarnings(max(vec[rho>0]))
+    vup = suppressWarnings(min(vec[rho<0]))
+    vy = max(min(vy, vup),vlo)
 
     ## Calculate a,b,z for TG = (F(b)-F(z))/(F(b)-F(a))
-    z = Rmpfr::mpfr((z-mean)/sd, precBits=bits)
-    a = Rmpfr::mpfr((a-mean)/sd, precBits=bits)
-    b = Rmpfr::mpfr((b-mean)/sd, precBits=bits)
+    z = Rmpfr::mpfr(vy/sd, precBits=bits)
+    a = Rmpfr::mpfr(vlo/sd, precBits=bits)
+    b = Rmpfr::mpfr(vup/sd, precBits=bits)
+    if(!(a<=z &  z<=b)){
+        browser()
+    }
 
     ## Separately store and return num&denom of TG
     numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
     denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
-    return(list(denom=denom, numer=numer))
+
+    ## Form p-value as well.
+    pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
+                       (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+
+    return(list(denom=denom, numer=numer, pv = pv))
 }
 
 
@@ -248,4 +255,25 @@ dual1d_Dmat = function(m){
     D[ii,ii+1] = 1
   }
   return(D)
+}
+
+
+##' Creates bootstrap sample of numeric vector \code{vec}, optionally with a
+##' seed.
+##' @param vec Numeric vector
+##' @param seed Seed for random number generation
+##' @return resampled \code{vec}.
+##' @export
+bootstrap_sample <- function(vec,seed=NULL){
+    if(!is.null(seed)) set.seed(seed)
+    return(vec[sample.int(length(vec),replace=TRUE)])
+}
+
+##' Scale \code{resid} to have empirical std of \code{std}.
+##' @param resid numeric vector (meant to be residuals from changepoint model).
+##' @param std desired empirical standard deviation
+##' @return Properly scaled \code{resid}.
+##' @export
+scale_resid <- function(resid, std){
+    return(resid*(1/sd(resid))*std)
 }

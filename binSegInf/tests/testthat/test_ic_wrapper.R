@@ -18,18 +18,20 @@ test_that("Object returned from ic_to_polyhedra() is a valid polyhedra", {
 
 
 
-test_that("IC wrapper works properly", {
+## test_that("IC wrapper works properly", {
 
-    ## Example
-    set.seed(1)
-    y = c(rnorm(10),rnorm(10)+5,rnorm(10))
-    sigma = 1 
-    obj = binSeg_fixedThresh(y,1)
+##     ## Example
+##     set.seed(1)
+##     y = c(rnorm(10),rnorm(10)+5,rnorm(10))
+##     sigma = 1 
+##     obj = binSeg_fixedThresh(y,1)
+##     cp = c(10,20,15,5) 
+##     consec=1
+##     stp <- ic_wrapper(obj,y,sigma=sigma)
+##     obj <-  get_ic(cp=cp, y=y, sigma=sigma,consec=consec, maxsteps=3)
+##     poly <- ic_to_poly(obj)
+##     expect_true(is_valid.polyhedra(poly))
+## })
 
-    cp = c(10,20,15,5) 
 
-    consec=1
-    obj <-  get_ic(cp=cp, y=y, sigma=sigma,consec=consec, maxsteps=3)
-    poly <- ic_to_poly(obj)
-    expect_true(is_valid.polyhedra(poly))
-})
+

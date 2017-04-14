@@ -10,7 +10,7 @@
 #' @export
 contrast_vector <- function(obj, jump.idx, sorted = F, 
   type = c("segment", "spike"), ...){
-  if(!class(obj) %in% c("bsFs", "flFs"))
+  stopifnot(class(obj) %in% c("bsFs", "flFs","wbsFs")) 
   if(!is.character(type[1])) stop("type must be character")
   if(!type[1] %in% c("segment", "spike")) stop("type must be either segment or spike")
   type <- type[1]

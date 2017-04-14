@@ -6,30 +6,25 @@
 ##' @param type One of \code{c("bic","ebic","aic")}. Defaults to
 ##'     \code{"bic"}. Only BIC is possible for now.
 ##' @param consec Number of rises in IC before stop is to happen. Defaults to 2.
-##' @param returntype \code{"polyhedra"} for polyhedra, and \code{"stoptime"}
-##'     for the stoptime.
-##' @return polyhedra or stoptime
+##' @return list containing two objects: ''poly'' and ''stoptime''.
 ##' @example examples/ic_wrapper-example.R
 ##' 
 ##' @export
 ic_wrapper <- function(obj, y, consec=2, maxsteps=length(cp), sigma,
-                       type = "bic", returntype = c("polyhedra","stoptime")){## Basic checks
+                       type = "bic"){## Basic checks
     stopifnot(c("cp") %in% objects(obj))
     if(type!="bic") stop("Only BIC is possible, for now.")
-    returntype = match.arg(returntype)
     
     ## Get ic information
-    ic_obj = get_ic(obj$cp, y, consec=2, sigma=sigma, type = type)
+    tryCatch({
+        ic_obj = get_ic(obj$cp, y, consec=2, sigma=sigma, type = type)
+    },
+    warning = function() return(NULL)
+    ) 
     newpoly = ic_to_poly(ic_obj)
     
     ## Return 
-    if(returntype == "polyhedra"){
-        return(newpoly)
-    } else if (returntype == "stoptime") {
-        return(ic_obj$stoptime+1)
-    } else {
-        stop("Not valid returntype")
-    }
+    return(list(poly=newpoly, stoptime = ic_obj$stoptime+1))
 }
 
 ##' Takes IC vector and creates polyhedra.
@@ -42,7 +37,7 @@ ic_to_poly <- function(obj){
 
     ## Basic checks
     stopifnot(is_valid.ic(obj))
-    
+
     ## Get order of ICs
     seqdirs = c(.getorder(obj$ic))
 
@@ -54,6 +49,7 @@ ic_to_poly <- function(obj){
     
     ## Collect halfspaces
     for(jj in 1:(obj$stoptime + obj$consec)){
+
     
         residual = obj$resid[[jj+1]]
         const    = obj$pen[jj+1] - obj$pen[jj]
@@ -102,7 +98,8 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
     
     ## Collect BIC at each step 0 ~ (maxsteps-1)
     for(ii in 1:pmin(maxsteps,length(cp))){
-        if(verbose)  cat('step', ii, '\n')
+        ## if(verbose)  cat('step', ii, '\n')
+         cat('step', ii, '\n')
         
         ## Form proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
         tD = cbind(t(D)[,-cp[1:ii]])
@@ -139,6 +136,11 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
     stoptime = .whichrise(ic,consec) - 1 
     stoptime = pmin(stoptime, length(y)-consec-1)
 
+    ## Return NULL if path hasn't stopped
+    if(!(stoptime+consec < maxsteps)){
+        warning(paste('IC rule using', consec, 'rises hasnt stopped!'))
+    }
+    if(stoptime==0) warning('Stoptime is zero!')
 
     obj = structure(list(ic=ic, consec=consec, resid=resid, pen=pen, RSS=RSS,
                          stoptime=stoptime,y=y, type=type), class="ic")

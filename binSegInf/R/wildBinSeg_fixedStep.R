@@ -12,7 +12,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
                 return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL){
     ## Basic checks
     if(numSteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
-    if(any(duplicated(y))) stop("y must contain all unique values")
+    if(round(numSteps) != numSteps) stop(paste("You should provide an integer value for numSteps!"))
+    ## if(any(duplicated(y))) stop("y must contain all unique values")
     if(is.null(numIntervals) & is.null(intervals)){
         stop("Provide input for generating intervals, or the intervals themselves!")}
     if(!is.null(intervals)) stopifnot(.is_valid_intervals(intervals))
