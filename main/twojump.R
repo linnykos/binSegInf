@@ -1,19 +1,19 @@
 ## Simulation settings
-n = 20
+n = 30
 nsim.is = 100
 numSteps = 1
 numIntervals = 10
 n.levs = 6
 levs=seq(from=0,to=2,length=n.levs)
-nsims = seq(from=1000,to=500,length=n.levs)
-sigma=1
+nsims = seq(from=1000,to=100,length=n.levs)
+sigma = 1
 sim.settings <- list(levs = levs,
                      nsim.is = nsim.is,
                      numSteps = numSteps,
                      numIntervals = numIntervals,
                      n = n,
-                     mn = mn.onejump,
+                     mn = mn.twojump,
                      nsims = nsims,
                      sigma = sigma)
 
-sim_driver(sim.settings,"../data/onejump.Rdata", dir="../data")
+sim_driver(sim.settings,"../data/twojump.Rdata", dir="../data")
