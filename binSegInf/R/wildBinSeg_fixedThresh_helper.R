@@ -384,8 +384,9 @@ thresh| or |numSteps|, not both!")
         if(length(obj$cp)==0){return(NULL)}
         poly <- polyhedra(obj)
         
-        if(!all(poly$"gamma" %*%y >= poly$'u')) browser()
-        stopifnot(all(poly$gamma%*%y >= poly$u))
+        tol = 1E-12
+        if(!all(poly$"gamma" %*%y + tol >= poly$'u')) browser()
+        stopifnot(all(poly$gamma%*%y+ tol >= poly$u))
         
         ## Calculate num & denom of TG
         ## poly.pval(y,poly$gamma,poly$u,v,sigma,bits=100)

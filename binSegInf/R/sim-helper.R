@@ -1,13 +1,3 @@
-##' Function to plot qqlot of p-values
-##' @param pp numeric vector of p-values.
-##' @param main 
-qqunif <- function(pp, main=NULL){
-    qqplot(x=pp, y=seq(from=0,to=1,length=length(pp)))
-    abline(0,1)
-    if(!is.null(main)) title(main=main)
-}
-
-
 ##' Toy data generating function, of up-then-down two-jump signal, for use in
 ##' Rmd simulation files.
 ##' @param seed Seed to generate data from
