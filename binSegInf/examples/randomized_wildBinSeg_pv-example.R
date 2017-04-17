@@ -25,6 +25,6 @@ v = make_all_segment_contrasts(obj)[[1]]
 pv1 = pvalue(y, poly, v, sigma)
 
 ## Get /randomized/ p-value /not/ conditional on interval set
-pv2 <- randomized_wildBinSeg_pv(y = y, v = v,
+pv2 <- randomized_wildBinSeg_pv(y = y, v = v,thresh=thresh,
                                 numIntervals = numIntervals,
-                                nsim.is=1000, sigma=sigma)
+                                nsim.is=10, sigma=sigma)

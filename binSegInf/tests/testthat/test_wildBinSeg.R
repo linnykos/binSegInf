@@ -224,7 +224,7 @@ test_that("get_vup_vlo() produces numerator and denominator consistent with exte
     v = make_all_segment_contrasts(obj)[[1]]
     
     ## Partition the TG statistic 
-    a = partition_TG(y, polyhedra=poly, v=v, sigma=sigma, nullcontrast=0, bits=50)
+    a = partition_TG(y, poly=poly, v=v, sigma=sigma, nullcontrast=0, bits=50)
 
     ## Separately make the p-value
     pv1 = poly.pval(y=y,v=v, G=poly$gamma, u=poly$u, sigma=sigma)$pv
@@ -264,7 +264,7 @@ test_that("Fixed Step Polyhedron contains y (a really basic check)",{
         expect_true(all(poly$gamma %*% cbind(y0) >= poly$u))
     }
 
-}
+})
 
 test_that("Fixed Step Polyhedron is exactly correct",{
     ## Make this a test:
@@ -293,7 +293,7 @@ test_that("Fixed Step Polyhedron is exactly correct",{
     
     ## Generate many new datasets from your polyhedron, see if they /all/ give
     ## you the same fit. No need to do Gaussian generation of ynew.
-    for(jj in 100000:1001){
+    for(jj in 100000:99000){
         set.seed(jj)
         ## ynew <- mn + rnorm(n,0,sigma)
         ynew = y0 + rnorm(n,0,0.5)
