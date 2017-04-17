@@ -7,3 +7,7 @@
 .Rproj.user
 .Rd
 *.Rd
+*.RData
+*.Rdata
+\#*\#
+.\#*
