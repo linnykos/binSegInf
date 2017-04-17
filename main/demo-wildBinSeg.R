@@ -80,4 +80,3 @@ pv = sapply(vs, function(v){
 ## Optionally, compare it directly to a different pfun2
 pv2 = sapply(vs, function(v){ pfun2(y=y,v=v,poly=poly,sigma=sigma,
                                     nsim.is=nsim.is, numIntervals=numIntervals)})
-
