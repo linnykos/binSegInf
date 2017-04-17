@@ -16,4 +16,4 @@ sim.settings <- list(levs = levs,
                      nsims = nsims,
                      sigma = sigma)
 
-sim_driver(sim.settings,"../data/onejump.Rdata", dir="../data")
+sim_driver(sim.settings,"onejump.Rdata", dir="../data")

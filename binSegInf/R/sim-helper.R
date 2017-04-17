@@ -171,6 +171,8 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
 
     ## generate data
     y <- mn(lev,n) + rnorm(n,0,sigma)
+    set.seed(0)
+    y <-runif(10)
 
     ###########################
     ## Do SBS-FS inference ####
@@ -186,6 +188,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
         p.bsfs[ii] <- poly.pval(y=y,
                                 G=poly$ gamma,u=poly$u, v=contrast[[ii]],sigma=sigma, bits=100)$pv
     }
+    p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
 
     ###########################
     ## Do WBS-FS inference ####
@@ -205,11 +208,6 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
                                                 numIntervals=numIntervals,
                                                 nsim.is=nsim.is, bits=100)
     }
-
-    #######################
-    ## Format and return ##
-    #######################
-    p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
     p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
     p.wbsfs.nonrand = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.nonrand)
     colnames(p.bsfs) = colnames(p.wbsfs.nonrand) = colnames(p.wbsfs) = c("isim","cp","pv")
@@ -239,6 +237,7 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
                                           n=sim.settings$n,
                                           mn=sim.settings$mn)})
         ## Extract and Aggregate
+        browser()
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
         plist.wbsfs.nonrand <- lapply(manysimresult, function(a)a$p.wbsfs.nonrand)
