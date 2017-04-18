@@ -237,7 +237,6 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
                                           n=sim.settings$n,
                                           mn=sim.settings$mn)})
         ## Extract and Aggregate
-        browser()
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
         plist.wbsfs.nonrand <- lapply(manysimresult, function(a)a$p.wbsfs.nonrand)
