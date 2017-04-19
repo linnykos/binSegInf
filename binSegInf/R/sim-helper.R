@@ -171,8 +171,6 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
 
     ## generate data
     y <- mn(lev,n) + rnorm(n,0,sigma)
-    set.seed(0)
-    y <-runif(10)
 
     ###########################
     ## Do SBS-FS inference ####
@@ -249,4 +247,18 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
 
         save(results, sim.settings, file = file.path(dir,filename))
     }
+}
+
+
+##' Gets sigma by fitting basic wbs::sbs on it, with default settings for
+##' complexity.
+##' @param y data vector
+##' @export
+get_sigma <- function(y){
+  cps = sort(changepoints(wbs::sbs(y))$cpt.th[[1]])
+  segment.inds = sapply(1:(length(cps)+1),
+                      function(ii) (c(0,cps,length(y))[ii]+1):(c(0,cps,length(y))[ii+1]))
+  mn = rep(NA,length(y))
+  for(ind in segment.inds) mn[ind] <- mean(y[ind])
+  return(sd(y-mn))
 }

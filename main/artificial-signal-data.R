@@ -2,6 +2,7 @@ library(DNAcopy)
 library(genlasso)
 library(genlassoinf)
 data(coriell)
+
 #Combine into one CNA object to prepare for analysis on Chromosomes 1-23
 CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
                   coriell$Chromosome,coriell$Position,
@@ -10,6 +11,7 @@ CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
 y = (coriell[,4])
 y = y[!is.na(y)]
 a = fusedlasso1d(y)
+cv = cv.trendfilter(a)
 
 ## Harvest a sparse-fused lasso
 mn.elnet = softthresh(a,lambda=cv$lambda.1se,gamma=0.05)
@@ -36,6 +38,14 @@ newmn.short = newmn[1001:1500]
 
 ## Save it
 resid.cleanmn <- y - cleanmn
-filename = "data/coriell.Rdata"
+filename = "../data/coriell.Rdata"
 y.orig<-y
-save(y.orig, segment.means, segments, cleanmn, resid.cleanmn, newmn, newmn.short, std, file = filename)
+save(y.orig,
+     segment.means,
+     segments,
+     cleanmn,
+     resid.cleanmn,
+     newmn,
+     newmn.short,
+     std,
+     file = filename)
