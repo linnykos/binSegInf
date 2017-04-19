@@ -91,7 +91,7 @@ test_that("binSeg_fixedSteps works on one jump", {
   y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
   
-  expect_true(length(res) == 3)
+  expect_true(length(res) == 4)
   expect_true(class(res) == "bsFs")
   expect_true(class(res$tree)[1] == "Node")
   expect_true(res$tree$breakpoint == 10)
@@ -121,11 +121,6 @@ test_that("the is_valid function works", {
   res <- binSeg_fixedSteps(y, 1)
   
   expect_true(is_valid(res))
-})
-
-test_that("binSeg errors on duplicated values", {
-  y <- rep(0, 10)
-  expect_error(binSeg_fixedSteps(y, 1))
 })
 
 test_that("binSeg splits at the best location", {
