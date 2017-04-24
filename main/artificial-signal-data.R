@@ -22,8 +22,17 @@ ydiff = D %*% mn.elnet
 ydiff[abs(ydiff)<1E-10]=0
 cp <- which(ydiff!=0)
 cp <- cp[c(1,4,6,7,8)]
-cleanmn <- piecewise_mean(y,cp)
+## cleanmn <- get_piecewise_mean(y,cp)
+## std = sd(y-cleanmn)
+## segment.means = sapply(segments, function(mysegment){mean(y[mysegment])})
+segments = lapply(1:(length(cp)+1), function(ii){ v=c(0,cp,length(y));(v[ii]+1):(v[ii+1]) })
+segment.means = sapply(segments, function(mysegment){mean(y[mysegment])})
+
+## Make segment means
+cleanmn = rep(NA,length(y))
+lapply(1:length(segments), function(ii){cleanmn[segments[[ii]]] <<- segment.means[ii]})
 std = sd(y-cleanmn)
+
 
 ## Make means, forcing some things to be zero.
 newmn = rep(NA,length(y))

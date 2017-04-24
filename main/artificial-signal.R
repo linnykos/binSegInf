@@ -8,10 +8,10 @@ coriell_mn <- function(lev=1,n){
     return((newmn2 / h * std) * lev)
 }
 n = length(coriell_mn(1))
-nsim.is = 10
+nsim.is = 100
 numSteps = 5
 numIntervals = 30
-n.levs = 2
+n.levs = 1
 levs=seq(from=0,to=3,length=n.levs)
 ## nsims = seq(from=100,to=50,length=n.levs)#rep(1,n.levs)#
 nsims =rep(1,n.levs) 

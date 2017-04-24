@@ -229,6 +229,7 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL){
     n.levs = length(levs)
     results <- replicate(n.levs, list())
     names(results) = paste("jump size",levs)
+    ptm <- proc.time()
     for(i.lev in 1:n.levs){
         ## Run simulations
         cat(i.lev, "out of", n.levs, fill=TRUE)
@@ -242,7 +243,9 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL){
                                           numIntervals=sim.settings$numIntervals,
                                           n=sim.settings$n,
                                           mn=sim.settings$mn,
-                                          seed=seed)},
+                                          seed=seed),
+                                   print(proc.time() - ptm)
+                               },
                                mc.cores = 4)
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
