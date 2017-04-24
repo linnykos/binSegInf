@@ -111,17 +111,17 @@ i.covers.cp <- function(i,cp){
 ## ##' Single simulation driver, for experiments. Works for wildBinSeg, binSeg_OOO.
 ## one_sim <- function(pfun, method, lev, datfun, seed=NULL,n, sigma,
 ##                     thresh=NULL,size=NULL,pfun2=NULL, ...){
-    
+
 ##     ## Generate data
 ##     y = datfun(seed,n,lev,sigma)
-    
+
 ##     ## Run method /once/, collect things
 ##     obj = method(y,thresh, numIntervals=numIntervals, verbose=FALSE)
 ##     if(length(obj$cp)==0 | all(is.na(obj$cp)))return(NULL)
-    
+
 ##     ## Collect a polyhedron
 ##     poly <- polyhedra(obj)
-    
+
 ##     ## Make contrasts
 ##     vs = make_all_segment_contrasts(obj)
 
@@ -134,7 +134,7 @@ i.covers.cp <- function(i,cp){
 ##         pv2 = sapply(vs, function(v){ pfun2(y=y,v=v,poly=poly,sigma=sigma,...)})
 ##         return(c(pv,pv2))
 ##     }
-    
+
 ##     return(pv)
 ## }
 
@@ -143,22 +143,22 @@ i.covers.cp <- function(i,cp){
 plot_pvals <- function(pvals.list, title=c("wbs","sbs")){
     invisible(lapply(pvals.list, function(plist){
         ii <<- ii+1
-        
+
         ## Extract verdicts
         pp = unlist(plist)
         vd = unlist(lapply(plist, function(pvec){pvec<0.05/length(pvec)}))
-        
+
         ## Get indices of approximately recovered locations
         prox = 0
         ind = which(names(pp) %in% c(n/3 + (-prox):prox, 2*n/3 + (-prox):prox))
-        
+
         ## Make qqplot
         qqunif(unlist(pp[ind]))
         title(paste("Jump size =", levs[ii]))
 
         ## Calculate power
         title(sub=round(sum(vd[ind])/length(ind),3))
-        
+
     }))}
 
 ##' Generates one-jump mean
@@ -224,7 +224,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
 
 
 ##' Simulation driver.
-sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL){
+sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=4){
     levs = sim.settings$levs
     n.levs = length(levs)
     results <- replicate(n.levs, list())
@@ -243,10 +243,10 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL){
                                           numIntervals=sim.settings$numIntervals,
                                           n=sim.settings$n,
                                           mn=sim.settings$mn,
-                                          seed=seed),
+                                          seed=seed)
                                    print(proc.time() - ptm)
                                },
-                               mc.cores = 4)
+                               mc.cores = mc.cores)
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)

@@ -36,8 +36,6 @@ poly_from_snapshot <- function(obj, mystep){
     Scurr <- obj$S[[paste("step",mystep)]]
     Ecurr <- obj$E[[paste("step",mystep)]]
 
-
-
     ## Extract maximizing things at this step.
     max.m = get_last_row_val(obj$M[[mystep+1]])
     max.b = get_last_row_val(obj$B[[mystep+1]])
@@ -54,7 +52,7 @@ poly_from_snapshot <- function(obj, mystep){
 
     ## 1. First, characterize the sign of the max.cusum.contrast
     max.cusum.contrast = unsigned_contrast(max.s, max.b, max.e, y=obj$y)
-    newrows1 = rbind(max.cusum.contrast)
+    newrows1 = rBind(max.cusum.contrast)
 
     ## For each terminal node, characterize the selection event of b.max in m.max.
     newpolylist <- lapply(Tcurr[!sapply(Tcurr,is.null)], function(t){
@@ -67,27 +65,27 @@ poly_from_snapshot <- function(obj, mystep){
         if(length(ms)==0) return()
 
         ## 2. Second, Compare /all other/ cusums to that of the grand max
-        newrows2 = do.call(rbind, lapply(ms, function(m){
-            ## cat("m is", m,fill=TRUE)
+        newrows2 = do.call(rBind, lapply(ms, function(m){
             if(m==0){se = c(s,e)}else{se = obj$intervals$se[[m]]}
             s.to.e = (se[1]:se[2])
             other.bs = s.to.e[-which(s.to.e == se[2])]
             if(m==max.m) other.bs = other.bs[other.bs!=max.b]
-            if(length(other.bs)==0) return(rbind(rep(NA,length(obj$y)))[-1,])
+            if(length(other.bs)==0) return(rBind(rep(NA,length(obj$y)))[-1,])
 
             ## Subtract all other contrast from the maximum cusum contrast
-            other.cusum.contrasts = do.call(rbind, lapply(other.bs, function(other.b){
+            other.cusum.contrasts = do.call(rBind, lapply(other.bs, function(other.b){
                 signed_contrast(se[1], other.b, se[2], y=obj$y)}))
-            subtracted.contrasts = rbind(sweep(-rbind(other.cusum.contrasts), 2,
+            subtracted.contrasts = rBind(sweep(-rBind(other.cusum.contrasts), 2,
                                                max.cusum.contrast, "+" ),
-                                         sweep(+rbind(other.cusum.contrasts), 2,
+                                         sweep(+rBind(other.cusum.contrasts), 2,
                                                max.cusum.contrast, "+" ))
             if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
-            ## cat("nrow is", nrow(subtracted.contrasts),fill=TRUE)
+            cat("nrow is", nrow(subtracted.contrasts),fill=TRUE)
             return(subtracted.contrasts)
         }))
-        newrows = rbind(newrows1, newrows2)
+        newrows = rBind(newrows1, newrows2)
         newu = rep(0,nrow(newrows))
+
 
         ## If newrows is empty (no comparisons to be made), then don't do anything
         if(length(as.numeric(newrows))==0){ return(NULL)}
@@ -95,7 +93,6 @@ poly_from_snapshot <- function(obj, mystep){
         ## Return it as a polyhedron
         return(polyhedra.matrix(obj = newrows, u = newu))
     })
-
 
     return(do.call(combine.polyhedra, newpolylist))
 }
