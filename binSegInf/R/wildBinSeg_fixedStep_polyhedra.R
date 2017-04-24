@@ -1,13 +1,13 @@
 #' Generate polyhedra matrix from wbs output
 #' Forms both Gamma matrix and u vector
-#' 
+#'
 #' @param obj Output from wbs
 #' @param ... not used now
 #'
 #' @return An object of class polyhedra
 #' @export
 polyhedra.wbsFs <- function(obj, ...){
-    
+
     ## Basic checks
     stopifnot(is_valid.wbsFs(obj))
 
@@ -26,48 +26,55 @@ polyhedra.wbsFs <- function(obj, ...){
 ##' s.max) being the largest among all the competing intervals at that step.
 ##' @param obj \code{wbsFt} object.
 ##' @param mystep step in the path
-##' 
+##'
 ##' @return a polyhedra object with the selection event at that step.
 poly_from_snapshot <- function(obj, mystep){
-    
+  print(mystep)
+
     ## Obtain snapshot
     Tcurr <- obj$T[[paste("step",mystep)]]
     Scurr <- obj$S[[paste("step",mystep)]]
     Ecurr <- obj$E[[paste("step",mystep)]]
 
 
-    ## Extract maximizing things at this step. 
-    max.m = get_last_row_val(obj$M[[mystep+1]]) 
-    max.s = get_last_row_val(obj$S[[mystep+1]]) 
-    max.b = get_last_row_val(obj$B[[mystep+1]]) 
-    max.z = get_last_row_val(obj$Z[[mystep+1]]) 
+
+    ## Extract maximizing things at this step.
+    max.m = get_last_row_val(obj$M[[mystep+1]])
+    max.b = get_last_row_val(obj$B[[mystep+1]])
+    max.z = get_last_row_val(obj$Z[[mystep+1]])
+
+  if(max.m==0){
+    jk.max = as.numeric(get_last_row_ind.cplist( (obj$M[[mystep+1]])))
+    max.s = extract(Scurr,jk.max[1],jk.max[2])
+    max.e = extract(Ecurr,jk.max[1],jk.max[2])
+   } else {
     max.s = (obj$intervals$starts)[max.m]
     max.e = (obj$intervals$ends)[max.m]
+    }
 
-    
+    ## 1. First, characterize the sign of the max.cusum.contrast
+    max.cusum.contrast = unsigned_contrast(max.s, max.b, max.e, y=obj$y)
+    newrows1 = rbind(max.cusum.contrast)
+
     ## For each terminal node, characterize the selection event of b.max in m.max.
     newpolylist <- lapply(Tcurr[!sapply(Tcurr,is.null)], function(t){
-        
+
         ## Get start/end points
         s = extract(Scurr,t[1],t[2])
         e = extract(Ecurr,t[1],t[2])
         ms = which(.get_which_qualify(s,e,obj$intervals))
+        if(obj$augment) ms = c(ms,0)
         if(length(ms)==0) return()
-        
-        
-        ## 1. First, characterize the sign of the max.cusum.contrast
-        max.cusum.contrast = unsigned_contrast(max.s, max.b, max.e, y=obj$y)
-        newrows1 = rbind(max.cusum.contrast)
-        
+
         ## 2. Second, Compare /all other/ cusums to that of the grand max
         newrows2 = do.call(rbind, lapply(ms, function(m){
             ## cat("m is", m,fill=TRUE)
-            se = obj$intervals$se[[m]]
+            if(m==0){se = c(s,e)}else{se = obj$intervals$se[[m]]}
             s.to.e = (se[1]:se[2])
-            other.bs = s.to.e[-which(s.to.e == se[2])] 
+            other.bs = s.to.e[-which(s.to.e == se[2])]
             if(m==max.m) other.bs = other.bs[other.bs!=max.b]
             if(length(other.bs)==0) return(rbind(rep(NA,length(obj$y)))[-1,])
-            
+
             ## Subtract all other contrast from the maximum cusum contrast
             other.cusum.contrasts = do.call(rbind, lapply(other.bs, function(other.b){
                 signed_contrast(se[1], other.b, se[2], y=obj$y)}))
@@ -80,16 +87,16 @@ poly_from_snapshot <- function(obj, mystep){
             return(subtracted.contrasts)
         }))
         newrows = rbind(newrows1, newrows2)
-        newu = rep(0,nrow(newrows)) 
-        
+        newu = rep(0,nrow(newrows))
+
         ## If newrows is empty (no comparisons to be made), then don't do anything
         if(length(as.numeric(newrows))==0){ return(NULL)}
-        
+
         ## Return it as a polyhedron
         return(polyhedra.matrix(obj = newrows, u = newu))
     })
 
-    
+
     return(do.call(combine.polyhedra, newpolylist))
 }
 

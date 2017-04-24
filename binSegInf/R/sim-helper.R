@@ -167,9 +167,10 @@ mn.onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
 mn.twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 ##' Simulation inner function.
-onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
+onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, seed=NULL){
 
     ## generate data
+    if(!is.null(seed)) set.seed(seed)
     y <- mn(lev,n) + rnorm(n,0,sigma)
 
     ###########################
@@ -198,6 +199,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
     p.wbsfs = p.wbsfs.nonrand = rep(NA,length(obj$cp))
     contrast <- make_all_segment_contrasts(obj)
     for(ii in 1:length(obj$cp)){
+      print(ii)
         p.wbsfs.nonrand[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
                                          v=contrast[[ii]], sigma=sigma)$pv
         p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
@@ -209,6 +211,12 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
     p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
     p.wbsfs.nonrand = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.nonrand)
     colnames(p.bsfs) = colnames(p.wbsfs.nonrand) = colnames(p.wbsfs) = c("isim","cp","pv")
+
+    ########################
+    ## Do CBS inference ####
+    ########################
+
+
     return(list(p.wbsfs.nonrand = p.wbsfs.nonrand,
                 p.bsfs=p.bsfs,
                 p.wbsfs=p.wbsfs))
@@ -216,7 +224,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn){
 
 
 ##' Simulation driver.
-sim_driver <- function(sim.settings, filename, dir="../data"){
+sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL){
     levs = sim.settings$levs
     n.levs = length(levs)
     results <- replicate(n.levs, list())
@@ -224,7 +232,7 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
     for(i.lev in 1:n.levs){
         ## Run simulations
         cat(i.lev, "out of", n.levs, fill=TRUE)
-        manysimresult = lapply(1:sim.settings$nsims[i.lev],
+        manysimresult = mclapply(1:sim.settings$nsims[i.lev],
                                function(isim){
                                    if(isim%%100==1){print(isim)}
                                    onesim(isim, lev=sim.settings$levs[i.lev],
@@ -233,14 +241,22 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
                                           numSteps=sim.settings$numSteps,
                                           numIntervals=sim.settings$numIntervals,
                                           n=sim.settings$n,
-                                          mn=sim.settings$mn)})
-        ## Extract and Aggregate
+                                          mn=sim.settings$mn,
+                                          seed=seed)},
+                               mc.cores = 4)
+        ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
         plist.wbsfs.nonrand <- lapply(manysimresult, function(a)a$p.wbsfs.nonrand)
-        pmat.bsfs = do.call(rbind, plist.bsfs)
-        pmat.wbsfs = do.call(rbind, plist.wbsfs)
-        pmat.wbsfs.nonrand = do.call(rbind, plist.wbsfs.nonrand)
+
+
+        ## Reformat to pmat
+        pmat.bsfs = reformat(pmat.bsfs)
+        pmat.wbsfs = reformat(pmat.wbsfs)
+        pmat.wbsfs.nonrand = reformat(pmat.wbsfs.nonrand)
+
+
+        ## Store results
         results[[i.lev]] <- list(pmat.bsfs = pmat.bsfs,
                                  pmat.wbsfs =  pmat.wbsfs,
                                  pmat.wbsfs.nonrand = pmat.wbsfs.nonrand)
@@ -253,6 +269,7 @@ sim_driver <- function(sim.settings, filename, dir="../data"){
 ##' Gets sigma by fitting basic wbs::sbs on it, with default settings for
 ##' complexity.
 ##' @param y data vector
+##' @import wbs
 ##' @export
 get_sigma <- function(y){
   cps = sort(changepoints(wbs::sbs(y))$cpt.th[[1]])
@@ -261,4 +278,58 @@ get_sigma <- function(y){
   mn = rep(NA,length(y))
   for(ind in segment.inds) mn[ind] <- mean(y[ind])
   return(sd(y-mn))
+}
+
+##' Return piecewise mean.
+##' @param y data vector.
+##' @param cp changepoint vector. Assumed to be sorted.
+##' @import glmgen
+##' @export
+get_piecewise_mean <- function(y, cp){
+  if(!all.equal(sort(cp), cp)) stop ("cp is not sorted!")
+  aug.cp = c(0,cp,length(y))
+  segment.inds = sapply(1:(length(cp)+1),
+                      function(ii){ (aug.cp[ii]+1):aug.cp[ii+1]})
+  mn = rep(NA,length(y))
+  for(ind in segment.inds) mn[ind] <- mean(y[ind])
+  return(mn)
+}
+
+
+
+##' Naive inference
+##' @param v contrast
+##' @param y data
+##' @param sigma noise level
+##' @return p-value for one-sided test of \eqn{H_0: v^Ty=0}.
+ztest <- function(v,y,sigma,alpha=0.05){
+  ## stopifnot(sum(v*y)>0)
+  if(sum(v*y)<=0)print("v'y is not positive!!!! Something is slightly fishy.")
+  test.stat <- sum(v*y) * 1/sqrt(sum(v*v)) * 1/sigma
+  ## @param alpha significance level
+  ## cutoff <- qnorm(1-alpha, 0,1)
+  return(dnorm(test.stat))
+}
+
+
+
+##' Reformat then plot the p-values, from plist
+reformat <- function(my.plist){
+  my.pmat = do.call(plyr::rbind.fill, lapply(my.plist,
+                                           function(x)data.frame(as.list(x))))
+  cpnames = as.numeric(sapply(names(my.pmat),
+                              function(mystring){substr(mystring,start=2,
+                                                        stop=nchar(mystring))}))
+  names(my.pmat) = cpnames
+  my.pmat = my.pmat[,order(cpnames)]
+  my.pmat = Matrix(as.matrix(my.pmat))
+  apply(my.pmat,2, function(vec)sum(!is.na(vec)))
+  cpnames = as.numeric(colnames(my.pmat))
+  return(my.pmat)
+}
+
+##' Get the p-values at locations, from pmat
+get_condit_pvals <- function(my.pmat, loc){
+  pvals = as.numeric(my.pmat[,loc])
+  return(pvals)
 }

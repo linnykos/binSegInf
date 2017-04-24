@@ -8,7 +8,7 @@ coriell_mn <- function(lev=1,n){
     return((newmn2 / h * std) * lev)
 }
 n = length(coriell_mn(1))
-nsim.is = 50
+nsim.is = 10
 numSteps = 5
 numIntervals = 30
 n.levs = 2

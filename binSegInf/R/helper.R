@@ -176,19 +176,29 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
 
 
 
-##' Function to plot qqlot of p-values
+##' Function to plot qqlot of p-values. Use extra parameter
 ##' @param pp numeric vector of p-values.
 ##' @param main label to plot as main title.
-##' @param ... other parameters for \code{qqplot()}.
+##' @param ... other graphical parameters for \code{plot()}.
 qqunif <- function(pp, main=NULL,...){
     xy <- qqplot(x=pp,
-                 y=seq(from=0,to=1,length=length(pp)),
-                 ...)
+                 y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE)
+    plot(xy, axes=FALSE,...)
+    axis(2); axis(1)
     abline(0,1)
     if(!is.null(main)) title(main=main)
     return(xy)
 }
 
+
+##' Function to /add/ qq plot points of p-values
+##' @param pp numeric vector of p-values.
+##' @param main label to plot as main title.
+##' @param ... other parameters for \code{qqplot()}.
+qqunif_add <- function(pp, main=NULL,...){
+    xy <- qqplot(x=pp, y=seq(from=0,to=1,length=length(pp)),plot.it=FALSE)
+    points(xy,...)
+}
 
 
 ##' Get all cusums, given start point \code{s} and end point \code{e}
@@ -225,17 +235,23 @@ getcusums <- function(s,e,y, unsigned=FALSE){
 }
 
 
-##' Either return maximizing breakpoint, or the maximum cusum
-.get_max_b <- function(m,intervals,y,type=c("cusums","max.b", "max.z")){
+##' Either return maximizing breakpoint, or the maximum cusum. If \code{m}
+##' includes zero, then that is handled to correspond to \code{c(s,e)}
+##' @param m set of indices that correspond to intervals. If equal to 0, coputes things correspond to \code{c(s,e)}.
+##' @param s start indices of the interval of interest.
+##' @param e end index of the interval of interest.
+##' @param interval set of intervals, produced by \code{generate_intervals()}./
+.get_max_b <- function(m,s,e, intervals, y, type=c("cusums","max.b", "max.z")){
     type = match.arg(type)
-    s <- intervals$starts[[m]]
-    e <- intervals$ends[[m]]
-    ## cat("(s,e)=(",s,",",e,")",fill=TRUE)
-    max.b.before.adding.s <- which.max(getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums)
+    if(m!=0){
+      s <- intervals$starts[[m]]
+      e <- intervals$ends[[m]]
+    }
+    allcusums = getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums
+    max.b.before.adding.s <- which.max(allcusums)
     if(type=="cusums"){
         return(max(getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums))
     } else if (type == "max.b"){
-        ## max.b.before.adding.s <- which.max(getcusums(s=s,e=e,y=y,unsigned=TRUE)$allcusums)
         max.b <- max.b.before.adding.s + (s - 1)
         return(max.b)
     } else if (type == "max.z"){
@@ -280,4 +296,31 @@ bootstrap_sample <- function(vec,seed=NULL){
 ##' @export
 scale_resid <- function(resid, std){
     return(resid*(1/sd(resid))*std)
+}
+
+
+
+##' Only compare things on nodes whose start and end are >1
+prune_of_1_length_segments <- function(Tcurr,Scurr,Ecurr){
+  Tcurr.copy = Tcurr
+  long.enough <- sapply(Tcurr, function(t){
+    if(is.null(t)) return(TRUE)
+    s = extract(Scurr,t[1],t[2])
+    e = extract(Ecurr,t[1],t[2])
+    return(e-s>=1)
+  })
+  Tcurr.copy[!long.enough] = NULL
+  return(Tcurr.copy)
+}
+
+##' Gets piecewise mean, given segments
+piecewise_mean <- function(y,cp){
+  stopifnot(all(1<=cp & cp<=length(y)))
+  ## stopifnot(all.equal(sort(cp),cp))
+  cp = sort(cp)
+  segments = lapply(1:(length(cp)+1), function(ii){ v=c(0,cp,length(y));(v[ii]+1):(v[ii+1]) })
+  segment.means = sapply(segments, function(mysegment){mean(y[mysegment])})
+  cleanmn = rep(NA,length(y))
+  lapply(1:length(segments), function(ii){cleanmn[segments[[ii]]] <<- segment.means[ii]})
+  return(cleanmn)
 }

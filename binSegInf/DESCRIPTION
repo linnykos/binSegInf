@@ -16,6 +16,7 @@ Imports:
     MASS,
     wbs,
     genlasso,
+    glmgen,
     Matrix,
     pryr
 Suggests:

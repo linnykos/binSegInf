@@ -23,7 +23,7 @@ is_valid.polyhedra <- function(obj){
   }
   if(!is.numeric(obj$u)) stop("u is not a numeric vector")
   if(nrow(obj$gamma) != length(obj$u)) stop("nrow(gamma) does not match length(u)")
-  
+
   TRUE
 }
 
@@ -38,7 +38,7 @@ combine.polyhedra <- function(...){
 
     polyobjs = list(...)
     polyobjs = polyobjs[which(!sapply(polyobjs, is.null))]
-    
+
     ## Combine separately and return
     newgamma = do.call(rbind, lapply(polyobjs, function(mypolyobj) mypolyobj$gamma))
     newu = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
@@ -47,3 +47,6 @@ combine.polyhedra <- function(...){
     stopifnot(is_valid.polyhedra(newpoly))
     return(newpoly)
 }
+
+
+

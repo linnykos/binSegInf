@@ -53,6 +53,8 @@ extract <- function(x,...) UseMethod("extract")
 #' gets the value corresponding to the (j,k)'th entry of cplist
 extract.cplist <- function(cplist,j,k){
    ## if(is.na(where_jk(cplist,j,k))) stop(paste("(",j,",",k,") not in your cplist"))
+  j = as.numeric(j)
+  k = as.numeric(k)
     if(!exists(cplist,j,k)) stop(paste("(",j,",",k,") not in your cplist"))
     return(cplist$mat[where_jk(cplist,j,k),3])
 }
@@ -204,4 +206,12 @@ get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
 ##' @return "val" value of the last row of cplist.
 get_last_row_val.cplist <- function(cplist){
     return(cplist$mat[nrow(cplist$mat), "val"])
+}
+
+get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
+##' Extracts /last/ element of cplist. Mainly used in wbs-FS-polyhedra.
+##' @param cplist A cplist object.
+##' @return "val" value of the last row of cplist.
+get_last_row_ind.cplist <- function(cplist){
+    return(cplist$mat[nrow(cplist$mat), c("j","k")])
 }
