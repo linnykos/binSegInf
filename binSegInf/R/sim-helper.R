@@ -307,7 +307,7 @@ get_piecewise_mean <- function(y, cp){
 ##' @return p-value for one-sided test of \eqn{H_0: v^Ty=0}.
 ztest <- function(v,y,sigma,alpha=0.05){
   ## stopifnot(sum(v*y)>0)
-  if(sum(v*y)<=0)print("v'y is not positive!!!! Something is slightly fishy.")
+  if(sum(v*y)<=0){print(sum(v*y));print("v'y is not positive!!!! Something is slightly fishy.")}
   test.stat <- sum(v*y) * 1/sqrt(sum(v*v)) * 1/sigma
   ## @param alpha significance level
   ## cutoff <- qnorm(1-alpha, 0,1)
@@ -317,17 +317,14 @@ ztest <- function(v,y,sigma,alpha=0.05){
 
 
 ##' Reformat then plot the p-values, from plist
-reformat <- function(my.plist){
-  my.pmat = do.call(plyr::rbind.fill, lapply(my.plist,
-                                           function(x)data.frame(as.list(x))))
-  cpnames = as.numeric(sapply(names(my.pmat),
-                              function(mystring){substr(mystring,start=2,
-                                                        stop=nchar(mystring))}))
-  names(my.pmat) = cpnames
-  my.pmat = my.pmat[,order(cpnames)]
-  my.pmat = Matrix(as.matrix(my.pmat))
-  apply(my.pmat,2, function(vec)sum(!is.na(vec)))
-  cpnames = as.numeric(colnames(my.pmat))
+reformat <- function(my.plist, n){
+    my.pmat = do.call(rbind, lapply(my.plist,
+                                    function(x){
+                                      myrow <- rep(NA,n);
+                                      myrow[as.numeric(names(x))] <- x
+                                      myrow
+                                      }))
+  names(my.pmat) = 1:n
   return(my.pmat)
 }
 
