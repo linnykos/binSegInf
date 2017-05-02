@@ -196,11 +196,10 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
     intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
     poly <- polyhedra(obj)
-    p.wbsfs = p.wbsfs.nonrand = rep(NA,length(obj$cp))
+    p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     contrast <- make_all_segment_contrasts(obj)
     for(ii in 1:length(obj$cp)){
-      print(ii)
-        p.wbsfs.nonrand[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
+        p.wbsfs.plain[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
                                          v=contrast[[ii]], sigma=sigma)$pv
         p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
                                                 v=contrast[[ii]], sigma=sigma,
@@ -209,15 +208,15 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
                                                 nsim.is=nsim.is, bits=100)
     }
     p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
-    p.wbsfs.nonrand = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.nonrand)
-    colnames(p.bsfs) = colnames(p.wbsfs.nonrand) = colnames(p.wbsfs) = c("isim","cp","pv")
+    p.wbsfs.plain = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.plain)
+    colnames(p.bsfs) = colnames(p.wbsfs.plain) = colnames(p.wbsfs) = c("isim","cp","pv")
 
     ########################
     ## Do CBS inference ####
     ########################
 
 
-    return(list(p.wbsfs.nonrand = p.wbsfs.nonrand,
+    return(list(p.wbsfs.plain = p.wbsfs.plain,
                 p.bsfs=p.bsfs,
                 p.wbsfs=p.wbsfs))
 }
@@ -250,19 +249,19 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
-        plist.wbsfs.nonrand <- lapply(manysimresult, function(a)a$p.wbsfs.nonrand)
+        plist.wbsfs.plain <- lapply(manysimresult, function(a)a$p.wbsfs.plain)
 
 
         ## Reformat to pmat
         pmat.bsfs = reformat(pmat.bsfs)
         pmat.wbsfs = reformat(pmat.wbsfs)
-        pmat.wbsfs.nonrand = reformat(pmat.wbsfs.nonrand)
+        pmat.wbsfs.plain = reformat(pmat.wbsfs.plain)
 
 
         ## Store results
         results[[i.lev]] <- list(pmat.bsfs = pmat.bsfs,
                                  pmat.wbsfs =  pmat.wbsfs,
-                                 pmat.wbsfs.nonrand = pmat.wbsfs.nonrand)
+                                 pmat.wbsfs.plain = pmat.wbsfs.plain)
 
         save(results, sim.settings, file = file.path(dir,filename))
     }
