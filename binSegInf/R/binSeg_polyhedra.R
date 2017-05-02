@@ -71,7 +71,6 @@ polyhedra.bsFt = function(obj, verbose = F) {
     slist = obj$bs.output$slist
     elist = obj$bs.output$elist
     selist = obj$bs.output$selist
-    zlist = obj$bs.output$zlist
     Zlist = obj$bs.output$Zlist
     y = obj$y
     thresh = obj$thresh
