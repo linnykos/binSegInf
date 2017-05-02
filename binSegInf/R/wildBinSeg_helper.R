@@ -9,7 +9,7 @@ addd = function(mylist,j,k,semat){
     ## Basic checks: list is empty? elements are all correctly formated matrices?
     ## if(length(mylist)==0) stop("you are trying to add to an empty list!")
     ## mylist=null
-    ## if(length(mylist)==0) mylist= list(1) 
+    ## if(length(mylist)==0) mylist= list(1)
     ## if(!all(sapply(1:length(mylist), function(ii) colnames((mylist)[[ii]])[1]=="m"))) stop("mylist is empty!")
 
     ## Augment the list with a new element and name it appropriately
@@ -56,15 +56,15 @@ maximize = function(s, e, y, getb=TRUE){
     all.cusums = sapply(all.bs, function(b){cusum(s=s, b=b, e=e, y=y)})
     names(all.cusums) = all.bs
     all.cusums = c(rep(NA,s-1), all.cusums, rep(NA,length(y)-s))
-    sn = sign(all.cusums) 
-    
+    sn = sign(all.cusums)
+
     ## obtain cusum-maximizing breakpoint and its sign
     b = which.max(abs(all.cusums))
     z = sn[b]
 
     ## return maximizer and sign
-    if(getb){ return(b) } else {  return(all.cusums[b]) } 
-   
+    if(getb){ return(b) } else {  return(all.cusums[b]) }
+
 }
 
 
@@ -77,23 +77,23 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param augment TRUE of binary segmentation is run in augment mode.
 ##' @param intervals set of random intervals, drawn between 1 and 60
 .make_semat = function(m, s, e, intervals, y, thresh, augment){
-    
+
     ## Make bare matrix
     mymat = matrix(NA, ncol=7, nrow = length(m), dimnames=NULL)
     mymat = data.frame(mymat)
     colnames(mymat) = c("m", "s", "b", "e", "maxcusum", "maxhere",
                         "passthreshold")
-    
+
     ## Fill in information about selection
    if(augment){
-    se.for.each.m = vector("list", length(m)) 
+    se.for.each.m = vector("list", length(m))
     if(length(m)>1) se.for.each.m[1:(length(m)-1)] = intervals$se[m[1:(length(m)-1)]]
     se.for.each.m[[length(m)]] = c(s,e)
   }
   else{
     se.for.each.m = intervals$se[m]
   }
-    
+
     mymat[,"m"] = m
     mymat[,"s"] = sapply(se.for.each.m, function(vec)vec[1])
     mymat[,"b"] = sapply(se.for.each.m,
@@ -102,17 +102,17 @@ maximize = function(s, e, y, getb=TRUE){
     mymat[,"e"] = sapply(se.for.each.m, function(vec)vec[2])
     mymat[,"maxcusum"] = sapply(se.for.each.m,
                        function(se){ maximize(se[1], se[2], y, FALSE) })
-    
+
     ## Mark which guy is the maximizing interval
     mymat[,"maxhere"] = rep(FALSE,length(m))
     mymat[which.max(abs(mymat[,"maxcusum"])),"maxhere"] = TRUE
-    
+
     ## Check if that guy's max cusum passed the threshold
     mymat[,"passthreshold"] = rep(FALSE,length(m))
     max.ind = which.max(abs(mymat[,"maxcusum"]))
     passed.thresh = (abs(mymat[max.ind,"maxcusum"]) > thresh)
     mymat[which.max(abs(mymat[,"maxcusum"])),"passthreshold"] = passed.thresh
-    
+
 
     return(mymat)
 }
@@ -125,7 +125,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
 .make_signs = function(m, s, e, intervals, y, thresh){
-    
+
     ## Basic checks
     stopifnot(length(m)==1)
 
@@ -139,14 +139,14 @@ maximize = function(s, e, y, getb=TRUE){
     all.bs = (s:(e-1))
     all.cusums = sapply(all.bs, function(b){cusum(s=s, b=b, e=e, y=y)})
     names(all.cusums) = all.bs
-    sn = sign(all.cusums) 
+    sn = sign(all.cusums)
 
 
     ## Make bare matrix
     mymat = matrix(NA, ncol=6, nrow = e-s, dimnames=NULL)
     mymat = data.frame(mymat)
     colnames(mymat) = c("s", "b", "e", "sn", "maxhere", "cusums")
-    
+
     ## Fill in information about selection
     mymat[,"s"] = rep(s, e-s)
     mymat[,"b"] = all.bs
@@ -155,7 +155,7 @@ maximize = function(s, e, y, getb=TRUE){
     mymat[, "maxhere"] = FALSE
     mymat[which.max(abs(all.cusums)), "maxhere"] = TRUE
     mymat[,"cusums"] = all.cusums
-    
+
     return(mymat)
 }
 
@@ -171,7 +171,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @return List containing starts and ends and intervals etc.
 ##' @export
 generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL, augment = FALSE){
-    
+
     ## Basic checks
     stopifnot(n>1)
 
@@ -189,7 +189,7 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
        duplicates = (starts == ends)
        numIntervals = length(starts)
     } else {
-        done.drawing = FALSE 
+        done.drawing = FALSE
         while(!done.drawing){
             starts = sample(1:n, numIntervals*3, replace=TRUE)
             ends = sample(1:n, numIntervals*3, replace=TRUE)
@@ -199,7 +199,7 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
             if(numIntervals==0) done.drawing = TRUE
         }
     }
-    
+
     ## Function to make interval given start and end indices, not necessarily
     ## start<end, with an option to reverse them, or rarely, return NULL when
     ## start == end
@@ -211,7 +211,7 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
             return(start:end)
         }
     }
-    
+
     ## Take intervals (identical intervals are eliminated! since they don't play
     ## a role anywhere further along the way, and the max-CUSUM comparisons made
     ## using the de-duplicated set of drawn intervals is still fair/same)
@@ -230,6 +230,16 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
                 se = Map(c,starts,ends)))
 }
 
+## After making intervals, you can attempt to plot them.
+plot_intervals <- function(intervals){
+    numIntervals = length(intervals$se)
+    plot(NA, ylim = c(0,numIntervals), xlim = c(0,n), xlab = "intervals", ylab = "")
+    for(ii in 1:numIntervals){
+        se = intervals$se[[ii]]
+        lines(x=se, y = c(ii,ii))
+    }
+}
+
 
 
 ##' Helper function that takes in a tree (list of |semat|'s), and extracts the
@@ -239,9 +249,9 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
 ##' @param returntype One of \code{c("cp","sign")}, for whether to return the
 ##'     changepoint or the sign of teh changepoints.
 .extract_cp_from_tree = function(tree, returntype = c("cp","sign")){
-    
+
     ## Extract changepoints and sign from the tree
-    if(returntype == "cp"){ 
+    if(returntype == "cp"){
         all.cps = sapply(tree,
                          function(semat){
                              passed = which(semat[,"maxhere"] & semat[,"passthreshold"])
@@ -356,7 +366,7 @@ make_all_segment_contrasts <- function(obj){
     unique.start.end.list = list(sapply(unique.se, function(se)se[1]),
                                  sapply(unique.se, function(se)se[2]))
     return(generate_intervals(n=n, start.end.list = unique.start.end.list))
-  
+
 }
 
 
@@ -405,11 +415,11 @@ thresh| or |numSteps|, not both!")
         }
         if(length(obj$cp)==0){return(NULL)}
         poly <- polyhedra(obj)
-        
+
         tol = 1E-12
         if(!all(poly$"gamma" %*%y + tol >= poly$'u')) browser()
         stopifnot(all(poly$gamma%*%y+ tol >= poly$u))
-        
+
         ## Calculate num & denom of TG
         ## poly.pval(y,poly$gamma,poly$u,v,sigma,bits=100)
         if(!all(poly$"gamma" %*%y >= poly$'u')) browser()

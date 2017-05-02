@@ -46,7 +46,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
 
     ## At general step
     for(mystep in 2:(numSteps+1)){
-      print(mystep)
+
         ## Goal is to get max.m, max.b, max.j, max.k
         .get_max.mbc <- function(Tcurr){
 
@@ -101,6 +101,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       A[[mystep]] = trim(Acurr)
       T[[mystep]] = trim(Tcurr)
       S[[mystep]] = df_to_cplist(trim(Scurr))
+
       E[[mystep]] = df_to_cplist(trim(Ecurr))
       B[[mystep]] = df_to_cplist(trim(Bcurr))
       Z[[mystep]] = df_to_cplist(trim(Zcurr))

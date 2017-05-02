@@ -348,3 +348,37 @@ test_that("Fixed Step Polyhedron is exactly correct",{
     }
 
 })
+
+
+
+testthat("Reduced WBS p-values still returns the same p-values.",{
+
+    ## Simulation settings
+    set.seed(0)
+    mn <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+    lev = 0
+    sigma = 1
+    n = 20
+    y <- mn(lev,n) + rnorm(n,0,sigma)
+    nsim.is = 1
+    numSteps = 2
+    numIntervals = 30
+    n.levs = 1
+
+    ## Fit WBS-FS and form contrast
+    method <- wildBinSeg_fixedSteps
+    set.seed(1)
+    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
+    obj <- method(y, numSteps=numSteps, intervals=intervals)
+    v <- make_all_segment_contrasts(obj)[[1]]
+
+
+    ## Fit reduced vs qplain-WBS polyhedron, see if p-values are the same
+    poly1 <- polyhedra(obj, reduce=FALSE)
+    poly2 <- polyhedra(obj, reduce=TRUE, v=v)
+
+    pval1 <- poly.pval(y=y, G=poly1$gamma, u=poly1$u, v=v, sigma=sigma)$pv
+    pval2 <- poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma)$pv
+
+    expect_equal(pval1, pval2)
+})
