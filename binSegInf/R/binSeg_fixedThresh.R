@@ -144,3 +144,4 @@ print.bsFt <- function(obj){
     
     cat("Changepoint set is ", obj$cp*obj$cp.sign,fill=TRUE)
 }
+

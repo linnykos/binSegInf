@@ -79,7 +79,7 @@ jumps.bsFs <- function(obj, sorted = F, ...){
 #'
 #' @param obj  bsFs object
 #' @param sorted  boolean
-#' @param ... not used
+#' @param ... not use
 #'
 #' @return vector of cusum numerics
 #' @export

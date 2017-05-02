@@ -31,7 +31,7 @@ add <- function(x,...) UseMethod("add")
 add.cplist <- function(cplist, new.j, new.k, newentry){
 
     ## Check if (new.j,new.k) already exists!
-    already.exists = !(all(is.na(where_jk.cplist(cplist, new.j, new.k)))) ## This is wrong.
+    already.exists = !(all(is.na(where_jk.cplist(cplist, new.j, new.k)))) ## This /may be wrong. Actually looks right.
     if(already.exists) stop(paste("j=",new.j, "and", "k=",new.k, "already exist!"))
 
     ## If cplist$mat is not large enough, then double the size
@@ -53,6 +53,8 @@ extract <- function(x,...) UseMethod("extract")
 #' gets the value corresponding to the (j,k)'th entry of cplist
 extract.cplist <- function(cplist,j,k){
    ## if(is.na(where_jk(cplist,j,k))) stop(paste("(",j,",",k,") not in your cplist"))
+  j = as.numeric(j)
+  k = as.numeric(k)
     if(!exists(cplist,j,k)) stop(paste("(",j,",",k,") not in your cplist"))
     return(cplist$mat[where_jk(cplist,j,k),3])
 }
@@ -90,7 +92,7 @@ where_jk <- function(x,...) UseMethod("where_jk")
 ##' j=13 and k = 39, then it searches for the row (13,39,XXX) in an n by 3
 ##' matrix.
 where_jk.cplist <- function(cplist, j, k, warn=FALSE){
-    
+
     ## Basic ncheck
     stopifnot(is.cplist(cplist))
 
@@ -116,7 +118,7 @@ where_jk.cplist <- function(cplist, j, k, warn=FALSE){
 }
 
 rid <- function(x,...) UseMethod("rid")
-##' Delete (j,k) or jklist, 
+##' Delete (j,k) or jklist,
 rid.cplist = function(cplist, j=NULL, k=NULL, jklist=NULL){
     newcplist = cplist
     ## If j and k are both empty, use jklist
@@ -126,7 +128,7 @@ rid.cplist = function(cplist, j=NULL, k=NULL, jklist=NULL){
 
     ## If jklist is empty, use j and k
     } else if(!is.null(jklist)){
-        if(length(jklist)==1) break 
+        if(length(jklist)==1) break
         for(jk in jklist){
             newcplist$mat = cplist$mat[-where_jk(cplist, jk[1] , jk[2]),]
             newcplist$last.row = newcplist$last.row - 1
@@ -154,7 +156,7 @@ trim.mat <- function(mat, type = c("rowcol","row")){
 
     ## If all NA matrix, return NULL.
     if(all(is.na(as.numeric(mat)))) return(NULL)
-    
+
     if(is.null(dim(mat))){ mat = mat[1:max(which(!is.na(mat)))]; return(mat)}
     last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
     mat = mat[1:last.j,,drop=F]
@@ -205,3 +207,69 @@ get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
 get_last_row_val.cplist <- function(cplist){
     return(cplist$mat[nrow(cplist$mat), "val"])
 }
+
+get_last_row_val <- function(x,...){UseMethod("get_last_row_val")}
+##' Extracts /last/ element of cplist. Mainly used in wbs-FS-polyhedra.
+##' @param cplist A cplist object.
+##' @return "val" value of the last row of cplist.
+get_last_row_ind.cplist <- function(cplist){
+    return(cplist$mat[nrow(cplist$mat), c("j","k")])
+}
+
+
+
+##' Constructor for cplist2 object. Used for CBS-fixed-threshold.
+##' @param nrow creates an all-NA matrix of dimension nrow x 8. Each row
+##'   contains \code{(j,k,s,e,s0,e0,z,pass)}.
+##' @import Matrix
+##' @export
+cplist2 <- function(nrow) {
+    emptydf = as.data.frame(matrix(NA, nrow=nrow, ncol=8))
+    names(emptydf)=c("j","k","s","e","s0","e0","z","pass")
+    structure(list(mat = emptydf, last.row=0),
+                  class = "cplist2")
+}
+
+##' Make cplist object from dataframe.
+##' @param df data frame
+df_to_cplist2 <- function(df){
+  stopifnot(ncol(df)==8)
+  return(structure(list(mat=rbind(df), last.row=nrow(rbind(df))), class = "cplist2"))
+}
+
+##' Check if object is of class "cplist"
+is.cplist2 <- function(someobj){ inherits(someobj, "cplist2") }
+
+
+
+addrow <- function(x,...) UseMethod("addrow")
+
+##' Function to add entries to cplist
+##' @param cplist2 list containing an n x 3 matrix, and the index of the last
+##'     nonempty (i.e. not all NA's) row.
+##' @import Matrix
+addrow.cplist2 <- function(cplist2, j=NA, k=NA, s=NA, e=NA, s0=NA, e0=NA, z=NA,
+                           pass=NA){
+
+    ## Basic checks
+    newrow = data.frame(j=j, k=k, s=s, e=e, s0=s0, e0=e0, z=z)
+    if(any(is.na(newrow))) stop("Some of the entries of the new row to add are missing!")
+
+    ## Check if (j,k) already exists!
+    already.exists = !(all(is.na(where_jk.cplist(cplist, j, k))))
+    if(already.exists) stop(paste("j=",j, "and", "k=",k, "already exist!"))
+
+    ## If cplist$mat is not large enough, then double the size
+    numrows = nrow(cplist2$mat)
+    if(cplist2$last.row>= numrows){
+        addmat = data.frame(matrix(NA, nrow=numrows, ncol=8))
+        names(addmat) = names(cplist$mat)
+        cplist2$mat = rbind(cplist2$mat,addmat )
+    }
+
+    ## Append the new row
+    cplist2$mat[cplist2$last.row+1, 1:8] = newrow
+    cplist2$last.row = cplist2$last.row+1
+    return(cplist2)
+}
+

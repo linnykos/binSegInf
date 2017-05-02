@@ -3,13 +3,18 @@
 ##' @param numSteps numeric of number of stepsemas
 ##' @param numIntervals number of random intervals to sample
 ##' @param tol tolerance to handle divide by zero instances
+##' @param intervals Intervals to manually use, produced from
+##'   \code{generate_intervals()}. Defaults to NULL.
+##' @param augment TRUE if the qualifying set of intervals in wild binary
+##'   segmentation should be augmented by the large interval \code{c(s,e)}.
+##'   Defaults to FALSE.
 ##'
 ##' @return either an environment address which contains output
 ##'     (\code{env$intervals} and \code{env$tree}), or a list of wild binary
 ##'     segmentation output.
 ##' @export
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
-                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL){
+                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL, augment=FALSE){
     ## Basic checks
     if(numSteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     if(round(numSteps) != numSteps) stop(paste("You should provide an integer value for numSteps!"))
@@ -17,13 +22,13 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     if(is.null(numIntervals) & is.null(intervals)){
         stop("Provide input for generating intervals, or the intervals themselves!")}
     if(!is.null(intervals)) stopifnot(.is_valid_intervals(intervals))
-    
+
     ## Generate the random intervals
     if(!is.null(seed)) set.seed(seed)
     if(is.null(intervals)){
         intervals = generate_intervals(length(y), numIntervals)
     }
-    
+
     ## De-duplicate the intervals
     intervals = .deduplicate_intervals(length(y), intervals)
 
@@ -32,98 +37,102 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     S = E = B = Z = M = list()
     Scurr = Ecurr = Bcurr = Zcurr = Mcurr = cplist(2*numSteps)
     Tcurr=Acurr=list()
-    
+
     ## At step 1,
     Scurr = add(Scurr,1,1,1)
     Ecurr = add(Ecurr,1,1,length(y))
     Tcurr[[1]] = c(1,1)
     G = matrix(NA, ncol = length(y), nrow = 2*length(y)*numSteps)
-    
+
     ## At general step
     for(mystep in 2:(numSteps+1)){
 
         ## Goal is to get max.m, max.b, max.j, max.k
         .get_max.mbc <- function(Tcurr){
 
-            ## Get maximizing quantities
-            max.m.b.cusums <- lapply(Tcurr, function(t){
-                if(is.null(t)) return()
-                s = extract(Scurr,t[1],t[2])
-                e = extract(Ecurr,t[1],t[2])
-                ms = which(.get_which_qualify(s,e,intervals))
-                if(length(ms)==0) return()
+          ## Get maximizing quantities
+          max.m.b.cusums <- lapply(Tcurr, function(t){
+            if(is.null(t)) return()
+            s = extract(Scurr,t[1],t[2])
+            e = extract(Ecurr,t[1],t[2])
+            ms = which(.get_which_qualify(s,e,intervals))
+            if(augment) ms = c(ms,0)
+            if(length(ms)==0) return()
 
-                ## Get the maximizer (m,b,z)
-                max.m = ms[which.max(sapply(ms, function(m) .get_max_b(m,intervals,y,"cusums")))]
-                max.cusum = max(sapply(ms, function(m) .get_max_b(m,intervals,y,"cusums")))
-                max.z = .get_max_b(max.m, intervals,y,"max.z")
-                max.b = .get_max_b(max.m, intervals,y,"max.b")
+            ## Get the maximizer (m,b,z)
+            max.m = ms[which.max(sapply(ms, function(m) .get_max_b(m,s,e,intervals,y,"cusums")))]
+            max.cusum = max(sapply(ms, function(m) .get_max_b(m,s,e,intervals,y,"cusums")))
+            max.z = .get_max_b(max.m, s, e, intervals,y,"max.z")
+            max.b = .get_max_b(max.m, s, e, intervals,y,"max.b")
 
-                return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
+            return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
         }
-
-        ## Rid of the null element (the first one)
-        mbc.list <- .get_max.mbc(Tcurr)
-        if(all(sapply(mbc.list, is.null))){
-            if(verbose){
-                print(paste("There were no qualifying intervals during step ", mystep-1));
-            }
-            next
+      mbc.list <- .get_max.mbc(Tcurr)
+      if(all(sapply(mbc.list, is.null))){
+        if(verbose){
+          print(paste("There were no qualifying intervals during step ", mystep-1));
         }
-        
-        ## Extract m,b,z,j,k 
-        ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
-        ## jk.max <- Tcurr.without.null[[ind]]
-        jk.max <- Tcurr[[ind]]
-        j.max <-  jk.max[1]
-        k.max <-  jk.max[2]
-        m.max <- mbc.list[[ind]]$max.m
-        b.max <- mbc.list[[ind]]$max.b
-        z.max <- sign(mbc.list[[ind]]$max.cusum)
+        next
+      }
 
-        ## Update S and E
-        s.max <- extract(Scurr,j.max,k.max)
-        e.max <- extract(Ecurr,j.max,k.max)
+      ## Extract m,b,z,j,k
+      ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
+      jk.max <- Tcurr[[ind]]
+      j.max <-  jk.max[1]
+      k.max <-  jk.max[2]
+      m.max <- mbc.list[[ind]]$max.m
+      b.max <- mbc.list[[ind]]$max.b
+      z.max <- sign(mbc.list[[ind]]$max.cusum)
 
-        if(verbose) cat("At step", mystep, ", changepoint", b.max, "enters! from (s,e)=",intervals$se[[m.max]], fill=TRUE)
+      ## Update S and E
+      s.max <- extract(Scurr,j.max,k.max)
+      e.max <- extract(Ecurr,j.max,k.max)
 
-        ## Change all other *Curr things 
-        Bcurr <- add(Bcurr, j.max, k.max, b.max)
-        Zcurr <- add(Zcurr, j.max, k.max, z.max)
-        Mcurr <- add(Mcurr, j.max, k.max, m.max)
+      ## if(verbose) cat("at step", mystep, ", changepoint", b.max,
+      ##                 "enters! from (s,e)=",intervals$se[[m.max]], fill=TRUE)
+      ## if(verbose) cat("at step", mystep, ", changepoint", b.max, "enters! from (s,e)=",s.max,e.max, fill=true)
 
-        ## Take snapshot
-        A[[mystep]] = trim(Acurr)
-        T[[mystep]] = trim(Tcurr)
-        S[[mystep]] = df_to_cplist(trim(Scurr))
-        E[[mystep]] = df_to_cplist(trim(Ecurr))
-        B[[mystep]] = df_to_cplist(trim(Bcurr))
-        Z[[mystep]] = df_to_cplist(trim(Zcurr))
-        M[[mystep]] = df_to_cplist(trim(Mcurr))
-        
-        ## Change active and terminal set
-        Acurr[[mystep]] <- c(j.max,k.max)
-        Tcurr <- Tcurr[-ind]
-        Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
-        Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
+      ## Change all other *Curr things
+      Bcurr <- add(Bcurr, j.max, k.max, b.max)
+      Zcurr <- add(Zcurr, j.max, k.max, z.max)
+      Mcurr <- add(Mcurr, j.max, k.max, m.max)
+
+      ## Take snapshot
+      A[[mystep]] = trim(Acurr)
+      T[[mystep]] = trim(Tcurr)
+      S[[mystep]] = df_to_cplist(trim(Scurr))
+
+      E[[mystep]] = df_to_cplist(trim(Ecurr))
+      B[[mystep]] = df_to_cplist(trim(Bcurr))
+      Z[[mystep]] = df_to_cplist(trim(Zcurr))
+      M[[mystep]] = df_to_cplist(trim(Mcurr))
+
+      ## Change active and terminal set
+      Acurr[[mystep]] <- c(j.max,k.max)
+      Tcurr <- Tcurr[-ind]
+      Tcurr[[mystep]] <- c(j.max + 1, 2*k.max-1)
+      Tcurr[[mystep+1]] <- c(j.max + 1, 2*k.max)
 
 
-        ## Prep Scurr and Ecurr for next step.
-        Scurr <- add(Scurr, j.max+1, 2*k.max-1, s.max)
-        Ecurr <- add(Ecurr, j.max+1, 2*k.max-1, b.max)
-        Scurr <- add(Scurr, j.max+1, 2*k.max, b.max+1)
-        Ecurr <- add(Ecurr, j.max+1, 2*k.max, e.max)
-        
+      ## Prep Scurr and Ecurr for next step.
+      Scurr <- add(Scurr, j.max+1, 2*k.max-1, s.max)
+      Ecurr <- add(Ecurr, j.max+1, 2*k.max-1, b.max)
+      Scurr <- add(Scurr, j.max+1, 2*k.max, b.max+1)
+      Ecurr <- add(Ecurr, j.max+1, 2*k.max, e.max)
+
+      ## Prune Tcurr of all one-length segments
+      Tcurr = prune_of_1_length_segments(Tcurr,Scurr,Ecurr)
     }
 
     if(numSteps==1) A =list("step 0" = NULL, "step 1" = NULL);
-    names(B) = names(M) = names(Z) = 
+    names(B) = names(M) = names(Z) =
     names(T) = names(S) = names(E) = paste("step", 0:(length(B)-1))
 
-    ## Bundle 
-    obj <- structure(list(A=A, T=T, S=S, E=E, B=B, Z=Z, M=M,
+    ## Bundle
+    obj <- structure(list(A=A, T=T, S= S, E=E, B=B, Z=Z, M=M,
                           intervals=intervals, cp=((B[[length(B)]])$mat)[,"val"],
-                          cp.sign=((Z[[length(Z)]])$mat)[,"val"], numSteps=numSteps, y=y),
+                          cp.sign=((Z[[length(Z)]])$mat)[,"val"], numSteps=numSteps, y=y,
+                          augment=augment),
                      class="wbsFs")
     return(obj)
 }
@@ -183,7 +192,7 @@ print.wbsFs <- function(obj){
 ## #' @export
 ## is_valid.semat <- function(semat){
 ##     if(!all(colnames(semat) %in% c("m", "b", "maxcusum", "maxhere", "maxhere",
-##                                    "passthreshold"))) stop("semat must be a matrix that contains certain elements!") 
+##                                    "passthreshold"))) stop("semat must be a matrix that contains certain elements!")
 ##   TRUE
 ## }
 
