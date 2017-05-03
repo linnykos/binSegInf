@@ -14,7 +14,8 @@
 ##'     segmentation output.
 ##' @export
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
-                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL, augment=FALSE){
+                                  return.env=FALSE, seed=NULL, verbose=FALSE,
+                                  intervals = NULL, augment=TRUE){
     ## Basic checks
     if(numSteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     if(round(numSteps) != numSteps) stop(paste("You should provide an integer value for numSteps!"))
