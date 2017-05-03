@@ -175,6 +175,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
     my.mn <- mn(lev,n)
     y <- my.mn + rnorm(n,0,sigma)
 
+    if(is.null(bootstrap)) bootstrap = FALSE
     if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
     if(!bootstrap) y = (my.mn + rnorm(length(y),0,sigma))
 
@@ -246,8 +247,8 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
         nsim = sim.settings$nsims[i.lev]
         manysimresult =
            mclapply(1:nsim, function(isim){
-               ## cat("\r", "simulation ", isim, "out of", nsim)
-               cat("simulation ", isim, "out of", nsim)
+               cat("\r", "simulation ", isim, "out of", nsim)
+               ## cat("simulation ", isim, "out of", nsim)
                onesim(isim, lev=sim.settings$levs[i.lev],
                       sigma=sim.settings$sigma,
                       nsim.is=sim.settings$nsim.is,

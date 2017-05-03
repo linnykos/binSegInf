@@ -1,13 +1,13 @@
 ## Simulation settings
-n = 15
+n = 30
 nsim.is = 100
 numSteps = 2
 numIntervals = 10
-n.levs = 3
-levs=seq(from=0,to=2,length=n.levs)
+n.levs = 4
+levs=seq(from=0,to=3,length=n.levs)
 nsims = seq(from=1000,to=500,length=n.levs)
 sigma = 1
-mc.cores=8
+mc.cores = 8
 sim.settings <- list(levs = levs,
                      nsim.is = nsim.is,
                      numSteps = numSteps,
@@ -15,7 +15,8 @@ sim.settings <- list(levs = levs,
                      n = n,
                      mn = mn.twojump,
                      nsims = nsims,
-                     sigma = sigma)
+                     sigma = sigma,
+                     bootstrap = FALSE)
 
 sim_driver(sim.settings=sim.settings,
            filename="twojump.Rdata",

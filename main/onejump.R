@@ -14,7 +14,8 @@ sim.settings <- list(levs = levs,
                      n = n,
                      mn = mn.onejump,
                      nsims = nsims,
-                     sigma = sigma)
+                     sigma = sigma,
+                     bootstrap = FALSE)
 
 sim_driver(sim.settings,"onejump.Rdata", dir="../results", reduce=TRUE)
 
