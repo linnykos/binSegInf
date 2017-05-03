@@ -66,7 +66,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
             max.z = .get_max_b(max.m, s, e, intervals,y,"max.z")
             max.b = .get_max_b(max.m, s, e, intervals,y,"max.b")
 
-            return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
+            return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum, max.z=max.z))})
         }
       mbc.list <- .get_max.mbc(Tcurr)
       if(all(sapply(mbc.list, is.null))){
@@ -83,7 +83,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       k.max <-  jk.max[2]
       m.max <- mbc.list[[ind]]$max.m
       b.max <- mbc.list[[ind]]$max.b
-      z.max <- sign(mbc.list[[ind]]$max.cusum)
+      z.max <- mbc.list[[ind]]$max.z  ## sign(mbc.list[[ind]]$max.cusum)
 
       ## Update S and E
       s.max <- extract(Scurr,j.max,k.max)

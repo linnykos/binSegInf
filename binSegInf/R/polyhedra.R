@@ -53,7 +53,7 @@ print <- function(obj, ...) {UseMethod("print")}
 ## Prints polyhedra
 print.polyhedra <- function(mypoly){
     if(all(is.na(mypoly$gamma[1,])) & nrow(mypoly$gamma)==1) print("Empty polyhedra object!")
-    first.n = min(10, nrow(mypoly$gamma))
+    first.n = min(10, nrow(mypoly$gamma), ncol(mypoly$gamma)/2)
     print(paste("Gamma matrix (first", first.n, " rows&cols) looks like:"))
     print(signif((mypoly$gamma[1:first.n,(1:(first.n*2))]),3))
     print(paste("u vector (first", first.n, "entries) looks like:"))

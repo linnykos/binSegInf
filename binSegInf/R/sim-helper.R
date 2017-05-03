@@ -189,8 +189,8 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
     contrast = list()
     for(ii in 1:length(obj$cp)){
         contrast[[ii]] <- contrast_vector(obj, ii)
-        p.bsfs[ii] <- poly.pval(y=y,
-                                G=poly$ gamma,u=poly$u, v=contrast[[ii]],sigma=sigma, bits=100)$pv
+        p.bsfs[ii] <- poly.pval(y= y, G= poly$ gamma, u=poly$u,
+                                v=contrast[[ii]],sigma=sigma, bits=100)$pv
     }
     ## p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
 
@@ -201,9 +201,9 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
     intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
     contrast <- make_all_segment_contrasts(obj)
-    poly <- polyhedra(obj,v=v,reduce=reduce)
     p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     for(ii in 1:length(obj$cp)){
+        poly <- polyhedra(obj, v = contrast[[ii]], reduce=reduce)
         p.wbsfs.plain[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
                                          v=contrast[[ii]], sigma=sigma)$pv
         p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,

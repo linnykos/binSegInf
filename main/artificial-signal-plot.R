@@ -1,10 +1,9 @@
-load("../data/artificial-smaller.Rdata")
+load("../results/artificial.Rdata")
 
 ## Extract results
 results[[1]]$pmat.bsfs[,"cp"]
 results[[1]]$pmat.wbsfs[,"cp"]
 results[[1]]$pmat.wbsfs.nonrand[,"cp"]
-
 
 ## Plot settings
 xlab = "Location"

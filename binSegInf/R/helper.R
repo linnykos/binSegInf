@@ -30,7 +30,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 
     ## Form contrast
     v = rep(0,n)
-    v[s:b] = -1/n1 
+    v[s:b] = -1/n1
     v[(b+1):e]  = 1/n2
     v = v * sqrt(1/((1/n1)+(1/n2)))
     if(!right.to.left) v = -v
@@ -49,10 +49,10 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 
 #' Calculates the halfspace vectors for the maximizing breakpoint and all the
 #' signs, for fixed-threshold SBS.
-#' 
+#'
 #' @param is.terminal.node T/F for whether the node is one where the threshold
 #'     is not breached.
-#' 
+#'
 #' @return A list of two objects \code{V} and \code{u}, for the halfspaces in
 #'     represented as V'y>u
 
@@ -61,25 +61,25 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
     if(!(s <= b & b <= e)){
         stop("s<=b<=e is not true")
     }
-    
+
     ## Make empty things, initialize
     V = matrix(NA, nrow = n^2, ncol = n)
     u = rep(NA,n)
     other.bs = (s:(e-1))
     other.bs = other.bs[other.bs != b]
     ii = 0
-    
+
     ## CUSUM comparison (s,b,e)
     v.this = cusum(s=s, b=b, e=e, y=y, contrast.vec=TRUE, right.to.left=TRUE)
     ## z.this = sign(sum(v.this * y))
     z.this = z
     vz.this = v.this * z.this
-    
+
     ## 1. Characterizing this break's sign.
     ii = ii+1
     V[ii,] = vz.this
     u[ii] = 0
-    
+
     ## 2. Characterizing threshold exceedance/nonexceedance
     if(!is.terminal.node){
         ii = ii+1
@@ -91,16 +91,16 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
         V[ii,] = -vz.this
         u[ii] = -thresh
     }
-    
+
     if(length(other.bs) == 0){
         V = V[c(),]
     } else {
         for(other.b in other.bs){
-            
+
             ## Sqrt mean difference of (s,other.b,e)
             v.other = cusum(s=s, b=other.b, e=e, y=y, contrast.vec=T,
                             right.to.left=T)
-            
+
             ## 3. Characterizing maximizer of |sqrt mean difference|
             if(!is.terminal.node){
                 ## other cusum is larger than -|this cusum|
@@ -115,7 +115,7 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
                 u[ii] = 0
             }
         }
-        
+
         V = V[1:ii,,drop=F]
         u = u[1:ii]
     }
@@ -136,19 +136,19 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
 partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
-    
+
     ## Basic checks
     stopifnot(length(v)==length(y))
     stopifnot(is_valid.polyhedra(poly))
-    
+
     ## From selectiveinference package (todo: make it succinct)
     G = poly$gamma
     u = poly$u
-    
+
     vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
-  
+
     rho = G %*% v / vv
     vec = (u - G %*% y + rho*vy) / rho
     vlo = suppressWarnings(max(vec[rho>0]))
@@ -202,7 +202,7 @@ qqunif_add <- function(pp, main=NULL,...){
 
 
 ##' Get all cusums, given start point \code{s} and end point \code{e}
-##' 
+##'
 ##' @param s Starting index, between \code{1} and \code{n}
 ##' @param e Ending index, between \code{1} and \code{n}
 ##' @param y \code{n}-lengthed data vector.
