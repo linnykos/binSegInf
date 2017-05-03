@@ -1,4 +1,4 @@
-#' Generate polyhedra
+# Generate polyhedra
 #'
 #' @param obj numeric matrix to be the gamma matrix
 #' @param u numeric vector
@@ -53,7 +53,7 @@ print <- function(obj, ...) {UseMethod("print")}
 ## Prints polyhedra
 print.polyhedra <- function(mypoly){
     if(all(is.na(mypoly$gamma[1,])) & nrow(mypoly$gamma)==1) print("Empty polyhedra object!")
-    first.n = 10
+    first.n = min(10, nrow(mypoly$gamma))
     print(paste("Gamma matrix (first", first.n, " rows&cols) looks like:"))
     print(signif((mypoly$gamma[1:first.n,(1:(first.n*2))]),3))
     print(paste("u vector (first", first.n, "entries) looks like:"))
@@ -70,7 +70,8 @@ print.polyhedra <- function(mypoly){
 ##' @param new.poly New polyhedron to add, but only if the Vup or Vlo change.
 ##' @param v contrast vector
 ##' @param y data vector
-smartadd <- function(orig.poly, new.poly, v, y){
+##' @param verbose Whether to print things.
+smartadd <- function(orig.poly, new.poly, v, y, verbose=FALSE){
 
     if(all(is.na(orig.poly$gamma[1,])) & nrow(orig.poly$gamma)==1){
         return(new.poly)
@@ -102,9 +103,10 @@ smartadd <- function(orig.poly, new.poly, v, y){
 
     ## Compare
     if(Vlo < Vlo.new | Vup > Vup.new ){
-        print("Updated polyhedron!")
+        if(verbose) print("Updated polyhedron!")
         return(updated.poly)
     } else {
+        if(verbose) print("Didn't update polyhedron..")
         return(orig.poly)
     }
 }

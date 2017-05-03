@@ -19,7 +19,7 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE,...){
     ## Smartly add rows, if the problem size is big
     if(reduce){
         for(mystep in 1:actual.num.steps){
-            latest.poly = poly_from_snapshot(obj, mystep, reduce, latest.poly)
+            latest.poly = poly_from_snapshot(obj, mystep, reduce, latest.poly, v)
         }
         return(latest.poly)
 
@@ -38,8 +38,11 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE,...){
 ##' s.max) being the largest among all the competing intervals at that step.
 ##' @param obj \code{wbsFt} object.
 ##' @param mystep step in the path
-##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you
-##'     should add (chunks) of r
+##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you should
+##'     add (chunks) of the polyhedron or not. This assumes you've chosen the
+##'     contrast \code{v} already.
+##' @param contrast Contrast vector of interest of inference; only to be used
+##'     when \code{reduce==TRUE}.
 ##' @param latest.poly If \code{reduce} is set to TRUE, this is the latest
 ##'     polyhedron outside of. This is necessary because polyhedron
 ##'     approximations only work if the checking for change in (Vup, Vlo) is
@@ -48,7 +51,7 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE,...){
 ##' @return a polyhedra object with the selection event at that step.
 ##' @import Matrix
 ##' @export
-poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
+poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL, v=NULL){
 
     ## Basic checks
     if(is.null(latest.poly) & reduce ) stop("Provide the latest polyhedron!")
@@ -104,7 +107,6 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
                                              sweep(+rBind(other.cusum.contrasts), 2,
                                                    max.cusum.contrast, "+" ))
                 if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
-                cat("nrow is", nrow(subtracted.contrasts),fill=TRUE)
                 return(subtracted.contrasts)
             }))
 
@@ -151,7 +153,8 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
 
                 ## Add a clump of rows after checking whether Vup & Vlo changes.
                 clump.poly = polyhedra(subtracted.contrasts, rep(0,nrow(subtracted.contrasts)))
-                latest.poly.copy <- smartadd(orig.poly = latest.poly.copy,
+                latest.poly.copy <-
+                    smartadd(orig.poly = latest.poly.copy,
                                              new.poly = clump.poly,
                                              v=v,
                                              y=obj$y)

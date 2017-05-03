@@ -381,11 +381,15 @@ make_all_segment_contrasts <- function(obj){
 ##'     your observed dataset.
 ##' @param thresh threshold.
 ##' @param numSteps number of steps to take.
-##' @param nsim.is Number of importance sampling samples you'd
-##'     like to calculate.
+##' @param nsim.is Number of importance sampling samples you'd like to
+##'     calculate.
+##' @param reduce \code{TRUE} if reduced version of polyhedron collecting is to
+##'     be used, in polyhedra collecting functions for WBS.
+##' @param v Contrast vector.
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL){
+randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL,
+                                     reduce=FALSE){
 
     ## Basic checks
     if(is.null(thresh) & is.null(numSteps))  stop("Provide one of | thresh| or |
@@ -414,7 +418,7 @@ thresh| or |numSteps|, not both!")
             obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i)
         }
         if(length(obj$cp)==0){return(NULL)}
-        poly <- polyhedra(obj)
+        poly <- polyhedra(obj, reduce=reduce, v=v)
 
         tol = 1E-12
         if(!all(poly$"gamma" %*%y + tol >= poly$'u')) browser()

@@ -167,7 +167,7 @@ mn.onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
 mn.twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 ##' Simulation inner function.
-onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, seed=NULL){
+onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, seed=NULL,reduce){
 
     ## generate data
     if(!is.null(seed)) set.seed(seed)
@@ -187,7 +187,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
         p.bsfs[ii] <- poly.pval(y=y,
                                 G=poly$ gamma,u=poly$u, v=contrast[[ii]],sigma=sigma, bits=100)$pv
     }
-    p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
+    ## p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
 
     ###########################
     ## Do WBS-FS inference ####
@@ -195,9 +195,9 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
     method <- wildBinSeg_fixedSteps
     intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
-    poly <- polyhedra(obj)
-    p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     contrast <- make_all_segment_contrasts(obj)
+    poly <- polyhedra(obj,v=v,reduce=reduce)
+    p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     for(ii in 1:length(obj$cp)){
         p.wbsfs.plain[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
                                          v=contrast[[ii]], sigma=sigma)$pv
@@ -205,11 +205,13 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
                                                 v=contrast[[ii]], sigma=sigma,
                                                 numSteps=numSteps,
                                                 numIntervals=numIntervals,
-                                                nsim.is=nsim.is, bits=100)
+                                                nsim.is=nsim.is, bits=100,
+                                                reduce=reduce)
     }
-    p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
-    p.wbsfs.plain = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.plain)
-    colnames(p.bsfs) = colnames(p.wbsfs.plain) = colnames(p.wbsfs) = c("isim","cp","pv")
+    ## p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
+    ## p.wbsfs.plain = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.plain)
+    ## colnames(p.bsfs) = colnames(p.wbsfs.plain) = colnames(p.wbsfs) = c("isim","cp","pv")
+    names(p.bsfs) = names(p.wbsfs.plain) = names(p.wbsfs) = obj$cp
 
     ########################
     ## Do CBS inference ####
@@ -223,7 +225,10 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn, see
 
 
 ##' Simulation driver.
-sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=4){
+##' @param sim.setting list of simulation settings, set externally.
+##' @param filename name of R data file to save in.
+##' @import parallel
+sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL, mc.cores=4, reduce=FALSE){
     levs = sim.settings$levs
     n.levs = length(levs)
     results <- replicate(n.levs, list())
@@ -231,21 +236,23 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=
     ptm <- proc.time()
     for(i.lev in 1:n.levs){
         ## Run simulations
-        cat(i.lev, "out of", n.levs, fill=TRUE)
-        manysimresult = mclapply(1:sim.settings$nsims[i.lev],
-                               function(isim){
-                                   if(isim%%100==1){print(isim)}
-                                   onesim(isim, lev=sim.settings$levs[i.lev],
-                                          sigma=sim.settings$sigma,
-                                          nsim.is=sim.settings$nsim.is,
-                                          numSteps=sim.settings$numSteps,
-                                          numIntervals=sim.settings$numIntervals,
-                                          n=sim.settings$n,
-                                          mn=sim.settings$mn,
-                                          seed=seed)
-                                   print(proc.time() - ptm)
-                               },
-                               mc.cores = mc.cores)
+        cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
+        nsim = sim.settings$nsims[i.lev]
+        manysimresult =
+           mclapply(1:nsim, function(isim){
+               ## cat("\r", "simulation ", isim, "out of", nsim)
+               cat("simulation ", isim, "out of", nsim)
+               onesim(isim, lev=sim.settings$levs[i.lev],
+                      sigma=sim.settings$sigma,
+                      nsim.is=sim.settings$nsim.is,
+                      numSteps=sim.settings$numSteps,
+                      numIntervals=sim.settings$numIntervals,
+                      n=sim.settings$n,
+                      mn=sim.settings$mn,
+                      seed=seed,
+                      reduce=reduce)
+               print(proc.time() - ptm)
+           }, mc.cores = mc.cores)
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
@@ -253,10 +260,9 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=
 
 
         ## Reformat to pmat
-        pmat.bsfs = reformat(pmat.bsfs)
-        pmat.wbsfs = reformat(pmat.wbsfs)
-        pmat.wbsfs.plain = reformat(pmat.wbsfs.plain)
-
+        pmat.bsfs = reformat(plist.bsfs, n=sim.settings$n)
+        pmat.wbsfs = reformat(plist.wbsfs, n=sim.settings$n)
+        pmat.wbsfs.plain = reformat(plist.wbsfs.plain, n=sim.settings$n)
 
         ## Store results
         results[[i.lev]] <- list(pmat.bsfs = pmat.bsfs,
@@ -264,6 +270,7 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,mc.cores=
                                  pmat.wbsfs.plain = pmat.wbsfs.plain)
 
         save(results, sim.settings, file = file.path(dir,filename))
+        cat(fill=TRUE)
     }
 }
 
@@ -317,13 +324,19 @@ ztest <- function(v,y,sigma,alpha=0.05){
 
 ##' Reformat then plot the p-values, from plist
 reformat <- function(my.plist, n){
-    my.pmat = do.call(rbind, lapply(my.plist,
+    my.pmat = do.call(Matrix::rBind, lapply(my.plist,
                                     function(x){
                                       myrow <- rep(NA,n);
                                       myrow[as.numeric(names(x))] <- x
                                       myrow
                                       }))
-  names(my.pmat) = 1:n
+
+## lapply(plist.bsfs, function(x){
+##     myrow <- rep(NA,n);
+##     myrow[as.numeric(names(x))] <- x
+##     myrow
+## })
+  colnames(my.pmat) = 1:n
   return(my.pmat)
 }
 
