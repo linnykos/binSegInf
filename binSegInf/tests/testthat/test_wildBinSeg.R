@@ -373,13 +373,13 @@ testthat("Reduced WBS p-values still returns the same p-values.",{
     obj <- method(y, numSteps=numSteps, intervals=intervals)
     v <- make_all_segment_contrasts(obj)[[1]]
 
+    ## New test
+    poly1 <- polyhedra(obj, reduce=TRUE,v=v,sigma=sigma)
+    poly2 <- polyhedra(obj, reduce=FALSE)
 
-    ## Fit reduced vs qplain-WBS polyhedron, see if p-values are the same
-    poly1 <- polyhedra(obj, reduce=FALSE)
-    poly2 <- polyhedra(obj, reduce=TRUE, v=v)
+    expect_equal(poly.pval2(y=y,vup=poly1$vup, vlo=poly1$vlo, sigma=sigma, v=v),
+                 poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma, bits=100))
 
-    pval1 <- poly.pval(y=y, G=poly1$gamma, u=poly1$u, v=v, sigma=sigma)$pv
-    pval2 <- poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma)$pv
-
-    expect_equal(pval1, pval2)
 })
+
+

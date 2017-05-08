@@ -273,7 +273,7 @@ addrow.cplist2 <- function(cplist2, j=NA, k=NA, s=NA, e=NA, s0=NA, e0=NA, z=NA,
     if(cplist2$last.row>= numrows){
         addmat = data.frame(matrix(NA, nrow=numrows, ncol=8))
         names(addmat) = names(cplist$mat)
-        cplist2$mat = rbind(cplist2$mat,addmat )
+        cplist2$mat = rbind(cplist2$mat, addmat)
     }
 
     ## Append the new row
