@@ -8,7 +8,7 @@ CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
                   coriell$Chromosome,coriell$Position,
                   data.type="logratio",sampleid=c("c05296","c13330"))
 y.orig = (coriell[,4])
-y.orig = y[!is.na(y.orig)]
+y.orig = y.orig[!is.na(y.orig)]
 a = fusedlasso1d(y.orig)
 cv = cv.trendfilter(a)
 

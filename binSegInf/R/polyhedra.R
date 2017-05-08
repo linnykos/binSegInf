@@ -1,4 +1,4 @@
-# Generate polyhedra
+#' Generate polyhedra
 #'
 #' @param obj numeric matrix to be the gamma matrix
 #' @param u numeric vector
@@ -39,10 +39,37 @@ combine.polyhedra <- function(...){
     polyobjs = list(...)
     polyobjs = polyobjs[which(!sapply(polyobjs, is.null))]
 
-    ## Combine separately and return
-    newgamma = do.call(rbind, lapply(polyobjs, function(mypolyobj) mypolyobj$gamma))
-    newu = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
+    ## OLD: Combine separately and return
+    newgamma2 = do.call(rbind, lapply(polyobjs, function(mypolyobj) mypolyobj$gamma))
+    newu2 = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
     newpoly = structure(list(gamma = newgamma, u= newu), class = "polyhedra")
+
+    ## NEW: Combine smartly. Handle better!!
+    rownums <- sapply(polyobjs, function(a) nrow(a$gamma))
+    nonemptyinds = which(rownums!=0)
+    starts = cumsum(c(1,rownums[-length(rownums)]))[nonemptyinds]
+    ends = cumsum(rownums)[nonemptyinds]
+    rowindlist = Map(function(a,b)a:b, starts, ends)
+    newgamma = matrix(NA,nrow=sum(rownums), ncol=ncol(polyobjs[[1]]$gamma))
+    newu = rep(NA, sum(rownums))
+    for(ii in 1:length(nonemptyinds)){
+        newgamma[rowindlist[[ii]],] = polyobjs[[nonempytinds[ii]]]$gamma
+        newu[rowindlist[[ii]]] = polyobjs[[nonemptyinds[ii]]]$u
+    }
+
+    ## Check that it handles empty polyhedra well.
+    a = polyhedra.matrix(rbind(rep(NA,10))[-1,], c())
+    polyobjs[[3]]=a
+    polyobjs[[4]] = polyobjs[[1]]
+
+    for(ii in 1:10){
+        ii=1
+        print(all.equal(newgamma2[1:ii,],newgamma[1:ii,]))
+    }
+    newgamma2[1:2,]
+    newgamma[1:2,]
+    all.equal(newu2,newu)
+
 
     stopifnot(is_valid.polyhedra(newpoly))
     return(newpoly)

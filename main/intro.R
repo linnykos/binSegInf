@@ -64,7 +64,7 @@ xtable(mytable, digits=c(1,0,3,3), align="|r|r|r|r|")
 
 
 
-## Bootstrap residuals and visualize 
+## Bootstrap residuals and visualize
 cleanmn <- piecewise_mean(y, c(53,94))
 std = sd(y-cleanmn)
 par(mfrow=c(3,3))
@@ -80,7 +80,7 @@ onesim_intro <- function(isim, bootstrap=TRUE){
   print(isim)
   numSteps = 3
   method <- binSeg_fixedSteps
-  seed = NULL##isim 
+  seed = NULL##isim
   std = sd(y-cleanmn)
   if(bootstrap) y = (cleanmn + bootstrap_sample(y-cleanmn,seed=seed))
   if(!bootstrap) y = (cleanmn + rnorm(length(cleanmn),0,std))

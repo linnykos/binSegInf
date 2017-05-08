@@ -201,43 +201,44 @@ test_that("Single polyhedron is correct",{
 
 
 
-test_that("Fixed Threshold WBS Polyhedron is exactly correct. (with and without augmentation)",
-{
+test_that("Fixed Threshold WBS Polyhedron is exactly correct. (with and without augmentation)",{
 
-  inds1 = c()
-  inds2 = c()
-  for(augment in c(FALSE,TRUE)){
-    ## Make this a test:
-    numIntervals = 1
-    n = 10 ## 4
-    lev = 0
-    sigma = 1
-    mn <- rep(c(0,lev), each=n/2)
-    seed = 48
-    set.seed(seed)
-    thresh = 0
-    y0 <- mn + rnorm(n, 0, sigma)
+    inds1 = c()
+    inds2 = c()
 
-    ## Run method on original data |y0|, collect things.
-    intervals = generate_intervals(n,numIntervals,seed)
-    obj = wildBinSeg_fixedThresh(y0, thresh, intervals=intervals, verbose=FALSE,augment=augment)
-    poly <- polyhedra.wbsFt(obj)
+    for(lev in c(1,10,100)){
+        print(lev)
+        for(augment in c(FALSE,TRUE)){
+            ## Make this a test:
+            numIntervals = 1
+            n = 10 ## 4
+            sigma = 1
+            mn <- rep(c(0,lev), each=n/2)
+            seed = 48
+            set.seed(seed)
+            thresh = 0
+            y0 <- mn + rnorm(n, 0, sigma)
 
-    ## Generate many new datasets from your polyhedron, see if they /all/ give
-    ## you the same fit. No need to do Gaussian generation of ynew.
-    ## for(jj in 100000:1001){
-    for(jj in 100000:99001){
-      set.seed(jj)
-      ## ynew <- mn + rnorm(n,0,sigma)
-      ynew = y0 + rnorm(n,0,0.5)
-      if(all(poly$gamma%*% (ynew) >= poly$u)){
-        if(!augment)inds1<-c(inds1,jj)
-        if(augment) inds2<-c(inds2,jj)
-        objnew =  wildBinSeg_fixedThresh(y=ynew, thresh=thresh, intervals=intervals,augment=augment)
-        expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
-      }
+            ## Run method on original data |y0|, collect things.
+            intervals = generate_intervals(n,numIntervals,seed)
+            obj = wildBinSeg_fixedThresh(y0, thresh, intervals=intervals, verbose=FALSE,augment=augment)
+            poly <- polyhedra.wbsFt(obj)
+
+            ## Generate many new datasets from your polyhedron, see if they /all/ give
+            ## you the same fit. No need to do Gaussian generation of ynew.
+            ## for(jj in 100000:1001){
+            for(jj in 100000:99001){
+                ## ynew <- mn + rnorm(n,0,sigma)
+                ynew = y0 + rnorm(n,0,0.5)
+                if(all(poly$gamma%*% (ynew) >= poly$u)){
+                    if(!augment)inds1<-c(inds1,jj)
+                    if(augment) inds2<-c(inds2,jj)
+                    objnew =  wildBinSeg_fixedThresh(y=ynew, thresh=thresh, intervals=intervals,augment=augment)
+                    expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
+                }
+            }
+        }
     }
-  }
 })
 
 test_that("get_vup_vlo() produces numerator and denominator consistent with external p-value functions", {

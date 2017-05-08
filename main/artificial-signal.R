@@ -37,10 +37,16 @@ reduce=TRUE
 ##            dir="../data", reduce=reduce )
 
 
-lev=4
+pdf("~/Desktop/sample-data.pdf",width=10,height=10)
+par(mfrow=c(2,2))
+for(lev in 1:4){
 mn <- coriell_mn
 set.seed(0)
 y <- mn(lev,n) + rnorm(n,0,std)
+plot(y,ylim=c(-1,1), main = paste0("Signal size /stretched/ from snr=1 to ",lev),pch=16,cex=.5,col='grey50')
+lines(mn(lev,n),col='red')
+}
+graphics.off()
 method <- wildBinSeg_fixedSteps
 intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
 

@@ -168,16 +168,15 @@ mn.twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 ##' Simulation inner function.
 onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
-                   seed=NULL,reduce, bootstrap=FALSE, std=NULL){
+                   seed=NULL,reduce, bootstrap=FALSE, std=NULL, augment){
 
     ## generate data
     if(!is.null(seed)) set.seed(seed)
     my.mn <- mn(lev,n)
-    y <- my.mn + rnorm(n,0,sigma)
 
     if(is.null(bootstrap)) bootstrap = FALSE
     if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
-    if(!bootstrap) y = (my.mn + rnorm(length(y),0,sigma))
+    if(!bootstrap) y = (my.mn + rnorm(n,0,sigma))
 
     ###########################
     ## Do SBS-FS inference ####
@@ -212,7 +211,8 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
                                                 numSteps=numSteps,
                                                 numIntervals=numIntervals,
                                                 nsim.is=nsim.is, bits=100,
-                                                reduce=reduce)
+                                                reduce=reduce,
+                                                augment=augment)
     }
     ## p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
     ## p.wbsfs.plain = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.plain)
@@ -259,7 +259,8 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
                       seed=seed,
                       reduce=reduce,
                       bootstrap=sim.settings$bootstrap,
-                      std=sim.settings$std
+                      std=sim.settings$std,
+                      augment = sim.settings$augment
                       )
                ## print(proc.time() - ptm)
            }, mc.cores = mc.cores)

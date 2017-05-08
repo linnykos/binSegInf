@@ -386,11 +386,10 @@ make_all_segment_contrasts <- function(obj){
 ##' @param reduce \code{TRUE} if reduced version of polyhedron collecting is to
 ##'     be used, in polyhedra collecting functions for WBS.
 ##' @param v Contrast vector.
+##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL,
-                                     reduce=FALSE){
-
+randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL, reduce=FALSE, augment){
     ## Basic checks
     if(is.null(thresh) & is.null(numSteps))  stop("Provide one of | thresh| or |
 numSteps| (but not both)!")
@@ -415,7 +414,7 @@ thresh| or |numSteps|, not both!")
         if(!is.null(thresh)){
             obj = wildBinSeg_fixedThresh(y,thresh, intervals=i)
         } else {
-            obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i)
+            obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         }
         if(length(obj$cp)==0){return(NULL)}
         poly <- polyhedra(obj, reduce=reduce, v=v)

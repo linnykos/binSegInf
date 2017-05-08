@@ -34,7 +34,10 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
     v[(b+1):e]  = 1/n2
     v = v * sqrt(1/((1/n1)+(1/n2)))
     if(!right.to.left) v = -v
-    if(unsigned) v = v * sign(sum(v*y))
+    if(unsigned) v = v * sign(sum(v*y)) ## This needs to change! Have the
+                                        ## function require the sign of v*y
+                                        ## beforehand, or check only if it isn't
+                                        ## provided, or something!
 
     ## Return the right thing
     if(contrast.vec){
@@ -207,17 +210,20 @@ qqunif_add <- function(pp, main=NULL,...){
 ##' @param e Ending index, between \code{1} and \code{n}
 ##' @param y \code{n}-lengthed data vector.
 ##' @param unsigned \code{TRUE} to return alsolute value.
+##' @param simplereturn \code{TRUE} just to return the cusums.
 ##'
 ##' @return list of information about the cusum calculations and maximizers in
 ##'     this interval.
 ##' @example examples/getcusums-example.R
 ##' @export
-getcusums <- function(s,e,y, unsigned=FALSE){
+getcusums <- function(s,e,y, unsigned=FALSE, simplereturn=FALSE){
 
     if(s<=0 | e<= 0) stop("must enter valid e,s >=1 ")
 
     ## Get all cusum
     cusums =  sapply(s:(e-1), function(b){ cusum(s=s,b=b,e=e,y=y, unsigned=unsigned) })
+    if(simplereturn)return(cusums)
+
     names(cusums) = paste("b=",s:(e-1))
     contrasts =  t(sapply(s:(e-1), function(b){cusum(s=s,b=b,e=e,y=y, contrast.vec=TRUE, unsigned = unsigned)}))
 
@@ -233,6 +239,34 @@ getcusums <- function(s,e,y, unsigned=FALSE){
                 contrasts = contrasts,
                 signs=signs))
 }
+
+##' Newer, 10 times faster function for getcusum().
+getcusums2 <- function(s, e, cumsums){
+    bvec = (s:(e-1))
+    n = e-s+1
+    cumsums.aug = c(0,cumsums)
+    return(-sqrt((e-bvec)/(n*(bvec-s+1)))*(cumsums.aug[bvec+1]-cumsums.aug[s-1+1]) +
+        sqrt((bvec-s+1)/(n*(e-bvec)))*(cumsums.aug[e+1]-cumsums.aug[bvec+1]))
+}
+
+##' Newer, 10 times faster function for cusum().
+cusum2 <- function(s,e,b){
+    cumsums.aug = c(0,cumsums)
+    return(-sqrt((e-b)/(n*(b-s+1)))*(cumsums.aug[b+1]-cumsums.aug[s-1+1]) +
+        sqrt((b-s+1)/(n*(e-b)))*(cumsums.aug[e+1]-cumsums.aug[b+1]))
+}
+
+##' Does a little more than getcusums2().
+get_morethan_cusums2 <- function(s,e,cumsums){
+    cusums <- getcusums2(s,e,cumsums)
+    max.b.ind = which.max(abs(cusums))
+    max.b = max.b.ind + s - 1
+    max.z = sign(cusums[which.max(cusums)])
+    return(list(max.b = max.b,
+                max.z = max.z,
+                max.cusum = cusums[max.b.ind]))
+}
+
 
 
 ##' Either return maximizing breakpoint, or the maximum cusum. If \code{m}

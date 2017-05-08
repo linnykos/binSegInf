@@ -7,6 +7,7 @@ n.levs = 5
 levs = seq(from=0,to=2,length=n.levs)
 nsims = seq(from=1000,to=500,length=n.levs)
 sigma = 1
+augment = TRUE
 sim.settings <- list(levs = levs,
                      nsim.is = nsim.is,
                      numSteps = numSteps,
@@ -15,7 +16,8 @@ sim.settings <- list(levs = levs,
                      mn = mn.onejump,
                      nsims = nsims,
                      sigma = sigma,
-                     bootstrap = FALSE)
+                     bootstrap = FALSE,
+                     augment = augment)
 
 sim_driver(sim.settings,"onejump.Rdata", dir="../results", reduce=TRUE)
 
