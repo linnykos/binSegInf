@@ -39,27 +39,29 @@ combine.polyhedra <- function(...){
     polyobjs = list(...)
     polyobjs = polyobjs[which(!sapply(polyobjs, is.null))]
 
-    ## ## OLD: Combine separately and return
-    ## newgamma2 = do.call(rbind, lapply(polyobjs, function(mypolyobj) mypolyobj$gamma))
-    ## newu2 = as.numeric(do.call(c, lapply(polyobjs, function(mypolyobj) mypolyobj$u)))
-    ## newpoly = structure(list(gamma = newgamma, u= newu), class = "polyhedra")
-
     ## NEW: Combine smartly. Handle better!!
     rownums <- sapply(polyobjs, function(a) nrow(a$gamma))
     nonemptyinds = which(rownums!=0)
-    starts = cumsum(c(1,rownums[-length(rownums)]))[nonemptyinds]
-    ends = cumsum(rownums)[nonemptyinds]
-    rowindlist = Map(function(a,b)a:b, starts, ends)
-    newgamma = matrix(NA,nrow=sum(rownums), ncol=ncol(polyobjs[[1]]$gamma))
-    newu = rep(NA, sum(rownums))
-    for(ii in 1:length(nonemptyinds)){
-        newgamma[rowindlist[[ii]],] = polyobjs[[nonemptyinds[ii]]]$gamma
-        newu[rowindlist[[ii]]] = polyobjs[[nonemptyinds[ii]]]$u
+    if(length(nonemptyinds)==0){
+        ## emptygamma =
+        ## emptyu  = c()
+        ## newpoly = structure(list(gamma=emptygamma))
+        return(NULL)
+    } else {
+        starts = cumsum(c(1,rownums[-length(rownums)]))[nonemptyinds]
+        ends = cumsum(rownums)[nonemptyinds]
+        rowindlist = Map(function(a,b)a:b, starts, ends)
+        newgamma = matrix(NA,nrow=sum(rownums), ncol=ncol(polyobjs[[1]]$gamma))
+        newu = rep(NA, sum(rownums))
+        for(ii in 1:length(nonemptyinds)){
+            newgamma[rowindlist[[ii]],] = polyobjs[[nonemptyinds[ii]]]$gamma
+            newu[rowindlist[[ii]]] = polyobjs[[nonemptyinds[ii]]]$u
+        }
+        newpoly = structure(list(gamma = newgamma, u= newu), class = "polyhedra")
+        stopifnot(is_valid.polyhedra(newpoly))
+        return(newpoly)
     }
 
-    newpoly = structure(list(gamma = newgamma, u= newu), class = "polyhedra")
-    stopifnot(is_valid.polyhedra(newpoly))
-    return(newpoly)
 }
 
 

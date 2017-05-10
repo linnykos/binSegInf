@@ -1,6 +1,6 @@
 ##' Algorithm for Circular binarysegmentation
 ##' @param y Data vector.
-circBinSeg <- function(y){
+circBinSeg <- function(y, return.env=FALSE){
 
     ## Initialize things
     n = length(y)
@@ -9,7 +9,7 @@ circBinSeg <- function(y){
     env$y = y
 
     ## Run CBS
-    circBinSeg_inner(y=y, s=1, e=n, j=0,k=1, env=env)
+    circBinSeg_inner(y=y, s=1, e=n, j=0,k=1, n=n,env=env)
 
     ## Gather output from |env| and return it.
     bs.output = list(cplist2 = cplist2,
@@ -22,12 +22,24 @@ circBinSeg <- function(y){
                     class = "cbs")
 
     if(return.env){ return(env) } else{ return(obj) }
-
 }
+
+
 
 ##' Inner function for binary segmentation with fixed threshold. The wrapper
 ##' \code{circBinSeg()} is intended to be used by user.
-circBinSeg_inner <- function(y, s, e, j, k, env,verbose=FALSE){
+##' @param s Starting index, in the vector-valued data. Must be an integer
+##'     larger than or equal to 1, and strictly smaller than \code{e}.
+##' @param e Ending index, in the vector-valued data. Must be an integer smaller
+##'     than or equal to \code{n}, and strictly larger than \code{s}.
+##' @param j The depth of the recursion on hand.
+##' @param k The indexing of the node location, from left to right, in the
+##'     \emph{complete} binary tree.
+##' @param y The original data.
+##' @param n The length of the data \code{y}.
+##' @param env environment where the algorithm output lives.
+##' @param verbose \code{TRUE} if you want this to be loud.
+circBinSeg_inner <- function(y, s, e, j, k, n, env,verbose=FALSE){
 
     ## If segment is 2-lengthed, terminate
     if(e-s<1){
@@ -40,7 +52,9 @@ circBinSeg_inner <- function(y, s, e, j, k, env,verbose=FALSE){
         snew <- cobj$snew
         enew <- cobj$enew
         z <- sign(cobj$maxcrit)
-        thresh <- makethresh(1,s,e,n,sigma)
+        ## sigma=1
+        ## thresh <- makethresh(1,s,e,n,sigma)
+        thresh=0
 
         ## Check threshold exceedance, then store
         if(abs(cobj$maxcrit) < thresh){
@@ -121,7 +135,7 @@ crit <- function(y,s=1,snew,enew,e=length(y), n=length(y), upward=TRUE, unsigned
 cbs_maximize <- function(y, s, e){
 
     ## Calculate cusums
-    ssmat <- t(combn(s:(e-1),2))
+    ssmat <- t(utils::combn(s:(e-1),2))
   crits <- apply(ssmat, 1, function(ss){
     crit(y=y, s=s, snew=ss[1], enew=ss[2], e=e, unsigned = FALSE)})
     ind.max <- which.max(abs(crits))

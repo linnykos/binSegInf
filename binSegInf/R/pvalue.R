@@ -145,7 +145,7 @@ mpfr.tnorm.surv <- function(z, mean=0, sd=1, a, b, bits=NULL) {
   z = (z-mean)/sd
   a = (a-mean)/sd
   b = (b-mean)/sd
-  return((pnorm(b)-pnorm(z))/(pnorm(b)-pnorm(a)))
+  return((stats::pnorm(b)-stats::pnorm(z))/(stats::pnorm(b)-stats::pnorm(a)))
 }
 
 

@@ -87,13 +87,13 @@ jump_cusum.bsFs <- function(obj, sorted = F, ...){
   jump_cusum(obj$tree, sorted)
 }
 
-#' Summary of bsFs object
-#'
-#' @param object  bsFs object
-#' @param ... not used
-#'
-#' @return matrix of summary statistics
-#' @export
+##' Summary of bsFs object
+##'
+##' @param object  bsFs object
+##' @param ... not used
+##'
+##' @return matrix of summary statistics
+##' @export
 summary.bsFs <- function(object, ...){
   summary(object$tree)
 }

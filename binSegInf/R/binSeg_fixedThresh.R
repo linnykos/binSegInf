@@ -17,7 +17,7 @@
 binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return.env=FALSE, numIntervals=NULL){
 
     n = length(y)
-    
+
     ## Create new environment |env|
     env = new.env()
     env$slist = env$elist = env$selist = env$blist = env$Blist = env$zlist = env$Zlist =
@@ -41,14 +41,14 @@ binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return
                      cp.sign = trim.vec(env$zlist$mat[,3]),
                      y = y,
                      thresh = thresh)
-    
+
     obj = structure(list(bs.output = bs.output,
                          y = y,
                          thresh = thresh,
                          cp = trim.vec(env$blist$mat[,3]),
                          cp.sign = trim.vec(env$zlist$mat[,3])) ,
                     class = "bsFt")
-    
+
     if(return.env){ return(env) } else{ return(obj) }
 
 }
@@ -91,20 +91,20 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
         env$slist = add(env$slist,j,k,s)
         env$elist = add(env$elist,j,k,e)
         env$selist = add(env$selist, j  ,k, paste(s,e))
-        return() 
+        return()
     ## Otherwise, calculate CUSUMs
     } else {
         all.bs = (s:(e-1))
         all.cusums = sapply(all.bs, function(b) cusum(s=s, b=b, e=e, y=y))
         names(all.cusums) = all.bs
         all.cusums = c(rep(NA,s-1), all.cusums, rep(NA,n-s))
-        sn = sign(all.cusums) 
-        
+        sn = sign(all.cusums)
+
         ## Obtain breakpoint and its sign
         b = which.max(abs(all.cusums))
         z = sn[b]
         if(verbose) cat("the (potential) changepoint", b, "is being considered, between s and e:",s,e, fill=T)
-        
+
         ## Check threshold exceedance, then store
         if(abs(all.cusums[b]) < thresh){
 
@@ -113,9 +113,9 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
             env$slist = add(env$slist,j,  k,s)
             env$elist = add(env$elist,j,  k,e)
             env$selist = add(env$selist, j  ,k, paste(s,e))
-            
+
             return(env)
-        } else { 
+        } else {
             if(verbose) cat("the biggest cusum was", all.cusums[b],
                             "which passed the threshold:", thresh,
                             "frm between s and e:",s,e, fill=T)
@@ -128,7 +128,7 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
             env$elist = add(env$elist, j  ,k, e)
             env$selist = add(env$selist, j  ,k, paste(s,e))
         }
-        
+
         ## Recurse
         binseg.by.thresh.inner(y, thresh, s, b, j+1, 2*k-1, verbose, env=env)
         binseg.by.thresh.inner(y, thresh, b+1, e, j+1, 2*k, verbose, env=env)
@@ -141,7 +141,7 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
 print.bsFt <- function(obj){
     ## if(obj$last.row==0){ print("Empty cplist object!")
     ## } else{ print(cplist$mat[1:cplist$last.row,])}
-    
+
     cat("Changepoint set is ", obj$cp*obj$cp.sign,fill=TRUE)
 }
 

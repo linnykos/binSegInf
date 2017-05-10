@@ -169,8 +169,7 @@ trim.mat <- function(mat, type = c("rowcol","row")){
     return(mat)
 }
 
-##' Trims rows of a matrix. No error handling.
-##' @param mat
+## Trims rows of a matrix. No error handling.
 .trimrows <- function(mat){
     last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
     return(mat[1:last.j,,drop=F])

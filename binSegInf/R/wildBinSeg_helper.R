@@ -42,7 +42,7 @@ adddd = function(newsigns,M,env){
 }
 
 
-##' filter NULLs out of a pvlist.
+## filter filternullNULLs out of a pvlist.
 .filternull <- function(pvlist){
     emptyguys = unlist(lapply(pvlist, function(pvobj) return(length(pvobj)==0)))
     return(pvlist[which(!emptyguys)])
@@ -74,9 +74,8 @@ maximize = function(s, e, y, getb=TRUE){
 ##'     in the relevant interval (s:e) at runtime of wbs()
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
-##' @param augment TRUE of binary segmentation is run in augment mode.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-.make_semat = function(m, s, e, intervals, y, thresh, augment){
+make_semat = function(m, s, e, intervals, y, thresh){
 
     ## Make bare matrix
     mymat = matrix(NA, ncol=7, nrow = length(m), dimnames=NULL)
@@ -84,16 +83,16 @@ maximize = function(s, e, y, getb=TRUE){
     colnames(mymat) = c("m", "s", "b", "e", "maxcusum", "maxhere",
                         "passthreshold")
 
-    ## Fill in information about selection
-   if(augment){
-    se.for.each.m = vector("list", length(m))
-    if(length(m)>1) se.for.each.m[1:(length(m)-1)] = intervals$se[m[1:(length(m)-1)]]
-    se.for.each.m[[length(m)]] = c(s,e)
-  }
-  else{
-    se.for.each.m = intervals$se[m]
-  }
+    ## Handle the case of m containing zeros.
+    which.zero = which(m==0)
+    if(length(which.zero)>0){
+        m.without.zeros = m[-which.zero]
+        se.for.each.m = c(intervals$se[m.without.zeros], list(c(s,e)))
+    } else {
+        se.for.each.m = intervals$se[m]
+    }
 
+    ## Fill in information about selection
     mymat[,"m"] = m
     mymat[,"s"] = sapply(se.for.each.m, function(vec)vec[1])
     mymat[,"b"] = sapply(se.for.each.m,
@@ -124,7 +123,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-.make_signs = function(m, s, e, intervals, y, thresh){
+make_signs = function(m, s, e, intervals, y, thresh){
 
     ## Basic checks
     stopifnot(length(m)==1)
@@ -167,10 +166,9 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param seed seed number for random interval generation; defaults to NULL.
 ##' @param start.end.list Manual list of starts and ends. Literally an R list
 ##' with two equal length vectors, each named |start| and |end|
-##' @param augment Augment the intervals with [s,e]
 ##' @return List containing starts and ends and intervals etc.
 ##' @export
-generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL, augment = FALSE){
+generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL){
 
     ## Basic checks
     stopifnot(n>1)
@@ -233,10 +231,14 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
 ## After making intervals, you can attempt to plot them.
 plot_intervals <- function(intervals){
     numIntervals = length(intervals$se)
-    plot(NA, ylim = c(0,numIntervals), xlim = c(0,n), xlab = "intervals", ylab = "")
+    graphics::plot(NA,
+                ylim = c(0,numIntervals),
+                xlim = c(0,max(intervals$e)),
+                xlab = "intervals",
+                ylab = "")
     for(ii in 1:numIntervals){
         se = intervals$se[[ii]]
-        lines(x=se, y = c(ii,ii))
+        graphics::lines(x=se, y = c(ii,ii))
     }
 }
 
@@ -248,7 +250,7 @@ plot_intervals <- function(intervals){
 ##'     \code{wbs()}, simply use \code{env$tree}.
 ##' @param returntype One of \code{c("cp","sign")}, for whether to return the
 ##'     changepoint or the sign of teh changepoints.
-.extract_cp_from_tree = function(tree, returntype = c("cp","sign")){
+extract_cp_from_tree = function(tree, returntype = c("cp","sign")){
 
     ## Extract changepoints and sign from the tree
     if(returntype == "cp"){
@@ -349,13 +351,13 @@ make_all_segment_contrasts <- function(obj){
 }
 
 
-##' Checking if intervals is correct.
+## Checking if intervals is correct.
 .is_valid_intervals <- function(intervals){
    return(all(names(intervals) %in% c("starts","ends","intervals","se")))
 }
 
 
-##' Deduplicating any intervals.
+## Deduplicating any intervals.
 .deduplicate_intervals <- function(n, intervals){
     ## Basic checks
     stopifnot(.is_valid_intervals(intervals))
@@ -433,7 +435,7 @@ thresh| or |numSteps|, not both!")
     }
 
     ## Collect weighted p-values and their weights
-    pvlist = lapply(1:nsim.is, function(isim) {get_one(bits=bits)})
+    pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
     pvlist = .filternull(pvlist)
 
     if(length(pvlist)==0) return(NULL)

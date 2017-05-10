@@ -10,13 +10,13 @@
 ##' @export
 wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
                 return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL, augment=FALSE){
-    
+
     ## Basic checks
     if(any(duplicated(y))) stop("y must contain all unique values")
     if(is.null(numIntervals) & is.null(intervals)){
         stop("Provide input for generating intervals, or the intervals themselves!")}
     if(!is.null(intervals)) stopifnot(.is_valid_intervals(intervals))
-    
+
     ## Generate the random intervals
     if(!is.null(seed)) set.seed(seed)
 
@@ -28,12 +28,12 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     intervals = .deduplicate_intervals(length(y), intervals)
     starts = intervals$starts
     ends = intervals$ends
-    
+
     ## Create new environment |env|
     env = new.env()
     env$tree = env$signs = NULL
     env$intervals = intervals ## Carry through the intervals!
-    
+
     ## Run WBS
     .wildBinSeg_inner(y, thresh, 1, length(y), 0, 1, verbose, env=env, augment=augment)
 
@@ -44,26 +44,26 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
                          thresh = thresh,
                          signs=env$signs,
                          intervals = env$intervals,
-                         cp = .extract_cp_from_tree(env$tree, "cp"),
-                         cp.sign = .extract_cp_from_tree(env$tree,
+                         cp = extract_cp_from_tree(env$tree, "cp"),
+                         cp.sign = extract_cp_from_tree(env$tree,
                                                          "sign"),
                          fixedInterval = !is.null(intervals),
                          augment = augment),
                     class = "wbsFt")
-    
+
     if(return.env){ return(env) } else{ return(obj) }
 }
 
-##' Inner function
-.wildBinSeg_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL,augment=FALSE){
+## Inner function for wbs-ft
+.wildBinSeg_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL, augment){
 
     if(verbose) cat('j,k are', j,k,fill=TRUE)
     if(verbose) cat('s,e are', s,e,fill=TRUE)
 
     ## If segment is 2-lengthed, terminate
     if(e-s<1){
-        return() 
-        
+        return()
+
     ## Otherwise, calculate CUSUMs
     } else {
 
@@ -73,43 +73,28 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
         if(length(m)==0) return()
 
         ## Form a matrix of results and save them
-        semat = .make_semat(m, s=s, e=e, env$intervals, y, thresh,augment)
+        semat = make_semat(m, s=s, e=e, env$intervals, y, thresh)
         env$tree = addd(env$tree, j, k, semat)
 
         ## Add the cusum sign information to the |env|ironment
         newsigns = lapply(m, function(single.m){
-            .make_signs(single.m, s, e, env$intervals, y)})
+            make_signs(single.m, s, e, env$intervals, y)})
         adddd(newsigns, m, env)
 
         ## If threshold is /not/ exceeded, then terminate
         if(all(semat[,"passthreshold"]==F)){
             return()
         ## If threshold is exceeded, then recurse.
-        } else { 
+        } else {
             ## Extract changepoin
             passed = which(semat[,"maxhere"] & semat[,"passthreshold"])
             b = semat[passed,"b"]
-            
+
             ## Recurse
-            .wildBinSeg_inner(y, thresh, s,   b,  j+1,  2*k-1, verbose=verbose, env=env)
-            .wildBinSeg_inner(y, thresh, b+1, e, j+1, 2*k, verbose=verbose, env=env)
+            .wildBinSeg_inner(y, thresh, s,   b,  j+1,  2*k-1, verbose=verbose, env=env, augment=augment)
+            .wildBinSeg_inner(y, thresh, b+1, e, j+1, 2*k, verbose=verbose, env=env, augment=augment)
         }
     }
-}
-
-##' Helper function to trim tree and deduplicate env$signs
-##' @param env An environment created as a result of the outer-most run of
-##'     \code{.wildBinSeg_inner(.., s=1,e=length(y))}
-.clean_env <- function(env){
-    ## Rid env$tree of the empty element
-    env$tree = env$tree[lapply(env$tree,length)>1]
-
-    ## Deduplicate env$signs
-    all.m = unique(as.numeric(names(env$signs)))
-    unique.first.m.ind  = sapply(all.m, function(my.m){
-        min(which(as.numeric(names(env$signs))==my.m))
-    })
-    env$signs = (env$signs)[unique.first.m.ind]
 }
 
 #' is_valid for wbs
@@ -154,13 +139,13 @@ print.wbsFt <- function(obj){
 ## #' @export
 ## is_valid.semat <- function(semat){
 ##     if(!all(colnames(semat) %in% c("m", "b", "maxcusum", "maxhere", "maxhere",
-##                                    "passthreshold"))) stop("semat must be a matrix that contains certain elements!") 
+##                                    "passthreshold"))) stop("semat must be a matrix that contains certain elements!")
 ##   TRUE
 ## }
 
 
 
-##' Collect list of (starts,ends) that qualify at this branch for comparison
+## Collect list of (starts,ends) that qualify at this branch for comparison
 .get_which_qualify = function(s,e, intervals){
     return(sapply(intervals$se, function(se){ return(s<=se[1] && se[2]<=e)}))
 }

@@ -1,60 +1,3 @@
-##' Toy data generating function, of up-then-down two-jump signal, for use in
-##' Rmd simulation files.
-##' @param seed Seed to generate data from
-##' @param n Data length
-##' @param lev jump size
-##' @param sigma Data noise
-##' @param type data
-twojump_data <- function(seed=NULL,n,lev,sigma, type=c("data","mean")){
-
-    type = match.arg(type)
-
-    ## Basic checks
-    if(n%%3!=0) stop("Provide |n| divisible by 3 !")
-
-    ## Generate mean
-    mn <- rep(c(0,lev,0), each=n/3)
-    if(type=="mean")  return(mn)
-
-    ## Generate data
-    if(!is.null(seed))  set.seed(seed)
-    y <- mn + rnorm(n, 0, sigma)
-    if(type=="data")  return(y)
-
-}
-
-
-##' Toy data generating function, of upward one-jump signal, for use in Rmd
-##'  simulation files.
-##' @param seed Seed to generate data from
-##' @param n Data length
-##' @param lev jump size
-##' @param sigma Data noise
-##' @param type data
-onejump_data <- function(seed=NULL, n, lev,sigma, type=c("data","mean")){
-
-   type = match.arg(type)
-
-    ## Basic checks
-    if(n%%2!=0) stop("Provide |n| divisible by 3 !")
-
-    ## Generate mean
-    mn <- rep(c(0,lev), each=n/2)
-    if(type=="mean")  return(mn)
-
-    ## Generate data
-    if(!is.null(seed))  set.seed(seed)
-    y <- mn + rnorm(n, 0, sigma)
-    if(type=="data")  return(y)
-
-}
-
-
-
-
-
-
-
 ##' See if the vector of p-values (whose rownames are locations) \code{pv} has
 ##' location \code{loc}.
 ##' @param pv numeric vector of p-values
@@ -76,7 +19,7 @@ pvalue2 = function(v,...){pvalue(contrast=v,...)}
 ##' Get power from pvalues
 ##' @param pvals list of numeric vector of p-values
 ##' @param loc location to condition on (can be a vector)
-get.power <- function(pvals, loc=n/2){
+get.power <- function(pvals, loc){
 
     ## preprocess
     pvals = lapply(pvals, function(mypvals){if(class(mypvals)=="list") unlist(mypvals) else mypvals})
@@ -100,12 +43,6 @@ i.covers.cp <- function(i,cp){
 }
 
 
-
-##' filter NULLs out of a pvmat list.
-.filternull <- function(pvmat){
-    emptyguys = lapply(pvmat, function(pvobj) return(length(pvobj)==0))
-    return(pvmat[emptyguys])
-}
 
 
 ## ##' Single simulation driver, for experiments. Works for wildBinSeg, binSeg_OOO.
@@ -139,27 +76,27 @@ i.covers.cp <- function(i,cp){
 ## }
 
 
-##' Plotter for list of pval vectors.
-plot_pvals <- function(pvals.list, title=c("wbs","sbs")){
-    invisible(lapply(pvals.list, function(plist){
-        ii <<- ii+1
+## ##' Plotter for list of pval vectors.
+## plot_pvals <- function(pvals.list, title=c("wbs","sbs")){
+##     invisible(lapply(pvals.list, function(plist){
+##         ii <<- ii+1
 
-        ## Extract verdicts
-        pp = unlist(plist)
-        vd = unlist(lapply(plist, function(pvec){pvec<0.05/length(pvec)}))
+##         ## Extract verdicts
+##         pp = unlist(plist)
+##         vd = unlist(lapply(plist, function(pvec){pvec<0.05/length(pvec)}))
 
-        ## Get indices of approximately recovered locations
-        prox = 0
-        ind = which(names(pp) %in% c(n/3 + (-prox):prox, 2*n/3 + (-prox):prox))
+##         ## Get indices of approximately recovered locations
+##         prox = 0
+##         ind = which(names(pp) %in% c(n/3 + (-prox):prox, 2*n/3 + (-prox):prox))
 
-        ## Make qqplot
-        qqunif(unlist(pp[ind]))
-        title(paste("Jump size =", levs[ii]))
+##         ## Make qqplot
+##         qqunif(unlist(pp[ind]))
+##         title(paste("Jump size =", levs[ii]))
 
-        ## Calculate power
-        title(sub=round(sum(vd[ind])/length(ind),3))
+##         ## Calculate power
+##         title(sub=round(sum(vd[ind])/length(ind),3))
 
-    }))}
+##     }))}
 
 ##' Generates one-jump mean
 mn.onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
@@ -168,7 +105,7 @@ mn.twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 ##' Simulation inner function.
 onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
-                   seed=NULL,reduce, bootstrap=FALSE, std=NULL, augment){
+                   seed=NULL,reduce, bootstrap=FALSE, std=NULL, augment, resid.cleanmn){
 
     ## generate data
     if(!is.null(seed)) set.seed(seed)
@@ -176,7 +113,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
 
     if(is.null(bootstrap)) bootstrap = FALSE
     if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
-    if(!bootstrap) y = (my.mn + rnorm(n,0,sigma))
+    if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
 
     ###########################
     ## Do SBS-FS inference ####
@@ -235,7 +172,7 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
 ##' @param filename name of R data file to save in.
 ##' @import parallel
 sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
-                       mc.cores=4, reduce=FALSE){
+                       mc.cores=4, reduce=FALSE, resid.cleanmn=NULL){
     levs = sim.settings$levs
     n.levs = length(levs)
     results <- replicate(n.levs, list())
@@ -260,7 +197,8 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
                       reduce=reduce,
                       bootstrap=sim.settings$bootstrap,
                       std=sim.settings$std,
-                      augment = sim.settings$augment
+                      augment = sim.settings$augment,
+                      resid.cleanmn = resid.cleanmn
                       )
                ## print(proc.time() - ptm)
            }, mc.cores = mc.cores)
@@ -297,7 +235,7 @@ get_sigma <- function(y){
                       function(ii) (c(0,cps,length(y))[ii]+1):(c(0,cps,length(y))[ii+1]))
   mn = rep(NA,length(y))
   for(ind in segment.inds) mn[ind] <- mean(y[ind])
-  return(sd(y-mn))
+  return(stats::sd(y-mn))
 }
 
 ##' Return piecewise mean.
@@ -328,7 +266,7 @@ ztest <- function(v,y,sigma,alpha=0.05){
   test.stat <- sum(v*y) * 1/sqrt(sum(v*v)) * 1/sigma
   ## @param alpha significance level
   ## cutoff <- qnorm(1-alpha, 0,1)
-  return(dnorm(test.stat))
+  return(stats::dnorm(test.stat))
 }
 
 

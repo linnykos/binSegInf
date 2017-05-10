@@ -34,7 +34,7 @@ test_that("combine.polyhedra works on lists containing empty polyhedra", {
     correctu = c(u1,u1,u2,u1)
 
     expect_equal(correctgamma, combine(b,b,a,b)$gamma)
-}
+})
 
 
 

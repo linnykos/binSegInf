@@ -50,7 +50,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 }
 
 
-#' Calculates the halfspace vectors for the maximizing breakpoint and all the
+#' Calculates the halfspace vectors for the maximiiming breakpoint and all the
 #' signs, for fixed-threshold SBS.
 #'
 #' @param is.terminal.node T/F for whether the node is one where the threshold
@@ -184,12 +184,12 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
 ##' @param main label to plot as main title.
 ##' @param ... other graphical parameters for \code{plot()}.
 qqunif <- function(pp, main=NULL,...){
-    xy <- qqplot(x=pp,
+    xy <- stats::qqplot(x=pp,
                  y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE)
-    plot(xy, axes=FALSE,...)
-    axis(2); axis(1)
-    abline(0,1)
-    if(!is.null(main)) title(main=main)
+    graphics::plot(xy, axes=FALSE,...)
+    graphics::axis(2); graphics::axis(1)
+    graphics::abline(0,1)
+    if(!is.null(main)) graphics::title(main=main)
     return(xy)
 }
 
@@ -199,8 +199,8 @@ qqunif <- function(pp, main=NULL,...){
 ##' @param main label to plot as main title.
 ##' @param ... other parameters for \code{qqplot()}.
 qqunif_add <- function(pp, main=NULL,...){
-    xy <- qqplot(x=pp, y=seq(from=0,to=1,length=length(pp)),plot.it=FALSE)
-    points(xy,...)
+    xy <- stats::qqplot(x=pp, y=seq(from=0,to=1,length=length(pp)),plot.it=FALSE)
+    graphics::points(xy,...)
 }
 
 
@@ -250,8 +250,9 @@ getcusums2 <- function(s, e, cumsums){
 }
 
 ##' Newer, 10 times faster function for cusum().
-cusum2 <- function(s,e,b){
+cusum2 <- function(s,e,b,cusums){
     cumsums.aug = c(0,cumsums)
+    n = e-s+1
     return(-sqrt((e-b)/(n*(b-s+1)))*(cumsums.aug[b+1]-cumsums.aug[s-1+1]) +
         sqrt((b-s+1)/(n*(e-b)))*(cumsums.aug[e+1]-cumsums.aug[b+1]))
 }
@@ -269,12 +270,12 @@ get_morethan_cusums2 <- function(s,e,cumsums){
 
 
 
-##' Either return maximizing breakpoint, or the maximum cusum. If \code{m}
-##' includes zero, then that is handled to correspond to \code{c(s,e)}
-##' @param m set of indices that correspond to intervals. If equal to 0, coputes things correspond to \code{c(s,e)}.
-##' @param s start indices of the interval of interest.
-##' @param e end index of the interval of interest.
-##' @param interval set of intervals, produced by \code{generate_intervals()}./
+## Either return maximizing breakpoint, or the maximum cusum. If \code{m}
+## includes zero, then that is handled to correspond to \code{c(s,e)}
+## @param m set of indices that correspond to intervals. If equal to 0, coputes things correspond to \code{c(s,e)}.
+## @param s start indices of the interval of interest.
+## @param e end index of the interval of interest.
+## @param interval set of intervals, produced by \code{generate_intervals()}./
 .get_max_b <- function(m,s,e, intervals, y, type=c("cusums","max.b", "max.z")){
     type = match.arg(type)
     if(m!=0){
@@ -329,7 +330,7 @@ bootstrap_sample <- function(vec,seed=NULL){
 ##' @return Properly scaled \code{resid}.
 ##' @export
 scale_resid <- function(resid, std){
-    return(resid*(1/sd(resid))*std)
+    return(resid*(1/stats::sd(resid))*std)
 }
 
 

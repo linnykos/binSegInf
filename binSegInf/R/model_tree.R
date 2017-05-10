@@ -1,14 +1,14 @@
 .create_node <- function(start, end, breakpoint = NA, cusum = NA, active = NA){
   node <- data.tree::Node$new(paste0(start, "-", end))
-  
+
   node$start <- start
   node$end <- end
   node$breakpoint <- breakpoint
   node$cusum <- cusum
   node$active <- active
-  
+
   is_valid(node)
-  
+
   node
 }
 
@@ -22,7 +22,7 @@ is_valid.Node <- function(obj){
   if(obj$start > obj$end) stop("the start must be less or equal to end")
   if(!is.na(obj$breakpoint) & (obj$start > obj$breakpoint & obj$end < obj$breakpoint))
     stop("breakpoint must be between start and end (inclusive)")
-  
+
   TRUE
 }
 
@@ -31,7 +31,7 @@ is_valid.Node <- function(obj){
 #' Enumerates the jumps. Sorted = F will return the jumps in order
 #' of occurance in the binSeg algorithm. Sorted = T will list the jumps
 #' in numeric order
-#' 
+#'
 #' @param obj object of class Node
 #' @param sorted boolean
 #' @param ... not used
@@ -40,7 +40,7 @@ is_valid.Node <- function(obj){
 #' @export
 jumps.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
-  
+
   res <- sapply(leaves, function(x){data.tree::FindNode(obj, x)$breakpoint})
   if(sorted) sort(res) else res
 }
@@ -59,9 +59,9 @@ jumps.Node <- function(obj, sorted = F, ...){
 #' @export
 jump_cusum.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
-  
+
   res <- sapply(leaves, function(x){data.tree::FindNode(obj, x)$cusum})
-  
+
   if(sorted){
     jumps <- jumps(obj, sorted = T)
     idx <- order(jumps)
@@ -82,12 +82,12 @@ summary.Node <- function(object, ...){
   leaves <- .enumerate_splits(object)
   jumps <- jumps(object)
   cusum <- jump_cusum(object)
-  
+
   mat <- t(sapply(leaves, .get_startEnd))
-  dat <- data.frame("Split_Number" = 1:length(leaves), "Start" = mat[,1], 
+  dat <- data.frame("Split_Number" = 1:length(leaves), "Start" = mat[,1],
     "End" = mat[,2], "Breakpoint" = jumps, "Cusum" = cusum)
   rownames(dat) <- NULL
-  
+
   dat
 }
 
@@ -103,17 +103,17 @@ summary.Node <- function(object, ...){
   cusum.vec <- sapply(leaves.names, function(x){
     data.tree::FindNode(tree, x)$cusum
   })
-  
+
   leaves.names[which.max(abs(cusum.vec))]
 }
 
 .split_node <- function(node){
   if(is.na(node$breakpoint)) stop("node does not have a set breakpoint yet")
   if(node$breakpoint >= node$end) stop("node breakpoint must be less than end")
-  
+
   left <- .create_node(node$start, node$breakpoint)
   right <- .create_node(node$breakpoint + 1, node$end)
-  
+
   list(left = left, right = right)
 }
 
