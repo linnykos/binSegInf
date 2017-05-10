@@ -421,7 +421,6 @@ thresh| or |numSteps|, not both!")
         if(length(obj$cp)==0){return(NULL)}
 
         ## Calculate num & denom of TG
-        v=contrast[[1]] ## TODO get rid
         reduce=FALSE
         poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
         if(reduce){
@@ -436,12 +435,13 @@ thresh| or |numSteps|, not both!")
 
     ## Collect weighted p-values and their weights
     ## pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
-    pvlist = replicate(nsim.is, get_one(bit=bits))
+    pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
 
     if(length(pvlist)==0) return(NULL)
 
     ## Calculate p-value and return
+    browser()
     sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
     sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
     pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
