@@ -107,7 +107,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
         icurr = 0
         newpolylist <- lapply(Tcurr.without.nulls, function(tt){
             icurr = icurr+1
-            cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
+            if(verbose) cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
 
             ## Get start/end points
             s = extract(Scurr,tt[1],tt[2])
@@ -180,7 +180,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
                 }
 
             }
-            cat(fill=TRUE)
+            if(verbose) cat(fill=TRUE)
 
 
             if(modified){
@@ -232,7 +232,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
 
             ## TODO: erase after done
             icurr = icurr+1
-            cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
+            if(verbose) cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
             ## End
 
             ## Get start/end points
@@ -247,7 +247,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
 
                 m = ms[kk]
 
-                cat('\r', kk, 'out of', length(ms), "qualifying intervals")
+                if(verbose) cat('\r', kk, 'out of', length(ms), "qualifying intervals")
                 if(m==0){se = c(s,e)}else{se = obj$intervals$se[[m]]}
                 s.to.e = (se[1]:se[2])
                 other.bs = s.to.e[-which(s.to.e == se[2])]
@@ -274,7 +274,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
                 vlo = vuplo$vlo
                 vup = vuplo$vup
             }
-            cat(fill=TRUE)
+            if(verbose) cat(fill=TRUE)
         }
         return(list(poly = NULL,
                     v = v,
