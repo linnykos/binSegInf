@@ -9,7 +9,7 @@
 ##' @param verbose load or not.
 ##' @return An object of class polyhedra
 ##' @export
-polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE...){
+polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,...){
 
     ## Basic checks
     stopifnot(is_valid.wbsFs(obj))
