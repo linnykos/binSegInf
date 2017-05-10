@@ -66,9 +66,6 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,
 ##' @import Matrix
 ##' @export
 poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=NULL, sigma=NULL, bits=NULL, env=NULL,verbose=FALSE){
-    print(mystep)
-
-
 
     ## Basic checks
     n = length(obj$y)
