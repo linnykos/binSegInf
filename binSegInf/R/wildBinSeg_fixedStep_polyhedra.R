@@ -138,7 +138,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
 
             ## if(mystep == 2 & tt[1]==2 & tt[2]==1)browser()
             for(ii in 1:length(ms)){
-                print('\r', 'out of', length(ms), "qualifying intervals")
+                cat('\r', 'out of', length(ms), "qualifying intervals")
 
                 m = ms[ii]
                 ## print("m")
