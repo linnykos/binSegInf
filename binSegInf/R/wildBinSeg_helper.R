@@ -419,17 +419,17 @@ thresh| or |numSteps|, not both!")
             obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         }
         if(length(obj$cp)==0){return(NULL)}
-        poly <- polyhedra(obj, reduce=reduce, v=v)
-
-        tol = 1E-12
-        if(!all(poly$"gamma" %*%y + tol >= poly$'u')) browser()
-        stopifnot(all(poly$gamma%*%y+ tol >= poly$u))
 
         ## Calculate num & denom of TG
-        ## poly.pval(y,poly$gamma,poly$u,v,sigma,bits=100)
-        if(!all(poly$"gamma" %*%y >= poly$'u')) browser()
-        tg = partition_TG(y,poly,v,sigma, nullcontrast=0, bits=100)
-        # stopifnot(all.equal(tg$pv, tg$numer/tg$denom))
+        v=contrast[[1]] ## TODO get rid
+        reduce=FALSE
+        poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
+        if(reduce){
+            vy = sum(v*y)
+            tg = partition_TG2(vy, poly$vup, poly$vlo, sigma, bits=100)
+        } else {
+            tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100)
+        }
 
         return(list(numer = tg$numer, denom = tg$denom, seed=seed))
     }

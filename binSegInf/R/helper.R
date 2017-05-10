@@ -177,6 +177,32 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
     return(list(denom=denom, numer=numer, pv = pv))
 }
 
+##' Modified version for reduce=TRUE
+partition_TG2 <- function(vy, vup, vlo, sigma, nullcontrast=0, bits=50){
+
+    vy = max(min(vy, vup),vlo)
+
+    vv = sum(v^2)
+    sd = sigma*sqrt(vv)
+    ## Calculate a,b,z for TG = (F(b)-F(z))/(F(b)-F(a))
+    z = Rmpfr::mpfr(vy/sd, precBits=bits)
+    a = Rmpfr::mpfr(vlo/sd, precBits=bits)
+    b = Rmpfr::mpfr(vup/sd, precBits=bits)
+    if(!(a<=z &  z<=b)){
+        browser()
+    }
+
+    ## Separately store and return num&denom of TG
+    numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
+    denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+
+    ## Form p-value as well.
+    pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
+                       (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+
+    return(list(denom=denom, numer=numer, pv = pv))
+}
+
 
 
 ##' Function to plot qqlot of p-values. Use extra parameter
