@@ -441,7 +441,6 @@ thresh| or |numSteps|, not both!")
     if(length(pvlist)==0) return(NULL)
 
     ## Calculate p-value and return
-    browser()
     sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
     sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
     pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
