@@ -5,9 +5,11 @@
 ##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you
 ##'     should add (chunks) of rows instead of /all/ of them.
 ##' @param v a contrast vector, if you want to use smart addition of polyhedra.
+##' @param sigma noise level.
+##' @param verbose load or not.
 ##' @return An object of class polyhedra
 ##' @export
-polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,...){
+polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE...){
 
     ## Basic checks
     stopifnot(is_valid.wbsFs(obj))
@@ -17,8 +19,8 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,...){
     ## Get all polyhedra
     actual.num.steps = (length(obj$B)-1)
 
-    env = new.env()
-    env$k = 0
+    ## env = new.env()
+    ## env$k = 0
 
     ## Smartly add rows, if the problem size is big
     if(reduce){
@@ -26,7 +28,7 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,...){
         vlo = -Inf
         for(mystep in 1:actual.num.steps){
             newpoly = poly_from_snapshot(obj, mystep, reduce, vup= vup, vlo=vlo,
-                                         v=v, sigma=sigma, env=env) ##TODO: erase when done
+                                         v=v, sigma=sigma, verbose=verbose) ##TODO: erase when done
             vup = newpoly$vup
             vlo = newpoly$vlo
         }
@@ -36,7 +38,7 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,...){
     } else {
         all.steps.polys <- lapply(1:actual.num.steps,
                                   function(mystep){
-            poly_from_snapshot(obj, mystep, reduce,env=env)$poly})
+            poly_from_snapshot(obj, mystep, reduce, verbose=verbose)$poly})
         combined.poly = do.call(combine.polyhedra, all.steps.polys)
         return(combined.poly)
     }
@@ -59,10 +61,11 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,...){
 ##' @param v v.
 ##' @param bits bits.
 ##' @param sigma noise level.
+##' @param verbose load or not.
 ##' @return a polyhedra object with the selection event at that step.
 ##' @import Matrix
 ##' @export
-poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=NULL, sigma=NULL, bits=NULL, env=NULL){
+poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=NULL, sigma=NULL, bits=NULL, env=NULL,verbose=FALSE){
     print(mystep)
 
 
