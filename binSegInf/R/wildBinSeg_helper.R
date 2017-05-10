@@ -435,7 +435,8 @@ thresh| or |numSteps|, not both!")
     }
 
     ## Collect weighted p-values and their weights
-    pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
+    ## pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
+    pvlist = replicate(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
 
     if(length(pvlist)==0) return(NULL)
