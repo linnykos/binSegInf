@@ -99,9 +99,9 @@ print.polyhedra <- function(mypoly){
 update_vuplo <- function(poly, v, y, vup, vlo, sigma, verbose=FALSE, bits=100){
 
     ## Get new vup and vlo
-    gamma = poly$gamma
-    u = poly$u
-    poly = structure(list(gamma = gamma, u=u), class = "polyhedra")
+    ## gamma = poly$gamma
+    ## u = poly$u
+    ## poly = structure(list(gamma = gamma, u=u), class = "polyhedra")
     pobj = poly.pval(y = y,
                      G = poly$gamma,
                      u = poly$u,
@@ -109,12 +109,15 @@ update_vuplo <- function(poly, v, y, vup, vlo, sigma, verbose=FALSE, bits=100){
                      sigma = sigma,
                      bits = bits)
 
-    pobj.new = poly.pval2(y=y,poly=pobj, v=v,bits=bits,sigma=sigma,reduce=TRUE)
+    vup.new = pmin(vup, pobj$vup)
+    vlo.new = pmax(vlo, pobj$vlo)
+    pv.new = poly.pval2(poly=NULL,vup=vup.new,vlo=vlo.new,y=y,v=v,bits=bits,sigma=sigma,
+                        reduce=TRUE)$pv
 
     ## Return updated vup and vlo
-    return(list(vup = pobj.new$vup,
-                vlo = pobj.new$vlo,
-                pv = pobj.new$pv))
+    return(list(vup = vup.new,
+                vlo = vlo.new,
+                pv = pv.new))
 }
 
 

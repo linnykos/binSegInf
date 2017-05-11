@@ -19,9 +19,6 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,
     ## Get all polyhedra
     actual.num.steps = (length(obj$B)-1)
 
-    ## env = new.env()
-    ## env$k = 0
-
     ## Smartly add rows, if the problem size is big
     if(reduce){
         vup = Inf
