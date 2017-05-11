@@ -45,58 +45,6 @@ i.covers.cp <- function(i,cp){
 
 
 
-## ##' Single simulation driver, for experiments. Works for wildBinSeg, binSeg_OOO.
-## one_sim <- function(pfun, method, lev, datfun, seed=NULL,n, sigma,
-##                     thresh=NULL,size=NULL,pfun2=NULL, ...){
-
-##     ## Generate data
-##     y = datfun(seed,n,lev,sigma)
-
-##     ## Run method /once/, collect things
-##     obj = method(y,thresh, numIntervals=numIntervals, verbose=FALSE)
-##     if(length(obj$cp)==0 | all(is.na(obj$cp)))return(NULL)
-
-##     ## Collect a polyhedron
-##     poly <- polyhedra(obj)
-
-##     ## Make contrasts
-##     vs = make_all_segment_contrasts(obj)
-
-##     ## Do inference and return
-##     pv = sapply(vs, function(v){
-##         pfun(y=y,v=v,poly=poly,sigma=sigma,...)})
-
-##     ## Optionally, compare it directly to a different pfun2
-##     if(!is.null(pfun2)){
-##         pv2 = sapply(vs, function(v){ pfun2(y=y,v=v,poly=poly,sigma=sigma,...)})
-##         return(c(pv,pv2))
-##     }
-
-##     return(pv)
-## }
-
-
-## ##' Plotter for list of pval vectors.
-## plot_pvals <- function(pvals.list, title=c("wbs","sbs")){
-##     invisible(lapply(pvals.list, function(plist){
-##         ii <<- ii+1
-
-##         ## Extract verdicts
-##         pp = unlist(plist)
-##         vd = unlist(lapply(plist, function(pvec){pvec<0.05/length(pvec)}))
-
-##         ## Get indices of approximately recovered locations
-##         prox = 0
-##         ind = which(names(pp) %in% c(n/3 + (-prox):prox, 2*n/3 + (-prox):prox))
-
-##         ## Make qqplot
-##         qqunif(unlist(pp[ind]))
-##         title(paste("Jump size =", levs[ii]))
-
-##         ## Calculate power
-##         title(sub=round(sum(vd[ind])/length(ind),3))
-
-##     }))}
 
 ##' Generates one-jump mean
 mn.onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
@@ -110,7 +58,6 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
     ## generate data
     if(!is.null(seed)) set.seed(seed)
     my.mn <- mn(lev,n)
-
     if(is.null(bootstrap)) bootstrap = FALSE
     if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
     if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
@@ -129,20 +76,19 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
         p.bsfs[ii] <- poly.pval(y= y, G= poly$ gamma, u=poly$u,
                                 v=contrast[[ii]],sigma=sigma, bits=100)$pv
     }
-    ## p.bsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.bsfs)
 
     ###########################
     ## Do WBS-FS inference ####
     ###########################
     method <- wildBinSeg_fixedSteps
-    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
+    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals,seed=seed)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
     contrast <- make_all_segment_contrasts(obj)
     p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     for(ii in 1:length(obj$cp)){
-        poly <- polyhedra(obj, v = contrast[[ii]], reduce=reduce)
-        p.wbsfs.plain[ii] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
-                                         v=contrast[[ii]], sigma=sigma)$pv
+        poly <- polyhedra(obj, v = contrast[[ii]], reduce=reduce, sigma=sigma)
+        p.wbsfs.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrast[[ii]],
+                                        sigma=sigma, reduce=reduce)$pv
         p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
                                                 v=contrast[[ii]], sigma=sigma,
                                                 numSteps=numSteps,
@@ -151,15 +97,11 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
                                                 reduce=reduce,
                                                 augment=augment)
     }
-    ## p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
-    ## p.wbsfs.plain = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs.plain)
-    ## colnames(p.bsfs) = colnames(p.wbsfs.plain) = colnames(p.wbsfs) = c("isim","cp","pv")
     names(p.bsfs) = names(p.wbsfs.plain) = names(p.wbsfs) = obj$cp
 
     ########################
     ## Do CBS inference ####
     ########################
-
 
     return(list(p.wbsfs.plain = p.wbsfs.plain,
                 p.bsfs=p.bsfs,
@@ -177,11 +119,12 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
     n.levs = length(levs)
     results <- replicate(n.levs, list())
     names(results) = paste("jump size",levs)
-    ## ptm <- proc.time()
     for(i.lev in 1:n.levs){
+
         ## Run simulations
         cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
         nsim = sim.settings$nsims[i.lev]
+
         manysimresult =
            mclapply(1:nsim, function(isim){
                cat("\r", "simulation ", isim, "out of", nsim)
@@ -193,20 +136,19 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
                       numIntervals=sim.settings$numIntervals,
                       n=sim.settings$n,
                       mn=sim.settings$mn,
-                      seed=seed,
+                      seed=isim,
                       reduce=reduce,
                       bootstrap=sim.settings$bootstrap,
                       std=sim.settings$std,
                       augment = sim.settings$augment,
                       resid.cleanmn = resid.cleanmn
                       )
-               ## print(proc.time() - ptm)
            }, mc.cores = mc.cores)
+
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
         plist.wbsfs.plain <- lapply(manysimresult, function(a)a$p.wbsfs.plain)
-
 
         ## Reformat to pmat
         pmat.bsfs = reformat(plist.bsfs, n=sim.settings$n)

@@ -32,7 +32,7 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,
             vup = newpoly$vup
             vlo = newpoly$vlo
         }
-        return(list(v=v,reduce=reduce,obj=obj,vup=vup,vlo=vlo))
+        return(list(v=v,reduce=reduce,obj=obj,vup=vup,vlo=vlo, poly=NULL))
 
     ## Otherwise, just rbind and add all rows!
     } else {
@@ -65,7 +65,9 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,
 ##' @return a polyhedra object with the selection event at that step.
 ##' @import Matrix
 ##' @export
-poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=NULL, sigma=NULL, bits=NULL, env=NULL,verbose=FALSE){
+poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
+                               v=NULL, sigma=NULL, bits=NULL, env=NULL,
+                               verbose=FALSE){
 
     ## Basic checks
     n = length(obj$y)
@@ -104,10 +106,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
         Tcurr.without.nulls = Tcurr[!sapply(Tcurr,is.null)]
 
         nTcurr = length(Tcurr.without.nulls)
-        icurr = 0
         newpolylist <- lapply(Tcurr.without.nulls, function(tt){
-            icurr = icurr+1
-            if(verbose) cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
 
             ## Get start/end points
             s = extract(Scurr,tt[1],tt[2])
@@ -221,19 +220,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL, v=
 
     if(reduce){
 
-        ## TODO: erase after done
-        Tcurr.without.nulls = Tcurr[!sapply(Tcurr,is.null)]
-        nTcurr = length(Tcurr.without.nulls)
-        icurr = 0
-        ## End
-
-
         for(t in Tcurr[!sapply(Tcurr,is.null)]){
-
-            ## TODO: erase after done
-            icurr = icurr+1
-            if(verbose) cat(icurr, "out of", nTcurr, "nodes", fill=TRUE)
-            ## End
 
             ## Get start/end points
             s = extract(Scurr,t[1],t[2])

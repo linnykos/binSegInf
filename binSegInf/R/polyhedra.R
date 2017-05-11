@@ -109,14 +109,12 @@ update_vuplo <- function(poly, v, y, vup, vlo, sigma, verbose=FALSE, bits=100){
                      sigma = sigma,
                      bits = bits)
 
-    vup.new = pmin(vup, pobj$vup)
-    vlo.new = pmax(vlo, pobj$vlo)
-    pv.new = poly.pval2(vup=vup.new,vlo=vlo.new,y=y,v=v,bits=bits,sigma=sigma)
+    pobj.new = poly.pval2(y=y,poly=pobj, v=v,bits=bits,sigma=sigma,reduce=TRUE)
 
     ## Return updated vup and vlo
-    return(list(vup = vup.new,
-                vlo = vlo.new,
-                pv = pv.new))
+    return(list(vup = pobj.new$vup,
+                vlo = pobj.new$vlo,
+                pv = pobj.new$pv))
 }
 
 

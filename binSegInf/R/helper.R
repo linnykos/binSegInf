@@ -138,24 +138,19 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
-    stopifnot(is_valid.polyhedra(poly))
-
-    ## From selectiveinference package (todo: make it succinct)
-    G = poly$gamma
-    u = poly$u
+    ## stopifnot(is_valid.polyhedra(poly))
 
     vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
-
-    rho = G %*% v / vv
-    vec = (u - G %*% y + rho*vy) / rho
-    vlo = suppressWarnings(max(vec[rho>0]))
-    vup = suppressWarnings(min(vec[rho<0]))
+    pvobj <- poly.pval2(y=y, poly=poly, v=v,
+                        sigma=sigma, reduce=reduce)
+    vup = pvobj$vup
+    vlo = pvobj$vlo
     vy = max(min(vy, vup),vlo)
 
     ## Calculate a,b,z for TG = (F(b)-F(z))/(F(b)-F(a))
@@ -177,31 +172,6 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50){
     return(list(denom=denom, numer=numer, pv = pv))
 }
 
-##' Modified version for reduce=TRUE
-partition_TG2 <- function(vy, vup, vlo, sigma, nullcontrast=0, bits=50){
-
-    vy = max(min(vy, vup),vlo)
-
-    vv = sum(v^2)
-    sd = sigma*sqrt(vv)
-    ## Calculate a,b,z for TG = (F(b)-F(z))/(F(b)-F(a))
-    z = Rmpfr::mpfr(vy/sd, precBits=bits)
-    a = Rmpfr::mpfr(vlo/sd, precBits=bits)
-    b = Rmpfr::mpfr(vup/sd, precBits=bits)
-    if(!(a<=z &  z<=b)){
-        browser()
-    }
-
-    ## Separately store and return num&denom of TG
-    numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
-    denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
-
-    ## Form p-value as well.
-    pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
-                       (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
-
-    return(list(denom=denom, numer=numer, pv = pv))
-}
 
 
 

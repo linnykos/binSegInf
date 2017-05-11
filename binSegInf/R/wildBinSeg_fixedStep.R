@@ -71,12 +71,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
               ms.aug = ms
               ms.aug[which(ms.aug==0)] = length(intervals$se) + 1
 
-              ## print("tt,s,e is")
-              ## print(tt)
-              ## print(s)
-              ## print(e)
-
-
               ## Get the maximizer (m,b,z)
               maxcusums = sapply(info.aug[ms.aug], '[[', "max.cusum")
               max.ind.of.maxcusums = which.max(abs(maxcusums))

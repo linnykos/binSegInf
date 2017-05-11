@@ -381,7 +381,6 @@ make_all_segment_contrasts <- function(obj){
 ##' @param numIntervals number of WBS intervals you want /each time/. This
 ##'     should match what you used when applying wild binary segmentation on
 ##'     your observed dataset.
-##' @param thresh threshold.
 ##' @param numSteps number of steps to take.
 ##' @param nsim.is Number of importance sampling samples you'd like to
 ##'     calculate.
@@ -391,13 +390,9 @@ make_all_segment_contrasts <- function(obj){
 ##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL, reduce=FALSE, augment){
-    ## Basic checks
-    if(is.null(thresh) & is.null(numSteps))  stop("Provide one of | thresh| or |
-numSteps| (but not both)!")
-
-    if(!is.null(thresh) & !is.null(numSteps)) stop("Provide /only/ one of |
-thresh| or |numSteps|, not both!")
+randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
+                                     numIntervals, nsim.is, bits=NULL,
+                                     reduce=FALSE, augment){
 
     ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(seed=NULL, bits=bits){
@@ -411,24 +406,12 @@ thresh| or |numSteps|, not both!")
 
         i = generate_intervals(length(y), numIntervals, seed=seed)
         if(!i.covers.cp(i,cp)){return(NULL)}
-
-        ## Run WBS and collect polyhedron
-        if(!is.null(thresh)){
-            obj = wildBinSeg_fixedThresh(y,thresh, intervals=i)
-        } else {
-            obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
-        }
+        obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         if(length(obj$cp)==0){return(NULL)}
 
         ## Calculate num & denom of TG
-        reduce=FALSE
         poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
-        if(reduce){
-            vy = sum(v*y)
-            tg = partition_TG2(vy, poly$vup, poly$vlo, sigma, bits=100)
-        } else {
-            tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100)
-        }
+        tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100,reduce=reduce)
 
         return(list(numer = tg$numer, denom = tg$denom, seed=seed))
     }
@@ -447,4 +430,3 @@ thresh| or |numSteps|, not both!")
 
     return(pv)
 }
-

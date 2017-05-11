@@ -189,10 +189,26 @@ ff <- function(z) {
 ##'     pvalue. (i.e. precision of Rmpfr)
 ##'
 ##' @return List of vup, vlo and pv.
-poly.pval2 <- function(y, v, vup, vlo, sigma, bits=NULL) {
-  z = sum(v*y)
-  vv = sum(v^2)
-  sd = sigma*sqrt(vv)
-  pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+poly.pval2 <- function(y, poly,v, sigma, bits=NULL, reduce=FALSE) {
+
+    G = poly$gamma
+    u = poly$u
+    vreduceup = poly$vup
+    vlo = poly$vlo
+
+    z = sum(v*y)
+    vv = sum(v^2)
+    sd = sigma*sqrt(vv)
+
+    if(reduce){
+        pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+    } else {
+        rho = G %*% v / vv
+        vec = (u - G %*% y + rho*z) / rho
+        vlo = suppressWarnings(max(vec[rho>0]))
+        vup = suppressWarnings(min(vec[rho<0]))
+        pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+    }
+
   return(list(pv=pv,vlo=vlo,vup=vup))
 }
