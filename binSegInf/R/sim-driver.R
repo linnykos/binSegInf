@@ -77,7 +77,6 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
         cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
         nsim = sim.settings$nsims[i.lev]
 
-        browser()
         manysimresult =
            mclapply(1:nsim, function(isim){
                cat("\r", "simulation ", isim, "out of", nsim)
