@@ -1,6 +1,4 @@
 .find_breakpoint_cbs <- function(vec){
-  stopifnot(all(diff(vec) >= 0))
-  
   n <- length(vec)
   
   breakpoint <- .enumerate_breakpoints_cbs(n)
@@ -18,7 +16,6 @@
 }
 
 .cusum_cbs <- function(x, vec){
-  stopifnot(all(diff(vec) >= 0))
   stopifnot(length(x) == 2, x[1] >= 1, x[2] <= length(vec), x[1] <= x[2])
   stopifnot(all(x %% 1 == 0))
   stopifnot(!all(x[1]==1, x[2]==length(vec)))
@@ -27,7 +24,7 @@
   sum1 <- vec[x[2]] - ifelse(x[1] > 1, vec[x[1]-1], 0)
   sum2 <- (vec[n] - vec[x[2]]) + ifelse(x[1] > 1, vec[x[1]-1], 0)
   
-  const <- sqrt(1/m + 1/(n-m))
+  const <- sqrt(1/(1/m + 1/(n-m)))
   const*(sum1/m - sum2/(n-m))
 }
 
