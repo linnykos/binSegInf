@@ -110,8 +110,8 @@ test_that(".enumerate_breakpoints_cbs outputs the right rows", {
 ## .find_breakpoint_cbs is correct
 
 test_that(".find_breakpoint_cbs works", {
-  vec <- cumsum(1:10)
-  res <- .find_breakpoint_cbs(vec)
+  y <- 1:10
+  res <- .find_breakpoint_cbs(y)
   
   expect_true(is.list(res))
   expect_true(length(res) == 2)
@@ -125,8 +125,7 @@ test_that(".find_breakpoint_cbs works", {
 test_that(".find_breakpoint_cbs finds the right breakpoint", {
   set.seed(10)
   y <- c(rnorm(10), rnorm(10, mean = 10), rnorm(10))
-  vec <- cumsum(y)
-  res <- .find_breakpoint_cbs(vec)
+  res <- .find_breakpoint_cbs(y)
   
   expect_true(all(res$breakpoint == c(11,20)))
 })
@@ -139,6 +138,14 @@ test_that("circularBinSeg_fixedSteps works", {
   set.seed(10)
   y <- c(rnorm(10), rnorm(10, mean = 10), rnorm(10))
   res <- circularBinSeg_fixedSteps(y, 1)
+  
+  expect_true(class(res) == "cbsFs")
+})
+
+test_that("circularBinSeg_fixedSteps works with two jumps", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  res <- circularBinSeg_fixedSteps(y, 2)
   
   expect_true(class(res) == "cbsFs")
 })

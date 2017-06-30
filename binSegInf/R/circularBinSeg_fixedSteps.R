@@ -9,7 +9,7 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
     for(i in 1:length(leaves.names)){
       leaf <- data.tree::FindNode(tree, leaves.names[i])
       
-      res <- .find_breakpoint_cbs(vec[leaf$start:leaf$end])
+      res <- .find_breakpoint_cbs(y[leaf$start:leaf$end])
       
       leaf$breakpoint <- res$breakpoint+leaf$start-1; leaf$cusum <- res$cusum
     }
@@ -26,9 +26,10 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
   obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")
 }
 
-.find_breakpoint_cbs <- function(vec){
-  n <- length(vec)
+.find_breakpoint_cbs <- function(y){
+  n <- length(y)
   
+  vec <- cumsum(y)
   breakpoint <- .enumerate_breakpoints_cbs(n)
   cusum_vec <- apply(breakpoint, 1, .cusum_cbs, vec = vec)
   
@@ -61,7 +62,7 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
   stopifnot(length(node$breakpoint) == 2, node$breakpoint[1] >= node$start,
             node$breakpoint[2] <= node$end)
   
-  if(node$breakpoint[1] > 1){left <- .create_node(node$start, node$breakpoint[1] - 1)} else{left <- NA}
+  if(node$breakpoint[1] > node$start){left <- .create_node(node$start, node$breakpoint[1] - 1)} else{left <- NA}
   middle <- .create_node(node$breakpoint[1], node$breakpoint[2])
   if(node$breakpoint[2] < node$end){right <- .create_node(node$breakpoint[2] + 1, node$end)} else{right <- NA}
   
