@@ -3,24 +3,29 @@
   
   n <- length(vec)
   
-  breakpoint <- cbind(rep(1:n, times = c((n-1), (n-1):1)), 
-                      unlist(lapply(1:n, function(x){
-                        if(x == 1) x:(n-1) else x:n
-                      })))
+  breakpoint <- .enumerate_breakpoints_cbs(n)
   cusum_vec <- apply(breakpoint, 1, .cusum_cbs, vec = vec)
   
   idx <- which.max(abs(cusum_vec))
   list(breakpoint = breakpoint[idx,], cusum = cusum_vec[idx])
 }
 
+.enumerate_breakpoints_cbs <- function(n){
+  cbind(rep(1:n, times = c((n-1), (n-1):1)), 
+        unlist(lapply(1:n, function(x){
+          if(x == 1) x:(n-1) else x:n
+        })))
+}
+
 .cusum_cbs <- function(x, vec){
   stopifnot(all(diff(vec) >= 0))
   stopifnot(length(x) == 2, x[1] >= 1, x[2] <= length(vec), x[1] <= x[2])
   stopifnot(all(x %% 1 == 0))
+  stopifnot(!all(x[1]==1, x[2]==length(vec)))
   
   n <- length(vec); m <- x[2]-x[1]+1
-  sum1 <- vec[x[2]] - ifelse(x[1] > 1, vec[x[i]-1], 0)
-  sum2 <- (vec[n] - vec[x[2]]) + ifesle(x[1] > 1, vec[x[i]], 0)
+  sum1 <- vec[x[2]] - ifelse(x[1] > 1, vec[x[1]-1], 0)
+  sum2 <- (vec[n] - vec[x[2]]) + ifelse(x[1] > 1, vec[x[1]-1], 0)
   
   const <- sqrt(1/m + 1/(n-m))
   const*(sum1/m - sum2/(n-m))
