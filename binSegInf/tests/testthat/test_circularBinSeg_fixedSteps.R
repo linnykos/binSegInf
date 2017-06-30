@@ -64,3 +64,27 @@ test_that(".cusum_cbs fails when the bounds are the entire interval", {
 
 ######################
 
+## .enumerate_breakpoints_cbs is correct
+
+test_that(".enumerate_breakpoints_cbs works", {
+  n <- 5
+  res <- .enumerate_breakpoints_cbs(n)
+  expect_true(is.matrix(res))
+  expect_true(ncol(res) == 2)
+  expect_true(all(res[,1] <= res[,2]))
+  
+  map <- res[,1]*6+res[,2]
+  expect_true(length(map) == length(unique(map))) #all unique rows
+})
+
+test_that(".enumerate_breakpoints_cbs outputs the right rows", {
+  n <- 4
+  res <- .enumerate_breakpoints_cbs(n)
+  answer <- matrix(c(1,1, 1,2, 1,3, 2,2, 2,3, 2,4, 3,3, 3,4, 4,4), ncol = 2, byrow = T)
+  
+  expect_true(nrow(res) == nrow(answer))
+  
+  map_res <- res[,1]*5+res[,2]
+  map_answer <- answer[,1]*5+answer[,2]
+  expect_true(all(sort(map_res) == sort(map_answer)))
+})
