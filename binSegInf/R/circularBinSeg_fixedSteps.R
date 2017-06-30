@@ -1,3 +1,31 @@
+circularBinSeg_fixedSteps <- function(y, numSteps){
+  if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
+  
+  #initialization
+  n <- length(y); tree <- .create_node(1, n); vec <- cumsum(y)
+
+  for(steps in 1:numSteps){
+    leaves.names <- .get_leaves_names(tree)
+    for(i in 1:length(leaves.names)){
+      leaf <- data.tree::FindNode(tree, leaves.names[i])
+      
+      res <- .find_breakpoint_cbs(vec[leaf$start:leaf$end])
+      
+      leaf$breakpoint <- res$breakpoint+leaf$start-1; leaf$cusum <- res$cusum
+    }
+    
+    node.name <- .find_leadingBreakpoint(tree)
+    node.selected <- data.tree::FindNode(tree, node.name)
+    node.selected$active <- steps
+    node.pairs <- .split_node_cbs(node.selected)
+    if(!any(is.na(node.pairs$left))) node.selected$AddChildNode(node.pairs$left)
+    node.selected$AddChildNode(node.pairs$middle)
+    if(!any(is.na(node.pairs$right))) node.selected$AddChildNode(node.pairs$right)
+  }
+  
+  obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")
+}
+
 .find_breakpoint_cbs <- function(vec){
   n <- length(vec)
   
@@ -29,15 +57,17 @@
 }
 
 .split_node_cbs <- function(node){
-  if(is.na(node$breakpoint)) stop("node does not have a set breakpoint yet")
+  if(any(is.na(node$breakpoint))) stop("node does not have a set breakpoint yet")
   stopifnot(length(node$breakpoint) == 2, node$breakpoint[1] >= node$start,
             node$breakpoint[2] <= node$end)
   
-  left <- ifelse(node$breakpoint[1] > 1, .create_node(node$start, node$breakpoint[1] - 1), NA)
+  if(node$breakpoint[1] > 1){left <- .create_node(node$start, node$breakpoint[1] - 1)} else{left <- NA}
   middle <- .create_node(node$breakpoint[1], node$breakpoint[2])
-  right <- ifelse(node$breakpoint[2] < n, .create_node(node$breakpoint[2] + 1, node$end), NA)
+  if(node$breakpoint[2] < node$end){right <- .create_node(node$breakpoint[2] + 1, node$end)} else{right <- NA}
   
-  stopifnot(!is.na(left) | !is.na(right))
+  stopifnot(!any(is.na(left)) | !any(is.na(right)))
   
   list(left = left, middle = middle, right = right)
 }
+
+is.na.Node <- function(x){FALSE}

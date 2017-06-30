@@ -130,3 +130,15 @@ test_that(".find_breakpoint_cbs finds the right breakpoint", {
   
   expect_true(all(res$breakpoint == c(11,20)))
 })
+
+####################
+
+## circularBinSeg_fixedSteps is correct
+
+test_that("circularBinSeg_fixedSteps works", {
+  set.seed(10)
+  y <- c(rnorm(10), rnorm(10, mean = 10), rnorm(10))
+  res <- circularBinSeg_fixedSteps(y, 1)
+  
+  expect_true(class(res) == "cbsFs")
+})
