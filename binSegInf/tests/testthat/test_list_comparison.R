@@ -17,3 +17,17 @@ test_that(".list_comparison works", {
         mat[i,3] - mat[i,1] - 1)
   }
 })
+
+#############
+
+## .list_comparison.cbsFs is correct
+
+test_that(".list_comparison.cbsFs works", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedSteps(y, 2)
+  res <- .list_comparison.cbsFs(obj)
+  
+  expect_true(is.matrix(res))
+  expect_true(ncol(res) == 4)
+})

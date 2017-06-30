@@ -43,17 +43,19 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
 #' Enumerates the jumps for circular binary segmentation. 
 #'
 #' @param obj cbs object
+#' @param sorted boolean
 #' @param ... not used
 #'
 #' @return vector of all the jump locations
 #' @export
-jumps.cbsFs <- function(obj, ...){
+jumps.cbsFs <- function(obj, sorted = T, ...){
   leaves <- .enumerate_splits(obj$tree)
   
   res <- sapply(leaves, function(x){data.tree::FindNode(obj$tree, x)$breakpoint})
   res[1,] <- sapply(res[1,], function(x){ifelse(x>1, x-1, NA)})
   res <- as.numeric(res)
-  sort(res[!is.na(res)])
+  res <- res[!is.na(res)]
+  if(sorted) sort(res) else res
 }
 
 #' Find breakpoints for circular binary segmentation
@@ -92,16 +94,21 @@ jumps.cbsFs <- function(obj, ...){
 #' The second part, \code{rbind(2:n, rep(n, n-1)))} accounts for any humps with no
 #' right shoulder and length larger than 1, but has a left shoulder. 
 #' The third part, \code{rbind(1:n, 1:n)}
-#' accounts for humps of length 1.
+#' accounts for humps of length 1. 
+#' 
+#' \code{start} shifts all the indices appropriately to the right.
 #'
 #' @param n integer
+#' @param start integer
 #'
 #' @return
-.enumerate_breakpoints_cbs <- function(n){
-  cbind(rep(1:n, times = c((n-1), (n-1):1)), 
+.enumerate_breakpoints_cbs <- function(n, start = 1){
+  res <- cbind(rep(1:n, times = c((n-1), (n-1):1)), 
         unlist(lapply(1:n, function(x){
           if(x == 1) x:(n-1) else x:n
         })))
+  
+  res + start - 1
 }
 
 #' Compute the circular cusum statistcs
@@ -169,3 +176,9 @@ jumps.cbsFs <- function(obj, ...){
 #' @return FALSE
 #' @export
 is.na.Node <- function(x){FALSE}
+
+
+jump_cusum.cbsFs <- function(obj, ...){
+  jump_cusum(obj$tree, F)
+}
+
