@@ -16,8 +16,10 @@ Imports:
     MASS,
     wbs,
     genlasso,
+    glmgen,
     Matrix,
-    pryr
+    pryr,
+    parallel
 Suggests:
     testthat
 RoxygenNote: 6.0.1

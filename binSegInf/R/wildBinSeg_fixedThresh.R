@@ -9,7 +9,7 @@
 ##'     segmentation output.
 ##' @export
 wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
-                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL){
+                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL, augment=FALSE){
     
     ## Basic checks
     if(any(duplicated(y))) stop("y must contain all unique values")
@@ -35,7 +35,7 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     env$intervals = intervals ## Carry through the intervals!
     
     ## Run WBS
-    .wildBinSeg_inner(y, thresh, 1, length(y), 0, 1, verbose, env=env)
+    .wildBinSeg_inner(y, thresh, 1, length(y), 0, 1, verbose, env=env, augment=augment)
 
     ## Clean the result and return
     .clean_env(env)
@@ -47,14 +47,15 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
                          cp = .extract_cp_from_tree(env$tree, "cp"),
                          cp.sign = .extract_cp_from_tree(env$tree,
                                                          "sign"),
-                         fixedInterval = !is.null(intervals)),
+                         fixedInterval = !is.null(intervals),
+                         augment = augment),
                     class = "wbsFt")
     
     if(return.env){ return(env) } else{ return(obj) }
 }
 
 ##' Inner function
-.wildBinSeg_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL){
+.wildBinSeg_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL,augment=FALSE){
 
     if(verbose) cat('j,k are', j,k,fill=TRUE)
     if(verbose) cat('s,e are', s,e,fill=TRUE)
@@ -66,18 +67,18 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     ## Otherwise, calculate CUSUMs
     } else {
 
-
         ## Extract the qualifying intervals at this branch
         m = which(.get_which_qualify(s,e,env$intervals))
+        if(augment) m = c(m,0)
         if(length(m)==0) return()
 
         ## Form a matrix of results and save them
-        semat = .make_semat(m, env$intervals, y, thresh)
+        semat = .make_semat(m, s=s, e=e, env$intervals, y, thresh,augment)
         env$tree = addd(env$tree, j, k, semat)
 
         ## Add the cusum sign information to the |env|ironment
         newsigns = lapply(m, function(single.m){
-            .make_signs(single.m, env$intervals, y)})
+            .make_signs(single.m, s, e, env$intervals, y)})
         adddd(newsigns, m, env)
 
         ## If threshold is /not/ exceeded, then terminate
@@ -85,7 +86,7 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
             return()
         ## If threshold is exceeded, then recurse.
         } else { 
-            ## Extract changepoint
+            ## Extract changepoin
             passed = which(semat[,"maxhere"] & semat[,"passthreshold"])
             b = semat[passed,"b"]
             
@@ -126,6 +127,7 @@ is_valid.wbsFt <- function(obj){
               "intervals",
               "cp",
               "cp.sign",
+              "augment",
               "fixedInterval"))) stop("obj must contain certain elements!")
   TRUE
 }
