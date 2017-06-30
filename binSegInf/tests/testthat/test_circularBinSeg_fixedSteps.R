@@ -105,6 +105,18 @@ test_that(".enumerate_breakpoints_cbs outputs the right rows", {
   expect_true(all(sort(map_res) == sort(map_answer)))
 })
 
+test_that(".enumerate_breakpoints_cbs outputs the right rows", {
+  n <- 10
+  res <- .enumerate_breakpoints_cbs(n)
+  answer <- t(cbind(combn(1:(n-1), 2), rbind(2:(n-1), rep(n, n-2)), rbind(1:n, 1:n)))
+  
+  expect_true(nrow(res) == nrow(answer))
+  
+  map_res <- res[,1]*11+res[,2]
+  map_answer <- answer[,1]*11+answer[,2]
+  expect_true(all(sort(map_res) == sort(map_answer)))
+})
+
 ####################
 
 ## .find_breakpoint_cbs is correct
