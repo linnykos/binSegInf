@@ -149,3 +149,34 @@ test_that("circularBinSeg_fixedSteps works with two jumps", {
   
   expect_true(class(res) == "cbsFs")
 })
+
+test_that("circularBinSeg_fixedSteps works when jump is at the edge", {
+  set.seed(10)
+  y <- c(rnorm(10), rnorm(10, mean = 10))
+  res <- circularBinSeg_fixedSteps(y, 1)
+  
+  expect_true(class(res) == "cbsFs")
+})
+
+####################
+
+## jumps.cbsFs is correct
+
+test_that("jumps.cbsFs works", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedSteps(y, 2)
+  res <- jumps(obj)
+  
+  expect_true(all(res == c(5,10,15,20)))
+})
+
+test_that("jumps.cbsFs works when one of the jumps is at the edge", {
+  set.seed(10)
+  y <- c(rnorm(10), rnorm(10, mean = 10))
+  obj <- circularBinSeg_fixedSteps(y, 1)
+  res <- jumps(obj)
+  
+  expect_true(res == 10)
+})
+

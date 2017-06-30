@@ -26,6 +26,15 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
   obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")
 }
 
+jumps.cbsFs <- function(obj, ...){
+  leaves <- .enumerate_splits(obj$tree)
+  
+  res <- sapply(leaves, function(x){data.tree::FindNode(obj$tree, x)$breakpoint})
+  res[1,] <- sapply(res[1,], function(x){ifelse(x>1, x-1, NA)})
+  res <- as.numeric(res)
+  sort(res[!is.na(res)])
+}
+
 .find_breakpoint_cbs <- function(y){
   n <- length(y)
   
