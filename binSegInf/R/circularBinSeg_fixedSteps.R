@@ -101,7 +101,7 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
 #' @param n integer
 #' @param start integer
 #'
-#' @return
+#' @return a matrix
 .enumerate_breakpoints_cbs <- function(n, start = 1){
   res <- cbind(rep(1:n, times = c((n-1), (n-1):1)), 
         unlist(lapply(1:n, function(x){
@@ -126,7 +126,7 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
 #' @param x vector of 2 integers.
 #' @param vec numeric vector
 #'
-#' @return
+#' @return a value
 .cusum_cbs <- function(x, vec){
   stopifnot(length(x) == 2, x[1] >= 1, x[2] <= length(vec), x[1] <= x[2])
   stopifnot(all(x %% 1 == 0))
