@@ -28,6 +28,6 @@ test_that(".list_comparison.cbsFs works", {
   obj <- circularBinSeg_fixedSteps(y, 2)
   res <- .list_comparison.cbsFs(obj)
   
-  expect_true(is.matrix(res))
-  expect_true(ncol(res) == 4)
+  expect_true(is.list(res))
+  expect_true(all(c(sapply(res[[1]], ncol), sapply(res[[2]], ncol)) == 4))
 })
