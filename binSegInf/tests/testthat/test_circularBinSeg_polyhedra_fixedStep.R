@@ -40,7 +40,6 @@ test_that("polyhedra.cbsFs satisfies polyhedra requirement", {
   res <- polyhedra(obj)
   
   expect_true(all(res$gamma %*% y >= res$u))
-  expect_true(nrow(res$gamma) == ans)
 })
 
 
@@ -49,7 +48,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   y <- c(rep(0,10), rep(-2,10), rep(-1,5)) + rnorm(25)
   obj <- circularBinSeg_fixedSteps(y,2)
   
-  model <- obj$model[,1:2]
+  model <- jumps(obj, sorted = F)
   poly <- polyhedra(obj)
   
   expect_true(all(poly$gamma %*% y >= poly$u))
@@ -57,13 +56,13 @@ test_that("having the same model if and only if the inequalities are satisfied",
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rep(0,10), rep(-2,10), rep(-1,5)) + rnorm(25)
-    obj.tmp <- circularBinSeg_fixedSteps(y.tmp,2)
+    y_tmp <- c(rep(0,10), rep(-2,10), rep(-1,5)) + rnorm(25)
+    obj_tmp <- circularBinSeg_fixedSteps(y_tmp,2)
     
-    model.tmp <- obj.tmp$model[,1:2]
+    model_tmp <- jumps(obj_tmp, sorted = F)
     
-    bool1 <- all(model == model.tmp)
-    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    bool1 <- all(length(model) == length(model_tmp) && all(model == model_tmp))
+    bool2 <- all(poly$gamma %*% y_tmp >= poly$u)
     
     expect_true(bool1 == bool2)
   }
@@ -82,13 +81,13 @@ test_that("having the same model if and only if the inequalities are satisfied",
   trials <- 100
   for(i in 1:trials){
     set.seed(i*10)
-    y.tmp <- c(rnorm(5), rnorm(5, mean = -10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
-    obj.tmp <- fLasso_fixedSteps(y.tmp,2)
+    y_tmp <- c(rnorm(5), rnorm(5, mean = -10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+    obj_tmp <- circularBinSeg_fixedSteps(y_tmp,2)
     
-    model.tmp <- obj.tmp$model[,1:2]
+    model_tmp <- jumps(obj_tmp, sorted = F)
     
-    bool1 <- all(model == model.tmp)
-    bool2 <- all(poly$gamma %*% y.tmp >= poly$u)
+    bool1 <- all(length(model) == length(model_tmp) && all(model == model_tmp))
+    bool2 <- all(poly$gamma %*% y_tmp >= poly$u)
     
     expect_true(bool1 == bool2)
   }

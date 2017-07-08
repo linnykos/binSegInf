@@ -117,6 +117,14 @@ test_that(".enumerate_breakpoints_cbs outputs the right rows", {
   expect_true(all(sort(map_res) == sort(map_answer)))
 })
 
+test_that(".enumerate_breakpoints_cbs works on singleton", {
+  res <- .enumerate_breakpoints_cbs(1)
+  
+  expect_true(is.matrix(res))
+  expect_true(all(dim(res) == c(1,2)))
+  expect_true(all(as.numeric(res) == c(1,1)))
+})
+
 ####################
 
 ## .find_breakpoint_cbs is correct
@@ -170,6 +178,14 @@ test_that("circularBinSeg_fixedSteps works when jump is at the edge", {
   expect_true(class(res) == "cbsFs")
 })
 
+test_that("circularBinSeg_fixedSteps will work in a strange circumstance where start=end", {
+  set.seed(70)
+  y <- c(rep(0,10), rep(-2,10), rep(-1,5)) + rnorm(25)
+  obj <- circularBinSeg_fixedSteps(y,2)
+  
+  expect_true(class(obj) == "cbsFs")
+})
+
 ####################
 
 ## jumps.cbsFs is correct
@@ -192,3 +208,15 @@ test_that("jumps.cbsFs works when one of the jumps is at the edge", {
   expect_true(res == 10)
 })
 
+test_that("jumps.cbsFs will not report the same jump if sorted is TRUE", {
+  set.seed(10)
+  y <- c(rnorm(10), rnorm(5, mean = 25), rnorm(5, mean = 20), rnorm(10))
+  obj <- circularBinSeg_fixedSteps(y, 2)
+  res <- jumps(obj, sorted = T)
+  
+  expect_true(all(res == c(10,15,20)))
+  
+  res <- jumps(obj, sorted = F)
+  
+  expect_true(all(res == c(10, 20, 10, 15)))
+})

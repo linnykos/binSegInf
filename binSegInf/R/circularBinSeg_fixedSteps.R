@@ -40,7 +40,8 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
 
 #' Get jumps from cbsFs objects
 #' 
-#' Enumerates the jumps for circular binary segmentation. 
+#' Enumerates the jumps for circular binary segmentation. If \code{sorted}
+#' is true, then only the unique changepoints are reported. 
 #'
 #' @param obj cbs object
 #' @param sorted boolean
@@ -55,7 +56,7 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
   res[1,] <- sapply(res[1,], function(x){ifelse(x>1, x-1, NA)})
   res <- as.numeric(res)
   res <- res[!is.na(res)]
-  if(sorted) sort(res) else res
+  if(sorted) unique(sort(res)) else res
 }
 
 #' Find breakpoints for circular binary segmentation
@@ -103,6 +104,8 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
 #'
 #' @return a matrix
 .enumerate_breakpoints_cbs <- function(n, start = 1){
+  if(n == 1) return(matrix(c(1,1), nrow = 1))
+  
   res <- cbind(rep(1:n, times = c((n-1), (n-1):1)), 
         unlist(lapply(1:n, function(x){
           if(x == 1) x:(n-1) else x:n
@@ -130,7 +133,9 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
 .cusum_cbs <- function(x, vec){
   stopifnot(length(x) == 2, x[1] >= 1, x[2] <= length(vec), x[1] <= x[2])
   stopifnot(all(x %% 1 == 0))
-  stopifnot(!all(x[1]==1, x[2]==length(vec)))
+  stopifnot(!all(x[1]==1, x[2]==length(vec)) | length(vec) == 1)
+  
+  if(length(vec) == 1) return(0)
   
   n <- length(vec); m <- x[2]-x[1]+1
   sum1 <- vec[x[2]] - ifelse(x[1] > 1, vec[x[1]-1], 0)
