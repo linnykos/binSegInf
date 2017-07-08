@@ -68,7 +68,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   }
 })
 
-test_that("having the same model if and only if the inequalities are satisfied", {
+test_that("having the same model if and only if the inequalities are satisfied, wrong model", {
   set.seed(5)
   y <- rnorm(25)
   obj <- circularBinSeg_fixedSteps(y,2)
@@ -119,4 +119,21 @@ test_that(".cusum_cbs_contrast_full gives the correct answer with shift", {
   cusum <- .cusum_cbs(c(3,5), cumsum(y[5:10]))
   
   expect_true(abs(con%*%y - cusum) <= 1e-6)
+})
+
+######################
+
+## .gammaRows_from_comparisons_cbsfs is correct
+
+test_that(".gammaRows_from_comparisons_cbsfs works", {
+  set.seed(10)
+  y <- c(rep(0,10), rep(5,10), rep(0,10))
+  
+  vec <- c(1, c(11,20), 30)
+  mat <- matrix(c(1,10,20,30, 1,11,19,30), 2, 4, byrow = T)
+  res <- .gammaRows_from_comparisons_cbsfs(vec, mat, 1, 30)
+  
+  expect_true(is.matrix(res))
+  expect_true(all(dim(res) == c(4,30)))
+  expect_true(all(res %*% y >= 0))
 })

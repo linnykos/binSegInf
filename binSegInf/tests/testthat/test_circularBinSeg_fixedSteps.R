@@ -186,6 +186,14 @@ test_that("circularBinSeg_fixedSteps will work in a strange circumstance where s
   expect_true(class(obj) == "cbsFs")
 })
 
+test_that("circularBinSeg_fixedSteps works with repetitions", {
+  set.seed(10)
+  y <- c(rep(0,10), rep(5,10), rep(0,10))
+  res <- circularBinSeg_fixedSteps(y, 1)
+  
+  expect_true(all(jumps(res, sorted = T) == c(10,20)))
+})
+
 ####################
 
 ## jumps.cbsFs is correct

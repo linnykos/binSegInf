@@ -1,3 +1,13 @@
+#' Polyhedra for circular binary segmentation fixed steps
+#' 
+#' The polyhedra has elements \code{gamma} (a matrix) and \code{u}
+#' (a vector).
+#'
+#' @param obj cbsFs object
+#' @param ... void, not used
+#'
+#' @return a polyhedra 
+#' @export
 polyhedra.cbsFs <- function(obj, ...){
   n <- .get_startEnd(obj$tree$name)[2] 
   numSteps <- obj$numSteps
@@ -14,6 +24,23 @@ polyhedra.cbsFs <- function(obj, ...){
   polyhedra(obj = mat, u = rep(0, nrow(mat)))
 }
 
+#' Form contrast vector for circular binary segmentation
+#' 
+#' The vector is made such that for a data vector \code{y}, if the
+#' output of \code{.cusum_cbs_contrast_full} is \code{res}, then
+#' \code{res \%*\% y} is the circular cusum statistic for a particular
+#' set of indices. 
+#' 
+#' Here, \code{start}, \code{idx}, \code{end} are all integers between 1
+#' and \code{n}
+#'
+#' @param start integer denoting the first (left) index of the left shoulder
+#' @param idx a vector of 2 integers containing the first (left) index
+#' of the hump and the last (right) index of the hump
+#' @param end integer denoting the last (right) index of the right shoulder
+#' @param n length of the contrast vector
+#'
+#' @return a vector
 .cusum_cbs_contrast_full <- function(start, idx, end, n){
   stopifnot(length(idx) == 2, idx[1] >= 1, idx[2] <= n, idx[1] <= idx[2], start >= 1, end <= n)
   stopifnot(all(idx %% 1 == 0), start %% 1 == 0, end %% 1 == 0)
@@ -30,6 +57,28 @@ polyhedra.cbsFs <- function(obj, ...){
   const * vec
 }
 
+#' Form the lines of the gamma matrix
+#' 
+#' \code{vec} is a vector of 4 positive integers less than \code{n}, where
+#' (from left to right) denote the first (left) index of the left shoulder,
+#' the first (left) index of the hump, the last (right) index of the hump,
+#' and the last (right) index of the right shoulder. Similarly,
+#' \code{mat} is a matrix with 4 columns. 
+#' 
+#' Typically, this function is used such that the circular cusum
+#' statistic formed with the indices in \code{vec} is larger than the
+#' circular cusum statistic formed with the indicies in any of the rows of
+#' \code{mat}.
+#' 
+#' This function returns a matrix with \code{n} columns, and \code{2*nrow(mat)}
+#' rows.
+#'
+#' @param vec a vector of integers
+#' @param mat a matrix of integers
+#' @param sign_win 1 or -1, denoting the sign of the jump denoted in \code{vec}
+#' @param n number of elements
+#'
+#' @return a matrix
 .gammaRows_from_comparisons_cbsfs <- function(vec, mat, sign_win, n){
   stopifnot(length(vec) == 4, ncol(mat) == 4)
   
