@@ -41,7 +41,10 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
 #' Get jumps from cbsFs objects
 #' 
 #' Enumerates the jumps for circular binary segmentation. If \code{sorted}
-#' is true, then only the unique changepoints are reported. 
+#' is true, then only the unique changepoints are reported, and no
+#' \code{NA} is recorded. If \code{sorted} is false, then each pair of
+#' elements in the result denote the jump locations, and \code{NA} means 
+#' the left (first) element of the hump is the first index.
 #'
 #' @param obj cbs object
 #' @param sorted boolean
@@ -55,8 +58,7 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
   res <- sapply(leaves, function(x){data.tree::FindNode(obj$tree, x)$breakpoint})
   res[1,] <- sapply(res[1,], function(x){ifelse(x>1, x-1, NA)})
   res <- as.numeric(res)
-  res <- res[!is.na(res)]
-  if(sorted) unique(sort(res)) else res
+  if(sorted) {res <- res[!is.na(res)]; unique(sort(res))} else res
 }
 
 #' Find breakpoints for circular binary segmentation

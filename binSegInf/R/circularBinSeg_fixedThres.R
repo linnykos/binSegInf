@@ -44,5 +44,5 @@ circularBinSeg_fixedThres<- function(y, thres){
 #' @return vector of all the jump locations
 #' @export
 jumps.cbsFt <- function(obj, ...){
-  jumps.cbsFs(obj)
+  jumps.cbsFs(obj, ...)
 }

@@ -1,6 +1,6 @@
-context("Test  circular binary segmentation fixed threshold")
+context("Test circular binary segmentation fixed threshold")
 
-## circularBinSeg_fixedSteps is correct
+## circularBinSeg_fixedThres is correct
 
 test_that("circularBinSeg_fixedThres works", {
   set.seed(10)

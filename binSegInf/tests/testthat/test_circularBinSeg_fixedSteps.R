@@ -228,3 +228,12 @@ test_that("jumps.cbsFs will not report the same jump if sorted is TRUE", {
   
   expect_true(all(res == c(10, 20, 10, 15)))
 })
+
+test_that("jumps.cbsFs works with sorted is FALSE and there are not two shoulders", {
+  set.seed(10)
+  y <- c(rep(0, 10), rep(5, 10))
+  obj <- circularBinSeg_fixedSteps(y, 1)
+  res <- jumps(obj, sorted = F)
+  
+  expect_true(all(is.na(res[1]), res[2] == 10) | all(res == c(10, 20)))
+})

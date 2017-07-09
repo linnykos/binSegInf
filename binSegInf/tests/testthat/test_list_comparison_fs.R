@@ -1,4 +1,4 @@
-context("Test list_comparison")
+context("Test list comparison for fixed steps")
 
 test_that(".list_comparison works", {
   set.seed(10)
