@@ -28,12 +28,21 @@ test_that("polyhedra.cbsFt works", {
   expect_true(ncol(res$gamma) == length(y))
   expect_true(nrow(res$gamma) == length(res$u))
 })
-# 
-# test_that("polyhedra.cbsFt satisfies the polyhedra requirement", {
-#   set.seed(10)
-#   y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
-#   obj <- circularBinSeg_fixedThres(y, thres = 10)
-#   res <- polyhedra(obj)
-#   
-#   expect_true(all(res$gamma %*% y >= res$u))
-# })
+
+test_that("polyhedra.cbsFt satisfies the polyhedra requirement", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedThres(y, thres = 10)
+  res <- polyhedra(obj)
+
+  expect_true(all(res$gamma %*% y >= res$u))
+})
+
+test_that("polyhedra.cbsFt satisfies the polyhedra requirement", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedThres(y, thres = 10)
+  res <- polyhedra(obj)
+
+  expect_true(all(res$gamma %*% y >= res$u))
+})

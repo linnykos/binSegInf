@@ -13,7 +13,7 @@ polyhedra.cbsFt <- function(obj, ...){
     if(all(is.na(comp_lis[[i]]$winning))){
       stopifnot(nrow(gamma_row_lis[[i]]) %% 2 == 0)
       u_lis[[i]] <- c(rep(-obj$thres, nrow(gamma_row_lis[[i]])/2),
-                      rep(obj$thres, nrow(gamma_row_lis[[i]])/2))
+                      rep(-obj$thres, nrow(gamma_row_lis[[i]])/2))
     } else {
       u_lis[[i]] <- c(rep(0, nrow(gamma_row_lis[[i]]) - 1), obj$thres)
     }
