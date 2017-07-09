@@ -43,7 +43,7 @@ test_that("polyhedra.cbsFs satisfies polyhedra requirement", {
 })
 
 
-test_that("having the same model if and only if the inequalities are satisfied", {
+test_that("polyhedra.cbsFs having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
   y <- c(rep(0,10), rep(-2,10), rep(-1,5)) + rnorm(25)
   obj <- circularBinSeg_fixedSteps(y,2)
@@ -68,7 +68,7 @@ test_that("having the same model if and only if the inequalities are satisfied",
   }
 })
 
-test_that("having the same model if and only if the inequalities are satisfied, wrong model", {
+test_that("polyhedra.cbsFs having the same model if and only if the inequalities are satisfied, wrong model", {
   set.seed(5)
   y <- rnorm(25)
   obj <- circularBinSeg_fixedSteps(y,2)
