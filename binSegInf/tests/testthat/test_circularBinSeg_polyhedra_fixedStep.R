@@ -137,3 +137,38 @@ test_that(".gammaRows_from_comparisons_cbsfs works", {
   expect_true(all(dim(res) == c(4,30)))
   expect_true(all(res %*% y >= 0))
 })
+
+test_that(".gammaRows_from_comparisons_cbsfs works when vec is NA", {
+  set.seed(10)
+  y <- c(rep(0,10), rep(5,10), rep(0,10))
+  
+  vec <- rep(NA, 4)
+  mat <- matrix(c(1,10,20,30, 1,11,19,30), 2, 4, byrow = T)
+  res <- .gammaRows_from_comparisons_cbsfs(vec, mat, 1, 30)
+  
+  expect_true(is.matrix(res))
+  expect_true(all(dim(res) == c(4, 30)))
+  
+  expect_true(length(unique(res[1,1:9])) == 1)
+  expect_true(length(unique(res[1,10:20])) == 1)
+  expect_true(length(unique(res[1,21:30])) == 1)
+  expect_true(length(unique(res[2,1:10])) == 1)
+  expect_true(length(unique(res[2,11:19])) == 1)
+  expect_true(length(unique(res[2,20:30])) == 1)
+})
+
+test_that(".gammaRows_from_comparisons_cbsfs works with add is T", {
+  set.seed(10)
+  y <- c(rep(0,10), rep(5,10), rep(0,10))
+  
+  vec <- c(1, c(11,20), 30)
+  mat <- matrix(c(1,10,20,30, 1,11,19,30), 2, 4, byrow = T)
+  res <- .gammaRows_from_comparisons_cbsfs(vec, mat, 1, 30)
+  
+  res2 <- .gammaRows_from_comparisons_cbsfs(vec, mat, 1, 30, add = T)
+  
+  expect_true(all(res == res2[1:4,]))
+  expect_true(length(unique(res2[5,1:10])) == 1)
+  expect_true(length(unique(res2[5,11:20])) == 1)
+  expect_true(length(unique(res2[5,21:30])) == 1)
+})

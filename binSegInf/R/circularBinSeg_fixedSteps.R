@@ -26,13 +26,13 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
       leaf$breakpoint <- res$breakpoint+leaf$start-1; leaf$cusum <- res$cusum
     }
     
-    node.name <- .find_leadingBreakpoint(tree)
-    node.selected <- data.tree::FindNode(tree, node.name)
-    node.selected$active <- steps
-    node.pairs <- .split_node_cbs(node.selected)
-    if(!any(is.na(node.pairs$left))) node.selected$AddChildNode(node.pairs$left)
-    node.selected$AddChildNode(node.pairs$middle)
-    if(!any(is.na(node.pairs$right))) node.selected$AddChildNode(node.pairs$right)
+    node_name <- .find_leadingBreakpoint(tree)
+    node_selected <- data.tree::FindNode(tree, node_name)
+    node_selected$active <- steps
+    node_pairs <- .split_node_cbs(node_selected)
+    if(!any(is.na(node_pairs$left))) node_selected$AddChildNode(node_pairs$left)
+    node_selected$AddChildNode(node_pairs$middle)
+    if(!any(is.na(node_pairs$right))) node_selected$AddChildNode(node_pairs$right)
   }
   
   obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")

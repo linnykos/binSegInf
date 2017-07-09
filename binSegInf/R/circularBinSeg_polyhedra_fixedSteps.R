@@ -77,22 +77,31 @@ polyhedra.cbsFs <- function(obj, ...){
 #' @param mat a matrix of integers
 #' @param sign_win 1 or -1, denoting the sign of the jump denoted in \code{vec}
 #' @param n number of elements
+#' @param add boolean
 #'
 #' @return a matrix
-.gammaRows_from_comparisons_cbsfs <- function(vec, mat, sign_win, n){
+.gammaRows_from_comparisons_cbsfs <- function(vec, mat, sign_win, n, add = F){
   stopifnot(length(vec) == 4, ncol(mat) == 4)
   
-  win_contrast <- .cusum_cbs_contrast_full(vec[1], vec[2:3], vec[4], n)
   lose_contrast <- t(apply(mat, 1, function(x){
     .cusum_cbs_contrast_full(x[1], x[2:3], x[4], n)
   }))
   
-  # add inequalities to compare winning split to all other splits
-  res <- .vector_matrix_signedDiff(win_contrast, lose_contrast, sign_win, 
-                                   rep(1, nrow(lose_contrast)))
-  res2 <- .vector_matrix_signedDiff(win_contrast, lose_contrast, sign_win, 
-                                    -rep(1, nrow(lose_contrast)))
+  if(!any(is.na(vec))){
+    win_contrast <- .cusum_cbs_contrast_full(vec[1], vec[2:3], vec[4], n)
+    
+    # add inequalities to compare winning split to all other splits
+    res <- .vector_matrix_signedDiff(win_contrast, lose_contrast, sign_win, 
+                                     rep(1, nrow(lose_contrast)))
+    res2 <- .vector_matrix_signedDiff(win_contrast, lose_contrast, sign_win, 
+                                      -rep(1, nrow(lose_contrast)))
+    
+    res_mat <- rbind(res, res2)
+    
+    if(add) rbind(res_mat, win_contrast) else res_mat
+  } else {
+    rbind(lose_contrast, -lose_contrast)
+  }
+
   
-  # add inequalities to compare splits to 0 (ensure correct sign)
-  rbind(res, res2)
 }
