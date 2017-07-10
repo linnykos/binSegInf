@@ -22,3 +22,14 @@ test_that(".list_comparison.cbsFt gives the right number of elements with NA win
   vec <- sapply(res, function(x){ifelse(all(is.na(x$winning)), TRUE, FALSE)})
   expect_true(length(which(vec)) == 5)
 })
+
+test_that(".list_comparison.cbsFt works when there are no splits", {
+  set.seed(10)
+  n <- 21
+  y <- rnorm(n)
+  obj <- circularBinSeg_fixedThres(y,2)
+  res <- .list_comparison.cbsFt(obj)
+  
+  expect_true(is.list(res))
+  expect_true(all(as.numeric(sapply(res, function(x){c(ncol(x$winning), ncol(x$losing))})) == 4))
+})

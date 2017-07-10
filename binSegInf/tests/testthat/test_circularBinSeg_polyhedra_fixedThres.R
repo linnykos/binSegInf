@@ -100,6 +100,7 @@ test_that("polyhedra.cbsFt having the same model if and only if the inequalities
 
 # test_that("polyhedra.cbsFt works when there are too many splits", {
 #   set.seed(10)
+#   n <- 21
 #   y <- rnorm(n)
 #   obj <- circularBinSeg_fixedThres(y,0.5)
 #   poly <- polyhedra(obj)
@@ -107,16 +108,18 @@ test_that("polyhedra.cbsFt having the same model if and only if the inequalities
 #   expect_true(class(poly) == "polyhedra")
 # })
 # 
-# test_that("polyhedra.cbsFt works when there are no splits", {
-#   set.seed(10)
-#   y <- rnorm(n)
-#   obj <- circularBinSeg_fixedThres(y,2)
-#   poly <- polyhedra(obj)
-#   
-#   expect_true(class(poly) == "polyhedra")
-# })
-# 
-# 
+test_that("polyhedra.cbsFt works when there are no splits", {
+  set.seed(10)
+  n <- 21
+  y <- rnorm(n)
+  obj <- circularBinSeg_fixedThres(y,2)
+  poly <- polyhedra(obj)
+
+  expect_true(class(poly) == "polyhedra")
+  expect_true(all(dim(poly$gamma) == c(nrow(.enumerate_breakpoints_cbs(n))*2, n)))
+})
+
+
 # test_that("polyhedra.cbsFt leads to uniform p values", {
 #   trials <- 100
 #   n <- 21

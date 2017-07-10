@@ -27,8 +27,9 @@ polyhedra.cbsFt <- function(obj, ...){
 .get_signs_cbsFt <- function(obj){
   nodes <- obj$tree$Get("active")
   active_vec <- names(sort(nodes))
-
+  
   sign_vec <- rep(0, length(nodes))
+  if(length(active_vec) == 0) return(sign_vec)
   
   for(i in 1:length(active_vec)){
     node_selected <- data.tree::FindNode(obj$tree, active_vec[i])

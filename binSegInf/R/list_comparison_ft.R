@@ -27,19 +27,21 @@
   u_lis <- vector("list", length(nodes))
   tree2 <- .create_node(1, obj$tree$end)
   
-  for(i in 1:length(active_vec)){
-    breakpoint <- data.tree::FindNode(obj$tree, active_vec[i])$breakpoint
-    comp_lis[[i]] <- .form_comparison_cbs(tree2, active_vec[i], breakpoint, excluding = F)
-    
-    node_selected <- data.tree::FindNode(tree2, active_vec[i])
-    node_selected$breakpoint <- breakpoint
-    
-    node_pairs <- .split_node_cbs(node_selected)
-    if(!any(is.na(node_pairs$left))) node_selected$AddChildNode(node_pairs$left)
-    node_selected$AddChildNode(node_pairs$middle)
-    if(!any(is.na(node_pairs$right))) node_selected$AddChildNode(node_pairs$right)
+  if(length(active_vec) > 0){
+    for(i in 1:length(active_vec)){
+      breakpoint <- data.tree::FindNode(obj$tree, active_vec[i])$breakpoint
+      comp_lis[[i]] <- .form_comparison_cbs(tree2, active_vec[i], breakpoint, excluding = F)
+      
+      node_selected <- data.tree::FindNode(tree2, active_vec[i])
+      node_selected$breakpoint <- breakpoint
+      
+      node_pairs <- .split_node_cbs(node_selected)
+      if(!any(is.na(node_pairs$left))) node_selected$AddChildNode(node_pairs$left)
+      node_selected$AddChildNode(node_pairs$middle)
+      if(!any(is.na(node_pairs$right))) node_selected$AddChildNode(node_pairs$right)
+    }
   }
-  
+ 
   for(i in 1:length(inactive_vec)){
     comp_lis[[i+length(active_vec)]] <- .form_comparison_cbs(tree2, inactive_vec[i], 
                                                                NA, excluding = F)
