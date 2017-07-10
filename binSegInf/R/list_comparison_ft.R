@@ -46,12 +46,14 @@
     }
   }
  
-  for(i in 1:length(inactive_vec)){
-    comp_lis[[i+length(active_vec)]] <- .form_comparison_cbs(tree2, inactive_vec[i], 
+  if(length(inactive_vec) > 0){
+    for(i in 1:length(inactive_vec)){
+      comp_lis[[i+length(active_vec)]] <- .form_comparison_cbs(tree2, inactive_vec[i], 
                                                                NA, excluding = F)
-    comp_lis[[i+length(active_vec)]]$winning[1:4] <- NA
+      comp_lis[[i+length(active_vec)]]$winning[1:4] <- NA
+    }
   }
-  
+
   comp_lis
 }
 

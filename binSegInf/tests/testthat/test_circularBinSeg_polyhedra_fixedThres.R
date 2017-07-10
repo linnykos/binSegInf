@@ -118,7 +118,7 @@ test_that("polyhedra.cbsFt works when there are too many splits", {
 
   expect_true(class(poly) == "polyhedra")
   expect_true(all(dim(poly$gamma) == c(length(poly$u), length(y))))
-  #expect_true(all(poly$gamma %*% y >= poly$u))
+  expect_true(all(poly$gamma %*% y >= poly$u))
 })
 
 test_that("polyhedra.cbsFt works when there are no splits", {

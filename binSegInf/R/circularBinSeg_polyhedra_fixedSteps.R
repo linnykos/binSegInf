@@ -86,7 +86,7 @@ polyhedra.cbsFs <- function(obj, ...){
   
   if(add & any(is.na(mat))){
     win_contrast <- .cusum_cbs_contrast_full(vec[1], vec[2:3], vec[4], n)
-    return(win_contrast)
+    return(matrix(sign_win*win_contrast, 1, n))
   }
   
   lose_contrast <- t(apply(mat, 1, function(x){

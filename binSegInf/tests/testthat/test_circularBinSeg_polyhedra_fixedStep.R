@@ -226,3 +226,27 @@ test_that(".gammaRows_from_comparisons_cbsfs gives positive win_contrast when ad
   expect_true(nrow(res) == 2*nrow(comp_lis[[1]]$losing) + 1)
   expect_true(res[nrow(res),]%*%y >= 5)
 })
+
+test_that(".gammaRows_from_comparisons_cbsfs works when y is length 2", {
+  y <- c(0,10)
+  obj <- circularBinSeg_fixedThres(y, 5)
+  comp_lis <- .list_comparison(obj)
+  
+  res <- .gammaRows_from_comparisons_cbsfs(comp_lis[[1]]$winning, 
+                                           comp_lis[[1]]$losing, .get_signs_cbsFt(obj)[1], 2, T)
+  expect_true(res %*% y >= 5)
+  
+  y <- c(0,-10)
+  obj <- circularBinSeg_fixedThres(y, 5)
+  comp_lis <- .list_comparison(obj)
+  
+  res <- .gammaRows_from_comparisons_cbsfs(comp_lis[[1]]$winning, 
+                                           comp_lis[[1]]$losing, .get_signs_cbsFt(obj)[1], 2, T)
+  expect_true(res %*% y >= 5)
+})
+
+test_that(".gammaRows_from_comparisons_cbsfs works when mat is NA", {
+  res <- .gammaRows_from_comparisons_cbsfs(matrix(c(1,3,4,5), ncol = 4), NA, 1, 5, T)
+  expect_true(is.matrix(res))
+  expect_true(ncol(res) == 5)
+})
