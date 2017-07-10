@@ -54,6 +54,7 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
 #' @export
 jumps.cbsFs <- function(obj, sorted = T, ...){
   leaves <- .enumerate_splits(obj$tree)
+  if(length(leaves) == 0) return(NA)
   
   res <- sapply(leaves, function(x){data.tree::FindNode(obj$tree, x)$breakpoint})
   res[1,] <- sapply(res[1,], function(x){ifelse(x>1, x-1, NA)})

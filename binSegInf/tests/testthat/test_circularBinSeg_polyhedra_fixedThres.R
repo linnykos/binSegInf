@@ -47,16 +47,16 @@ test_that("polyhedra.cbsFt satisfies the polyhedra requirement", {
   expect_true(all(res$gamma %*% y >= res$u))
 })
 
-# test_that("polyhedra.cbsFt gives the right number of rows", {
-#   set.seed(10)
-#   n <- 10
-#   y <- c(rnorm(n/2), rnorm(n/2, mean = 10))
-#   obj <- circularBinSeg_fixedThres(y,10)
-#   poly <- polyhedra(obj)
-#   
-#   expect_true(nrow(poly$gamma) == nrow(.enumerate_breakpoints_cbs(n))*2 + 1 + 
-#                 nrow(.enumerate_breakpoints_cbs(n/2))*4)
-# })
+test_that("polyhedra.cbsFt gives the right number of rows", {
+  set.seed(10)
+  n <- 10
+  y <- c(rnorm(n/2), rnorm(n/2, mean = 10))
+  obj <- circularBinSeg_fixedThres(y,10)
+  poly <- polyhedra(obj)
+
+  expect_true(nrow(poly$gamma) == (nrow(.enumerate_breakpoints_cbs(n))*2 + 1 - 2) +
+                nrow(.enumerate_breakpoints_cbs(n/2))*4)
+})
 
 
 test_that("polyhedra.cbsFt having the same model if and only if the inequalities are satisfied", {
@@ -134,46 +134,53 @@ test_that("polyhedra.cbsFt works when there are no splits", {
 })
 
 
-# test_that("polyhedra.cbsFt leads to uniform p values", {
-#   trials <- 100
-#   n <- 21
-#   null_vec <- rep(NA, trials); alt_vec <- rep(NA, trials)
-#   
-#   form_contrast <- function(obj, n){
-#     contrast <- rep(-1, n)
-#     jump_vec <- jumps(obj, sorted = T)
-#     if(length(jump_vec) == 1) {jump_vec <- c(0, jump_vec)}
-#     contrast[(jump_vec[1]+1):jump_vec[2]] <- 1
-#     contrast[contrast < 0] <- -1/sum(contrast < 0)
-#     contrast[contrast > 0] <- 1/sum(contrast > 0)
-#     
-#     contrast
-#   }
-#   
-#   for(i in 1:trials){
-#     set.seed(i*10)
-#     y <- rnorm(n)
-#     obj <- circularBinSeg_fixedThres(y,2)
-#     
-#     poly <- polyhedra(obj)
-#     contrast <- form_contrast(obj, n)
-#     
-#     null_vec[i] <- pvalue(y, poly, contrast)
-#   }
-#   
-#   for(i in 1:trials){
-#     set.seed(i*10)
-#     y <- c(rnorm(n/3), rnorm(n/3, mean = 1), rnorm(n/3))
-#     obj <- circularBinSeg_fixedThres(y,2)
-#     
-#     poly <- polyhedra(obj)
-#     contrast <- form_contrast(obj, n)
-#     
-#     alt_vec[i] <- pvalue(y, poly, contrast)
-#   }
-#   
-#   quant <- seq(0, 1, length.out = 11)
-#   expect_true(sum(abs(quantile(null_vec, prob = quant) - quant)) <= 
-#                 sum(abs(quantile(alt_vec, prob = quant) - quant)) )
-#   
-# })
+test_that("polyhedra.cbsFt leads to uniform p values", {
+  trials <- 100
+  n <- 21
+  null_vec <- rep(NA, trials); alt_vec <- rep(NA, trials)
+
+  form_contrast <- function(obj, n){
+    contrast <- rep(-1, n)
+    jump_vec <- jumps(obj, sorted = T)
+    if(length(jump_vec) == 1) {jump_vec <- c(0, jump_vec)}
+    contrast[(jump_vec[1]+1):jump_vec[2]] <- 1
+    contrast[contrast < 0] <- -1/sum(contrast < 0)
+    contrast[contrast > 0] <- 1/sum(contrast > 0)
+
+    contrast
+  }
+
+  for(i in 1:trials){
+    set.seed(i*10)
+    y <- rnorm(n)
+    obj <- circularBinSeg_fixedThres(y,2)
+
+    poly <- polyhedra(obj)
+    
+    if(all(is.na(jumps(obj)))){
+      null_vec[i] <- runif(1)
+    } else {
+      contrast <- form_contrast(obj, n)
+      null_vec[i] <- pvalue(y, poly, contrast)
+    }
+  }
+
+  for(i in 1:trials){
+    set.seed(i*10)
+    y <- c(rnorm(n/3), rnorm(n/3, mean = 1), rnorm(n/3))
+    obj <- circularBinSeg_fixedThres(y,2)
+
+    poly <- polyhedra(obj)
+    if(all(is.na(jumps(obj)))){
+      alt_vec[i] <- runif(1)
+    } else {
+      contrast <- form_contrast(obj, n)
+      alt_vec[i] <- pvalue(y, poly, contrast)
+    }
+  }
+
+  quant <- seq(0, 1, length.out = 11)
+  expect_true(sum(abs(quantile(null_vec, prob = quant) - quant)) <=
+                sum(abs(quantile(alt_vec, prob = quant) - quant)) )
+
+})
