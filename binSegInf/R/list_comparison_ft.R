@@ -15,7 +15,7 @@
 #' it means for that particular split, all possible future splits resulted in
 #' a cusum statistic lower than the desired threshold.
 #'
-#' @param obj 
+#' @param obj cbsFt object
 #'
 #' @return a list of lists of matrices
 .list_comparison.cbsFt <- function(obj){
@@ -23,8 +23,12 @@
   active_vec <- names(sort(nodes))
   inactive_vec <- names(nodes)[!names(nodes) %in% active_vec]
   
-  comp_lis <- vector("list", length(nodes))
-  u_lis <- vector("list", length(nodes))
+  active_vec <- .remove_singleton_nodes(active_vec)
+  inactive_vec <- .remove_singleton_nodes(inactive_vec)
+  num_nodes <- length(active_vec) + length(inactive_vec)
+  
+  comp_lis <- vector("list", num_nodes)
+  u_lis <- vector("list", num_nodes)
   tree2 <- .create_node(1, obj$tree$end)
   
   if(length(active_vec) > 0){
@@ -49,4 +53,11 @@
   }
   
   comp_lis
+}
+
+.remove_singleton_nodes <- function(node_vec){
+  if(length(node_vec) == 0) return(node_vec)
+  vec <- sapply(node_vec, .get_startEnd)
+  idx <- which(apply(vec, 2, function(x){ifelse(x[1]==x[2], FALSE, TRUE)}))
+  node_vec[idx]
 }

@@ -8,14 +8,17 @@ polyhedra.cbsFt <- function(obj, ...){
   sign_vec <- .get_signs_cbsFt(obj)
   
   for(i in 1:numNodes){
+    add <- !all(is.na(comp_lis[[i]]$winning))
     gamma_row_lis[[i]] <- .gammaRows_from_comparisons_cbsfs(comp_lis[[i]]$winning,
-                                                            comp_lis[[i]]$losing, sign_vec[i], n)
+                                                            comp_lis[[i]]$losing, sign_vec[i], n,
+                                                            add)
     if(all(is.na(comp_lis[[i]]$winning))){
       stopifnot(nrow(gamma_row_lis[[i]]) %% 2 == 0)
       u_lis[[i]] <- c(rep(-obj$thres, nrow(gamma_row_lis[[i]])/2),
                       rep(-obj$thres, nrow(gamma_row_lis[[i]])/2))
     } else {
-      u_lis[[i]] <- c(rep(0, nrow(gamma_row_lis[[i]]) - 1), obj$thres)
+      row_minus_one <- ifelse(length(nrow(gamma_row_lis[[i]])) > 0, nrow(gamma_row_lis[[i]]) - 1, 0)
+      u_lis[[i]] <- c(rep(0, row_minus_one), obj$thres)
     }
   }
   

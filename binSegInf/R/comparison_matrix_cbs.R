@@ -70,13 +70,15 @@
 #'
 #' @return a matrix
 .fourColumnMatrix_from_nodeVec <- function(vec, exclude = NA){
-  stopifnot(length(vec) == 2, is.numeric(vec))
+  stopifnot(length(vec) == 2, is.numeric(vec), vec[2] > vec[1])
   stopifnot(any(is.na(exclude)) || (is.numeric(exclude) & length(exclude) == 2) & 
               exclude[1] >= vec[1] & exclude[2] <= vec[2])
   
   if(any(is.na(exclude))){
     cbind(vec[1], .enumerate_breakpoints_cbs(vec[2]-vec[1]+1, vec[1]), vec[2])
-  } else{
+  } else if(vec[2]-vec[1] == 1) {
+    matrix(NA, 1, 4)
+  } else {
     mid.vec <- .enumerate_breakpoints_cbs(vec[2]-vec[1]+1, vec[1])
     mid.vec <- mid.vec[-which(apply(cbind(exclude[1] == mid.vec[,1], 
                                          exclude[2] == mid.vec[,2]), 1, all)),]

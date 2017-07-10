@@ -77,6 +77,7 @@ jumps.cbsFs <- function(obj, sorted = T, ...){
 #'
 #' @return a list
 .find_breakpoint_cbs <- function(y){
+  if(length(y) == 1) return(list(breakpoint = NA, cusum = 0))
   n <- length(y)
   
   vec <- cumsum(y)

@@ -202,7 +202,6 @@ test_that(".gammaRows_from_comparisons_cbsfs works when vec is NA", {
 })
 
 test_that(".gammaRows_from_comparisons_cbsfs works with add is T", {
-  set.seed(10)
   y <- c(rep(0,10), rep(5,10), rep(0,10))
   
   vec <- c(1, c(11,20), 30)
@@ -215,4 +214,15 @@ test_that(".gammaRows_from_comparisons_cbsfs works with add is T", {
   expect_true(length(unique(res2[5,1:10])) == 1)
   expect_true(length(unique(res2[5,11:20])) == 1)
   expect_true(length(unique(res2[5,21:30])) == 1)
+})
+
+test_that(".gammaRows_from_comparisons_cbsfs gives positive win_contrast when add is T", {
+  y <- c(rep(0,10), rep(-5,10), rep(0,10))
+  obj <- circularBinSeg_fixedThres(y, 5)
+  comp_lis <- .list_comparison(obj)
+  
+  res <- .gammaRows_from_comparisons_cbsfs(comp_lis[[1]]$winning, 
+                                           comp_lis[[1]]$losing, -1, 30, T)
+  expect_true(nrow(res) == 2*nrow(comp_lis[[1]]$losing) + 1)
+  expect_true(res[nrow(res),]%*%y >= 5)
 })

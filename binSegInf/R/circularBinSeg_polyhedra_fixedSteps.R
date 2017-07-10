@@ -82,6 +82,12 @@ polyhedra.cbsFs <- function(obj, ...){
 #' @return a matrix
 .gammaRows_from_comparisons_cbsfs <- function(vec, mat, sign_win, n, add = F){
   stopifnot(length(vec) == 4, ncol(mat) == 4)
+  stopifnot(add | !any(is.na(mat)))
+  
+  if(add & any(is.na(mat))){
+    win_contrast <- .cusum_cbs_contrast_full(vec[1], vec[2:3], vec[4], n)
+    return(win_contrast)
+  }
   
   lose_contrast <- t(apply(mat, 1, function(x){
     .cusum_cbs_contrast_full(x[1], x[2:3], x[4], n)
@@ -98,10 +104,8 @@ polyhedra.cbsFs <- function(obj, ...){
     
     res_mat <- rbind(res, res2)
     
-    if(add) rbind(res_mat, win_contrast) else res_mat
+    if(add) rbind(res_mat, sign_win*win_contrast) else res_mat
   } else {
     rbind(lose_contrast, -lose_contrast)
   }
-
-  
 }

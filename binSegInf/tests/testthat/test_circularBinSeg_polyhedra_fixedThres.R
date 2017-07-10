@@ -47,6 +47,17 @@ test_that("polyhedra.cbsFt satisfies the polyhedra requirement", {
   expect_true(all(res$gamma %*% y >= res$u))
 })
 
+# test_that("polyhedra.cbsFt gives the right number of rows", {
+#   set.seed(10)
+#   n <- 10
+#   y <- c(rnorm(n/2), rnorm(n/2, mean = 10))
+#   obj <- circularBinSeg_fixedThres(y,10)
+#   poly <- polyhedra(obj)
+#   
+#   expect_true(nrow(poly$gamma) == nrow(.enumerate_breakpoints_cbs(n))*2 + 1 + 
+#                 nrow(.enumerate_breakpoints_cbs(n/2))*4)
+# })
+
 
 test_that("polyhedra.cbsFt having the same model if and only if the inequalities are satisfied", {
   set.seed(5)
@@ -98,16 +109,18 @@ test_that("polyhedra.cbsFt having the same model if and only if the inequalities
   }
 })
 
-# test_that("polyhedra.cbsFt works when there are too many splits", {
-#   set.seed(10)
-#   n <- 21
-#   y <- rnorm(n)
-#   obj <- circularBinSeg_fixedThres(y,0.5)
-#   poly <- polyhedra(obj)
-#   
-#   expect_true(class(poly) == "polyhedra")
-# })
-# 
+test_that("polyhedra.cbsFt works when there are too many splits", {
+  set.seed(10)
+  n <- 21
+  y <- rnorm(n)
+  obj <- circularBinSeg_fixedThres(y,0.5)
+  poly <- polyhedra(obj)
+
+  expect_true(class(poly) == "polyhedra")
+  expect_true(all(dim(poly$gamma) == c(length(poly$u), length(y))))
+  #expect_true(all(poly$gamma %*% y >= poly$u))
+})
+
 test_that("polyhedra.cbsFt works when there are no splits", {
   set.seed(10)
   n <- 21
@@ -117,6 +130,7 @@ test_that("polyhedra.cbsFt works when there are no splits", {
 
   expect_true(class(poly) == "polyhedra")
   expect_true(all(dim(poly$gamma) == c(nrow(.enumerate_breakpoints_cbs(n))*2, n)))
+  expect_true(all(poly$gamma %*% y >= poly$u))
 })
 
 

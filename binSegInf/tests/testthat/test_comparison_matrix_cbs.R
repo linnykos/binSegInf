@@ -43,6 +43,16 @@ test_that(".form_comparison_cbs can set excluding to false", {
   expect_true(nrow(res$losing) == nrow(.enumerate_breakpoints_cbs(5))-1)
 })
 
+test_that(".form_comparison_cbs works for vectors of length 2", {
+  y <- c(0,1)
+  obj <- circularBinSeg_fixedThres(y, 5)
+  
+  res <- .form_comparison_cbs(obj$tree, "1-2", c(2,2), excluding = F)
+  
+  expect_true(ncol(res$losing) == 4)
+  expect_true(all(is.na(res$losing)))
+})
+
 ######################
 
 ## .fourColumnMatrix_from_nodeMatrix is correct
@@ -78,4 +88,18 @@ test_that(".fourColumnMatrix_from_nodeVec allows exclude", {
   res <- .fourColumnMatrix_from_nodeVec(vec)
   bool <- apply(res, 1, function(x){ifelse(x[2] == 4 & x[3] == 7, TRUE, FALSE)})
   expect_true(length(which(bool)) == 1)
+})
+
+test_that(".fourColumnMatrix_from_nodeVec returns all NA's if vec[2] == vec[1]+1", {
+  res <- .fourColumnMatrix_from_nodeVec(c(2,3),c(3,3))
+  expect_true(all(is.na(res)))
+  expect_true(all(dim(res) == c(1,4)))
+  
+  res <- .fourColumnMatrix_from_nodeVec(c(2,3),c(2,2))
+  expect_true(all(is.na(res)))
+  expect_true(all(dim(res) == c(1,4)))
+  
+  res <- .fourColumnMatrix_from_nodeVec(c(2,3),NA)
+  expect_true(res[1,1] == 2)
+  expect_true(res[1,4] == 3)
 })

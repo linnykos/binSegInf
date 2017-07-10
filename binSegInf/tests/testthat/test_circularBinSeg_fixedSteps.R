@@ -150,6 +150,14 @@ test_that(".find_breakpoint_cbs finds the right breakpoint", {
   expect_true(all(res$breakpoint == c(11,20)))
 })
 
+test_that(".find_breakpoint_cbs returns NA when y is length 1", {
+  y <- 1
+  res <- .find_breakpoint_cbs(y)
+  expect_true(is.list(res))
+  expect_true(is.na(res$breakpoint))
+  expect_true(res$cusum == 0)
+})
+
 ####################
 
 ## circularBinSeg_fixedSteps is correct

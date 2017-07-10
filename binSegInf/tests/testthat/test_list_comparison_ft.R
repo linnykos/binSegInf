@@ -33,3 +33,14 @@ test_that(".list_comparison.cbsFt works when there are no splits", {
   expect_true(is.list(res))
   expect_true(all(as.numeric(sapply(res, function(x){c(ncol(x$winning), ncol(x$losing))})) == 4))
 })
+
+test_that(".list_comparison.cbsFt does not give incorrect losing for corner case", {
+  set.seed(10)
+  n <- 21
+  y <- rnorm(n)
+  obj <- circularBinSeg_fixedThres(y,0.5)
+  res <- .list_comparison.cbsFt(obj)
+  
+  expect_true(all(sapply(res, function(x){ncol(x$losing)}) == 4))
+  
+})

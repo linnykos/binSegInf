@@ -12,7 +12,7 @@ circularBinSeg_fixedThres<- function(y, thres){
     for(i in 1:length(leaves.names)){
       leaf <- data.tree::FindNode(tree, leaves.names[i])
       
-      if(is.na(leaf$cusum)){
+      if(is.na(leaf$cusum) & leaf$start != leaf$end){
         res <- .find_breakpoint_cbs(y[leaf$start:leaf$end])
         
         leaf$breakpoint <- res$breakpoint+leaf$start-1; leaf$cusum <- res$cusum
