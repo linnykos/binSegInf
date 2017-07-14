@@ -57,6 +57,15 @@
   comp_lis
 }
 
+#' Remove singleton nodes
+#' 
+#' This a specialized function to remove nodes (based on their names)
+#' that start and end with the same index. This is to prevent degenercy 
+#' in the methods.
+#'
+#' @param node_vec Vector of node names
+#'
+#' @return vector of node names
 .remove_singleton_nodes <- function(node_vec){
   if(length(node_vec) == 0) return(node_vec)
   vec <- sapply(node_vec, .get_startEnd)
