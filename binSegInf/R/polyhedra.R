@@ -50,14 +50,15 @@ combine.polyhedra <- function(...){
 
 
 print <- function(obj, ...) {UseMethod("print")}
+
 ## Prints polyhedra
 print.polyhedra <- function(mypoly){
     if(all(is.na(mypoly$gamma[1,])) & nrow(mypoly$gamma)==1) print("Empty polyhedra object!")
     first.n = 10
     print(paste("Gamma matrix (first", first.n, " rows&cols) looks like:"))
-    print(signif((mypoly$gamma[1:first.n,(1:(first.n*2))]),3))
+    print(signif((mypoly$gamma[1:first.n, (1:min(first.n*2, ncol(mypoly$gamma)))]),3))
     print(paste("u vector (first", first.n, "entries) looks like:"))
-    print(signif(mypoly$u[1:first.n]))
+    print(signif(mypoly$u[1:min(first.n,length(mypoly$u))]))
 }
 
 ## #' Generic for functions that combine same-type things.

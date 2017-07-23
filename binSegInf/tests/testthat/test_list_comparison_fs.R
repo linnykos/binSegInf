@@ -1,4 +1,4 @@
-context("Test list_comparison")
+context("Test list comparison for fixed steps")
 
 test_that(".list_comparison works", {
   set.seed(10)
@@ -16,4 +16,18 @@ test_that(".list_comparison works", {
     expect_true(length(which(res[[i]]$losing[,1] == mat[i,1])) == 
         mat[i,3] - mat[i,1] - 1)
   }
+})
+
+#############
+
+## .list_comparison.cbsFs is correct
+
+test_that(".list_comparison.cbsFs works", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedSteps(y, 2)
+  res <- .list_comparison.cbsFs(obj)
+  
+  expect_true(is.list(res))
+  expect_true(all(c(sapply(res[[1]], ncol), sapply(res[[2]], ncol)) == 4))
 })

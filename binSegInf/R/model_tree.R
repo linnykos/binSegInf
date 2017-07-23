@@ -41,7 +41,7 @@ is_valid.Node <- function(obj){
 jumps.Node <- function(obj, sorted = F, ...){
   leaves <- .enumerate_splits(obj)
   
-  res <- sapply(leaves, function(x){data.tree::FindNode(obj, x)$breakpoint})
+  res <- as.numeric(sapply(leaves, function(x){data.tree::FindNode(obj, x)$breakpoint}))
   if(sorted) sort(res) else res
 }
 
