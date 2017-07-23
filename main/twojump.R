@@ -17,6 +17,9 @@ sim.settings <- list(levs = levs,
                      nsims = nsims,
                      sigma = sigma,
                      bootstrap = FALSE)
+                     ## resid.cleanmn = resid.cleanmn)
+
+
 
 sim_driver(sim.settings=sim.settings,
            filename="twojump.Rdata",
@@ -24,27 +27,3 @@ sim_driver(sim.settings=sim.settings,
            mc.cores=mc.cores)
 
 
-
-
-## ## First check
-## pmat.wbsfs.plain = matrix(NA,nrow=500, ncol=15)
-## for(isim in 1:500){
-##     print(isim)
-
-##     my.mn <- mn(lev,n)
-##     set.seed(isim)
-##     y <- my.mn + rnorm(n,0,sigma)
-##     ## Why are p-values weird
-##     method <- wildBinSeg_fixedSteps
-##     set.seed(isim+500)
-##     intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
-##     obj <- method(y, numSteps=numSteps, intervals=intervals)
-##     contrast <- make_all_segment_contrasts(obj)
-##     poly <- polyhedra(obj, v=v, reduce=TRUE)
-##     for(ii in 1:length(obj$cp)){
-##         pmat.wbsfs.plain[isim,obj$cp[ii]] <- poly.pval(y=y, G=poly$gamma, u=poly$u,
-##                                                     v=contrast[[ii]], sigma=sigma)$pv
-##     }
-## }
-## qqunif(pmat.wbsfs.plain[,5],ylim=c(0,1),xlim=c(0,1))
-## qqunif_add(pmat.wbsfs.plain[,10],col='red')

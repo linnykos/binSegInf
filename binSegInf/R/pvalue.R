@@ -189,27 +189,29 @@ ff <- function(z) {
 ##'     pvalue. (i.e. precision of Rmpfr)
 ##'
 ##' @return List of vup, vlo and pv.
-poly.pval2 <- function(y, poly,v, sigma, vup, vlo,bits=NULL, reduce=FALSE) {
+poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, reduce=FALSE) {
 
 
     z = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
 
-    if(reduce){
-        if(is.null(vlo) | is.null(vup))stop("provide vup&vlo!")
+    if(!is.null(vup) & !is.null(vlo)){
         pv = tnorm.surv(z,0,sd,vlo,vup,bits)
     } else {
-        G = poly$gamma
-        u = poly$u
-        vup = poly$vup
-        vlo = poly$vlo
+        if(!reduce){
+            G = poly$gamma
+            u = poly$u
 
-        rho = G %*% v / vv
-        vec = (u - G %*% y + rho*z) / rho
-        vlo = suppressWarnings(max(vec[rho>0]))
-        vup = suppressWarnings(min(vec[rho<0]))
-        pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+            rho = G %*% v / vv
+            vec = (u - G %*% y + rho*z) / rho
+            vlo = suppressWarnings(max(vec[rho>0]))
+            vup = suppressWarnings(min(vec[rho<0]))
+            pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+        } else {
+            ## if(is.null(vlo) | is.null(vup))stop("provide vup&vlo!")
+            pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits)
+        }
     }
 
   return(list(pv=pv,vlo=vlo,vup=vup))

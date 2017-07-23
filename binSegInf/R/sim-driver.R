@@ -33,12 +33,12 @@ onesim <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, mn,
     ## Do WBS-FS inference ####
     ###########################
     method <- wildBinSeg_fixedSteps
-    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals,seed=seed)
-    obj <- method(y, numSteps=numSteps, intervals=intervals)
+    ## intervals <- generate_intervals(n=length(y),numIntervals=numIntervals,seed=seed)
+    obj <- method(y, numSteps=numSteps, numIntervals=numIntervals, seed=seed)#, intervals=intervals)
     contrast <- make_all_segment_contrasts(obj)
     p.wbsfs = p.wbsfs.plain = rep(NA,length(obj$cp))
     for(ii in 1:length(obj$cp)){
-        system.time(poly <- polyhedra(obj, v = contrast[[ii]], reduce=TRUE, sigma=sigma))
+        poly <- polyhedra(obj, v = contrast[[ii]], reduce=TRUE, sigma=sigma)
         p.wbsfs.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrast[[ii]],
                                         sigma=sigma, reduce=reduce)$pv
         p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
@@ -77,8 +77,10 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
         cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
         nsim = sim.settings$nsims[i.lev]
 
+        ## Add tryCatch()
         manysimresult =
-           mclapply(1:nsim, function(isim){
+           ## mclapply(1:nsim, function(isim){
+           lapply(1:nsim, function(isim){
                cat("\r", "simulation ", isim, "out of", nsim)
                ## cat("simulation ", isim, "out of", nsim)
                onesim(isim, lev=sim.settings$levs[i.lev],
@@ -95,7 +97,8 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
                       augment = sim.settings$augment,
                       resid.cleanmn = resid.cleanmn
                       )
-           }, mc.cores = mc.cores)
+               })
+           ## }, mc.cores = mc.cores)
 
         ## Extract plist
         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)

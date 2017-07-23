@@ -217,11 +217,11 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
 
     if(reduce){
 
-        for(t in Tcurr[!sapply(Tcurr,is.null)]){
+        for(tt in Tcurr[!sapply(Tcurr,is.null)]){
 
             ## Get start/end points
-            s = extract(Scurr,t[1],t[2])
-            e = extract(Ecurr,t[1],t[2])
+            s = extract(Scurr,tt[1],tt[2])
+            e = extract(Ecurr,tt[1],tt[2])
             ms = which(.get_which_qualify(s,e,obj$intervals))
             if(obj$augment) ms = c(ms,0)
             if(length(ms)==0) next
@@ -254,9 +254,15 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
 
                 ## Add a clump of rows after checking whether Vup & Vlo changes.
                 clump.poly = polyhedra(subtracted.contrasts, rep(0,nrow(subtracted.contrasts)))
-                vuplo = update_vuplo(poly = clump.poly, v=v, y=obj$y, vup=vup, vlo=vlo, sigma=sigma, bits=bits)
-                vlo = vuplo$vlo
-                vup = vuplo$vup
+                pobj.clump = poly.pval(y = y,
+                                       poly=clump.poly,
+                                       reduce=FALSE,
+                                       v = v,
+                                       sigma = sigma,
+                                       bits = bits)
+
+                vup = pmin(vup, pobj$vup)
+                vlo = pmax(vlo, pobj$vlo)
             }
             if(verbose) cat(fill=TRUE)
         }

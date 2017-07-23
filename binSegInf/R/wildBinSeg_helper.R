@@ -392,7 +392,7 @@ make_all_segment_contrasts <- function(obj){
 ##' @export
 randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
                                      numIntervals, nsim.is, bits=NULL,
-                                     reduce=FALSE, augment){
+                                     reduce=FALSE, augment=TRUE){
 
     ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(seed=NULL, bits=bits){

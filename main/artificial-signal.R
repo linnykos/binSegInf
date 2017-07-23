@@ -9,7 +9,7 @@ coriell_mn <- function(lev=1,n){
 }
 
 n = length(coriell_mn(1))
-nsim.is = 500
+nsim.is = 1#500
 numSteps = 5
 numIntervals = 500
 n.levs = 1
@@ -17,26 +17,29 @@ levs=seq(from=0,to=3,length=n.levs)
 nsims = seq(from=100,to=50,length=n.levs)
 bootstrap=TRUE
 reduce=TRUE
+mc.scores = 1
 
-## sim.settings <- list(levs = levs,
-##                      nsim.is = nsim.is,
-##                      numSteps = numSteps,
-##                      numIntervals = numIntervals,
-##                      n = n,
-##                      mn = coriell_mn,
-##                      nsims = nsims,
-##                      sigma = std,
-##                      std = std,
-##                      bootstrap=bootstrap
-##                      )
-
-
-## sim_driver(sim.settings = sim.settings,
-##            ## filenames = paste0("artificial-lev-",mylev,".Rdata"),
-##            filenames = "artificial.Rdata",
-##            dir="../data", reduce=reduce )
+sim.settings <- list(levs = levs,
+                     nsim.is = nsim.is,
+                     numSteps = numSteps,
+                     numIntervals = numIntervals,
+                     n = n,
+                     mn = coriell_mn,
+                     nsims = nsims,
+                     sigma = std,
+                     std = std,
+                     bootstrap=bootstrap,
+                     resid.cleanmn = resid.cleanmn
+                     )
 
 
+sim_driver(sim.settings = sim.settings,
+           ## filenames = paste0("artificial-lev-",mylev,".Rdata"),
+           filenames = "artificial.Rdata",
+           dir="../data", reduce=reduce )
+
+
+## Plot things
 pdf("~/Desktop/sample-data.pdf",width=10,height=10)
 par(mfrow=c(2,2))
 for(lev in 1:4){
@@ -47,6 +50,10 @@ plot(y,ylim=c(-1,1), main = paste0("Signal size /stretched/ from snr=1 to ",lev)
 lines(mn(lev,n),col='red')
 }
 graphics.off()
+
+## Time things
+lev=4
+y <- mn(lev,n) + rnorm(n,0,std)
 method <- wildBinSeg_fixedSteps
 intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
 
@@ -61,7 +68,7 @@ v = contrast[[1]]
 
 print("This is how long it took to make the polyhedra:")
 mytime <- proc.time()
-poly <- polyhedra(obj,v=v,reduce=reduce)
+poly <- polyhedra(obj,v=v,reduce=TRUE,sigma=sigma)
 mynewtime <- proc.time()
 print(mynewtime - mytime)
 print(format(object.size(poly), "Mb"))
