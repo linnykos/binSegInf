@@ -327,7 +327,7 @@ make_contrast = function(test.bp, adj.bps, sn, n){
 ##' @export
 make_all_segment_contrasts <- function(obj){
 
-    ## BAsic checks
+    ## Basic checks
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
 
@@ -403,7 +403,6 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
 
         ## Generate interval
         cp <- get_cp_from_segment_contrast(v)
-
         i = generate_intervals(length(y), numIntervals, seed=seed)
         if(!i.covers.cp(i,cp)){return(NULL)}
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
