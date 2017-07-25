@@ -254,15 +254,15 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
 
                 ## Add a clump of rows after checking whether Vup & Vlo changes.
                 clump.poly = polyhedra(subtracted.contrasts, rep(0,nrow(subtracted.contrasts)))
-                pobj.clump = poly.pval(y = y,
+                pobj.clump = poly.pval2(y = obj$y,
                                        poly=clump.poly,
                                        reduce=FALSE,
                                        v = v,
                                        sigma = sigma,
                                        bits = bits)
 
-                vup = pmin(vup, pobj$vup)
-                vlo = pmax(vlo, pobj$vlo)
+                vup = pmin(vup, pobj.clump$vup)
+                vlo = pmax(vlo, pobj.clump$vlo)
             }
             if(verbose) cat(fill=TRUE)
         }

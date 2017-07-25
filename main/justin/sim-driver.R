@@ -1,58 +1,96 @@
+## Source in helpers
+source("../main/justin/sim-helper.R")
+
 ## Takes a given mean and multiply the maximum to have noise*lev maximum
 ## height.
-coriell_mn <- function(lev=1,n){
+coriell_mn <- function(lev=1,n, std.bootstrap=1){
     ## newmn2 = (newmn[1101:1300][seq(from=1,to=200,length=100)])
     h = max(abs(newmn))
-    return((newmn / h * std) * lev)
+    return((newmn / h * std.bootstrap) * lev)
 }
 
 ## Generates one-jump mean
-mn.onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
 ## Generates two-jump mean
-mn.twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
+twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 
-## Simulation inner function.
-onesim_sbs <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n, meanfun,
-                   seed=NULL,reduce, bootstrap=FALSE, std=NULL, augment, resid.cleanmn){
+onesim_sbs <- function(sim.settings){
+
+    ## Reassign things
+    sigma = sim.settings$sigma
+    lev = sim.settings$lev
+    nsim.is = sim.settings$nsim.is
+    numSteps = sim.settings$numSteps
+    numIntervals = sim.settings$numIntervals
+    n = sim.settings$n
+    meanfun = sim.settings$meanfun
+    reduce = sim.settings$reduce
+    augment = sim.settings$augment
+    bootstrap = sim.settings$bootstrap
+    std.bootstrap = sim.settings$std.bootstrap
+    cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
 
     ## Generate data (same across all onesim_OOO functions)
-    if(!is.null(seed)) set.seed(seed)
     my.mn <- meanfun(lev,n)
     if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
+    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
     if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
 
     ## Do SBS-FS inference (basic structure is similar)
     method <- binSeg_fixedSteps
     obj <- method(y, numSteps)
+    browser()
     poly <- polyhedra(obj)
     pvec = setNames(rep(NA,length(obj$cp)), obj$cp)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = sapply(1:length(obj$cp), function(ii){
-        poly.pval(y= y, G= poly$Gamma, u=poly$u, v=contrasts[[ii]],sigma=sigma,
+        poly.pval(y= y, G= poly$gamma, u=poly$u, v=contrasts[[ii]],sigma=sigma,
                   bits=100)$pv
     })
 }
 
-onesim_wbs <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n,
-                       meanfun, seed1=NULL,seed2=NULL, reduce, bootstrap=FALSE,
-                       std=NULL, augment, resid.cleanmn, type=c("plain","randomized")){
+
+## Simulation inner function.
+sim.settings = list(sigma=1, lev=1, nsim.is=1000, numSteps=1,
+                    numIntervals=100, n=10, meanfun=onejump,
+                    reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
+                    cleanmn.bootstrap=NULL,
+                    type = "random")##plain
+## a = onesim_sbs(sim.settings)
+a = onesim_wbs(sim.settings)
+
+onesim_wbs <- function(sim.settings){
+
+    ## Reassign things
+    sigma = sim.settings$sigma
+    lev = sim.settings$lev
+    nsim.is = sim.settings$nsim.is
+    numSteps = sim.settings$numSteps
+    numIntervals = sim.settings$numIntervals
+    n = sim.settings$n
+    meanfun = sim.settings$meanfun
+    reduce = sim.settings$reduce
+    augment = sim.settings$augment
+    bootstrap = sim.settings$bootstrap
+    std.bootstrap = sim.settings$std.bootstrap
+    cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
+    type = sim.settings$type
+
 
     ## Generate data (same across all onesim_OOO functions)
-    if(!is.null(seed)) set.seed(seed)
     my.mn <- meanfun(lev,n)
     if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
+    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
     if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
 
     ## Do WBS_FS inference (basic structure is similar)
     method <- wildBinSeg_fixedSteps
-    obj <- method(y, numSteps=numSteps, numIntervals=numIntervals, seed=seed)#, intervals=intervals)
+    obj <- method(y, numSteps=numSteps, numIntervals=numIntervals)#, intervals=intervals)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     for(ii in 1:length(obj$cp)){
-        poly <- polyhedra(obj, v = contrasts[[ii]], reduce=TRUE, sigma=sigma)
+        poly <- polyhedra(obj, v = contrasts[[ii]], reduce=reduce, sigma=sigma)
         if(type=="plain"){
             pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrasts[[ii]],
                                          sigma=sigma, reduce=reduce)$pv
@@ -66,35 +104,49 @@ onesim_wbs <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals, n,
                                                  augment=augment)
         }
     }
+    if(type=="plain"){
+        return(pvec.plain)
+    } else {
+        return(pvec)
+    }
 }
 
+onesim_fusedlasso <- function(sim.settings){
 
-onesim_fusedlasso <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals,
-                              n, meanfun, seed=NULL, reduce, bootstrap=FALSE,
-                              std=NULL, augment, resid.cleanmn,
-                              type=c("plain","randomized")){
+    ## Reassign things
+    sigma = sim.settings$sigma
+    lev = sim.settings$lev
+    nsim.is = sim.settings$nsim.is
+    numSteps = sim.settings$numSteps
+    numIntervals = sim.settings$numIntervals
+    n = sim.settings$n
+    meanfun = sim.settings$meanfun
+    reduce = sim.settings$reduce
+    augment = sim.settings$augment
+    bootstrap = sim.settings$bootstrap
+    std.bootstrap = sim.settings$std.bootstrap
+    cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
+    type = sim.settings$type
 
     ## Example settings
     ## n=10
     ## meanfun=mn.onejump
-    ## seed=1
     ## bootstrap=FALSE
     ## lev=3
     ## sigma=1
     ## numSteps=1
     ## type="plain"
     ## reduce=FALSE
+    ## set.seed(0)
 
     ## Generate data (same across all onesim_OOO functions)
-    if(!is.null(seed)) set.seed(seed)
     my.mn <- meanfun(lev,n)
     if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn, seed=seed))
+    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
     if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
 
     ## Do fused lasso inference (basic structure is similar)
     D = makeDmat(n,type='tf',ord=0)
-    if(!is.null(seed))set.seed(seed)
     obj <- genlassoinf::dualpathSvd2(y,D=D,maxsteps=numSteps,approx=TRUE)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
@@ -117,6 +169,16 @@ onesim_fusedlasso <- function(isim, sigma, lev, nsim.is, numSteps, numIntervals,
         return(pvec)
     }
 }
+
+
+
+randomized_genlasso_pv <- function(y=y, v=contrasts[[ii]], sigma=sigma,
+                                   numSteps=numSteps, numIntervals=numIntervals,
+                                   nsim.is=nsim.is, bits=100, reduce=reduce,
+                                   augment=augment){
+
+}
+
 
 ##' Simulation driver.
 ##' @param sim.setting list of simulation settings, set externally.
@@ -150,7 +212,7 @@ sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
                       seed=isim,
                       reduce=reduce,
                       bootstrap=sim.settings$bootstrap,
-                      std=sim.settings$std,
+                      std.bootstrap=sim.settings$std.bootstrap,
                       augment = sim.settings$augment,
                       resid.cleanmn = resid.cleanmn
                       )
