@@ -9,9 +9,8 @@ coriell_mn <- function(lev=1,n, std.bootstrap=1){
     return((newmn / h * std.bootstrap) * lev)
 }
 
-## Generates one-jump mean
+## Generates one/two-jumped means
 onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
-## Generates two-jump mean
 twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 
@@ -170,14 +169,6 @@ onesim_fusedlasso <- function(sim.settings){
     }
 }
 
-
-
-randomized_genlasso_pv <- function(y=y, v=contrasts[[ii]], sigma=sigma,
-                                   numSteps=numSteps, numIntervals=numIntervals,
-                                   nsim.is=nsim.is, bits=100, reduce=reduce,
-                                   augment=augment){
-
-}
 
 
 ##' Simulation driver.
