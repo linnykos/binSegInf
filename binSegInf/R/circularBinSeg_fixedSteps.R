@@ -35,7 +35,30 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
     if(!any(is.na(node_pairs$right))) node_selected$AddChildNode(node_pairs$right)
   }
   
-  obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")
+  extra_info <- .grab_info_cbs(tree)
+  
+  obj <- structure(list(tree = tree, numSteps = numSteps,
+                        cp = extra_info$cp, cp.interval = extra_info$cp_interval,
+                        cp.sign = extra_info$cp_sign, cp.depth = extra_info$cp_depth), 
+                   class = "cbsFs")
+}
+
+.grab_info_cbs <- function(tree){
+  leaves <- .enumerate_splits(tree)
+  if(length(leaves) == 0) return(NA)
+  
+  res <- sapply(leaves, function(x){data.tree::FindNode(tree, x)$breakpoint})
+  cp <- as.numeric(res)
+  cp[is.na(leaves)] <- 0
+  
+  cp_interval <- as.numeric(sapply(colnames(res), .get_startEnd))
+
+  cp_sign <- sign(rep(as.numeric(sapply(leaves, function(x){
+    data.tree::FindNode(tree, x)$cusum})), each = 2))
+  cp_depth <- rep(as.numeric(sapply(leaves, function(x){
+    data.tree::FindNode(tree, x)$active})), each = 2)
+  
+  list(cp = cp, cp_interval = cp_interval, cp_sign = cp_sign, cp_depth = cp_depth)
 }
 
 #' Get jumps from cbsFs objects
