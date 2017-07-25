@@ -31,7 +31,12 @@ circularBinSeg_fixedThres<- function(y, thres){
     round <- round+1
   }
   
-  obj <- structure(list(tree = tree, thres = thres), class = "cbsFt")
+  extra_info <- .grab_info_cbs(tree)
+  
+  obj <- structure(list(tree = tree, thres = thres,
+                        cp = extra_info$cp, cp.interval = extra_info$cp_interval,
+                        cp.sign = extra_info$cp_sign, cp.depth = extra_info$cp_depth), 
+                   class = "cbsFt")
 }
 
 #' Get jumps from cbsFt objects

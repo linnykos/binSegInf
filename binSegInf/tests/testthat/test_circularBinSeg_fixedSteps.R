@@ -245,3 +245,57 @@ test_that("jumps.cbsFs works with sorted is FALSE and there are not two shoulder
   
   expect_true(all(is.na(res[1]), res[2] == 10) | all(res == c(10, 20)))
 })
+
+###########################
+
+## .grab_info_cbs is correct
+
+test_that(".grab_info_cbs works", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedSteps(y, 2)
+  res <- .grab_info_cbs(obj$tree)
+  
+  expect_true(is.list(res))
+})
+
+test_that(".grab_info_cbs results make sense of fixedSteps", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedSteps(y, 8)
+  res <- .grab_info_cbs(obj$tree)
+  
+  expect_true(all(table(res$cp_sign) %% 2 == 0))
+  expect_true(all(table(res$cp_depth) %% 2 == 0))
+  
+  len <- length(res$cp)/2
+  for(i in 1:len){
+    interval <- res$cp_interval[((i-1)*2+1):(i*2)]
+    cp <- res$cp[((i-1)*2+1):(i*2)]
+    expect_true(interval[2] >= cp[2])
+    expect_true(interval[1]-1 <= cp[1])
+    expect_true(cp[1] <= cp[2])
+    expect_true(interval[1] <= interval[2])
+  }
+})
+
+test_that(".grab_info_cbs works", {
+  set.seed(10)
+  y <- c(rnorm(5), rnorm(5, mean = 10), rnorm(5), rnorm(5, mean = 10), rnorm(5))
+  obj <- circularBinSeg_fixedThres(y, 0.1)
+  res <- .grab_info_cbs(obj$tree)
+  
+  expect_true(all(table(res$cp_sign) %% 2 == 0))
+  expect_true(all(table(res$cp_depth) %% 2 == 0))
+  
+  len <- length(res$cp)/2
+  for(i in 1:len){
+    interval <- res$cp_interval[((i-1)*2+1):(i*2)]
+    cp <- res$cp[((i-1)*2+1):(i*2)]
+    expect_true(interval[2] >= cp[2])
+    expect_true(interval[1]-1 <= cp[1])
+    expect_true(cp[1] <= cp[2])
+    expect_true(interval[1] <= interval[2])
+  }
+})
+
