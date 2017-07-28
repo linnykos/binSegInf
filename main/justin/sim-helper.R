@@ -115,3 +115,8 @@ get_condit_pvals <- function(my.pmat, loc){
   pvals = as.numeric(my.pmat[,loc])
   return(pvals)
 }
+
+
+## Generates one/two-jumped means
+onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}

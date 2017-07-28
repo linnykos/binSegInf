@@ -1,4 +1,6 @@
+## Load in data and simulation driver functions
 load("../data/coriell.Rdata")
+source('../main/justin/sim-driver.R')
 
 ## n = length(coriell_mn(1))
 n = 10
@@ -18,58 +20,19 @@ nsim.is = 100
 ## Generate data
 set.seed(0)
 ## y <- coriell_mn(lev,n) + rnorm(n,0,std)
-y <- mn.onejump(lev,n) + rnorm(n,0,1)
+y <- onejump(lev,n) + rnorm(n,0,1)
 
 nreplicate = 10
 
-## Gather wbs p-values
-p.wbsfs.list = mclapply(1:nreplicate, function(irep){
-    cat("\r", "replicate", irep, "out of", nreplicate)
 
-    ## Run WBS once
-    method = wildBinSeg_fixedSteps
-    intervals = generate_intervals(length(y), numIntervals)
-    obj = method(y, numSteps=numSteps, intervals=intervals)
-    poly = polyhedra(obj)
+## Simulation settings
+sim.settings = list(sigma=1, lev=1, nsim.is=100, numSteps=1,
+                    numIntervals=100, n=10, meanfun=onejump,
+                    reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
+                    cleanmn.bootstrap=NULL,
+                    type = "random")##plain
 
-    ## Do importance sampling
-    vs = make_all_segment_contrasts(obj)
-    p.wbsfs = rep(NA,length(obj$cp))
-    names(p.wbsfs) = obj$cp
-    for(ii in 1:length(vs)){
-        p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y, v=vs[[ii]], sigma=sigma,
-                                                numSteps=numSteps,
-                                                numIntervals=numIntervals,
-                                                nsim.is=nsim.is, bits=100,
-                                                augment=TRUE)
-    }
-    return(p.wbsfs)
-}, mc.cores=mc.cores)
-
-##
-
-p.sbs.list = mclapply(1:nreplicate, function(irep){
-    cat("\r", "replicate", irep, "out of", nreplicate[ii])
-
-    method = wildBinSeg_fixedSteps
-    intervals = generate_intervals(length(y), numIntervals)
-    obj = method(y, numSteps=numSteps, intervals=intervals)
-    poly = polyhedra(obj)
-
-    vs = make_all_segment_contrasts(obj)
-    p.wbsfs = rep(NA,length(obj$cp))
-    names(p.wbsfs) = obj$cp
-    for(ii in 1:length(obj$cp)){
-        p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y, v=vs[[ii]], sigma=sigma,
-                                                numSteps=numSteps,
-                                                numIntervals=numIntervals,
-                                                nsim.is=nsim.is, bits=100,
-                                                augment=TRUE)
-    }
-    return(p.wbsfs)
-}, mc.cores=mc.cores)
-
-
-## Save result
-filename = paste0("artif.Rdata")
-save(p.wbsfs.list, sim.settings, file = file.path("../../results", filename))
+## Actually run the simulations
+## a = onesim_sbs(sim.settings)
+a = onesim_wbs(sim.settings)
+a = onesim_fusedlasso(sim.settings)

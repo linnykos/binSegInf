@@ -9,9 +9,6 @@ coriell_mn <- function(lev=1,n, std.bootstrap=1){
     return((newmn / h * std.bootstrap) * lev)
 }
 
-## Generates one/two-jumped means
-onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
-twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
 
 
 onesim_sbs <- function(sim.settings){
@@ -50,15 +47,6 @@ onesim_sbs <- function(sim.settings){
 }
 
 
-## Simulation inner function.
-sim.settings = list(sigma=1, lev=1, nsim.is=1000, numSteps=1,
-                    numIntervals=100, n=10, meanfun=onejump,
-                    reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
-                    cleanmn.bootstrap=NULL,
-                    type = "random")##plain
-## a = onesim_sbs(sim.settings)
-a = onesim_wbs(sim.settings)
-
 onesim_wbs <- function(sim.settings){
 
     ## Reassign things
@@ -76,16 +64,20 @@ onesim_wbs <- function(sim.settings){
     cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
     type = sim.settings$type
 
+    ## sigma=1; lev=0; nsim.is=100; numSteps=1;
+    ## numIntervals=20; n=6; meanfun=onejump;
+    ## reduce=TRUE;augment=TRUE;  bootstrap=FALSE; std.bootstrap=NULL;
+    ## cleanmn.bootstrap=NULL;
+    ## type = "randomized"
 
-    ## Generate data (same across all onesim_OOO functions)
-    my.mn <- meanfun(lev,n)
-    if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
-    if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
+
+    ## Generate data
+    y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
 
     ## Do WBS_FS inference (basic structure is similar)
     method <- wildBinSeg_fixedSteps
-    obj <- method(y, numSteps=numSteps, numIntervals=numIntervals)#, intervals=intervals)
+    intervals <- generate_intervals(length(y),numIntervals)
+    obj <- method(y, numSteps=numSteps, intervals=intervals)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     for(ii in 1:length(obj$cp)){
@@ -100,15 +92,45 @@ onesim_wbs <- function(sim.settings){
                                                  numIntervals=numIntervals,
                                                  nsim.is=nsim.is, bits=100,
                                                  reduce=reduce,
+                                                 ## reduce=FALSE,
                                                  augment=augment)
         }
     }
-    if(type=="plain"){
-        return(pvec.plain)
-    } else {
-        return(pvec)
-    }
+    if(type=="plain"){ return(pvec.plain) } else {  return(pvec) }
 }
+
+
+
+onesim_naive <- function(sim.settings){
+
+    ## Reassign things
+    sigma = sim.settings$sigma
+    lev = sim.settings$lev
+    nsim.is = sim.settings$nsim.is
+    numSteps = sim.settings$numSteps
+    numIntervals = sim.settings$numIntervals
+    n = sim.settings$n
+    meanfun = sim.settings$meanfun
+    reduce = sim.settings$reduce
+    augment = sim.settings$augment
+    bootstrap = sim.settings$bootstrap
+    std.bootstrap = sim.settings$std.bootstrap
+    cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
+    type = sim.settings$type
+
+    ## Generate data
+    y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
+
+    ## Do binseg naive z-tests
+    method <- binSeg_fixedSteps
+    seed = NULL##isim
+    obj <- method(y, numSteps)
+    pvec.naive = sapply(1:length(obj$cp), function(ii){
+        ztest(contrast_vector(obj, ii), y, sigma, 0.05)})
+    return(pvec.naive)
+}
+
+
 
 onesim_fusedlasso <- function(sim.settings){
 
@@ -139,13 +161,10 @@ onesim_fusedlasso <- function(sim.settings){
     ## set.seed(0)
 
     ## Generate data (same across all onesim_OOO functions)
-    my.mn <- meanfun(lev,n)
-    if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
-    if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
+    y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
 
     ## Do fused lasso inference (basic structure is similar)
-    D = makeDmat(n,type='tf',ord=0)
+    D = genlassoinf::makeDmat(n,type='tf',ord=0)
     obj <- genlassoinf::dualpathSvd2(y,D=D,maxsteps=numSteps,approx=TRUE)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
@@ -171,61 +190,61 @@ onesim_fusedlasso <- function(sim.settings){
 
 
 
-##' Simulation driver.
-##' @param sim.setting list of simulation settings, set externally.
-##' @param filename name of R data file to save in.
-##' @import parallel
-sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
-                       mc.cores=4, reduce=FALSE, resid.cleanmn=NULL){
-    levs = sim.settings$levs
-    n.levs = length(levs)
-    results <- replicate(n.levs, list())
-    names(results) = paste("jump size",levs)
-    for(i.lev in 1:n.levs){
+## ##' Simulation driver.
+## ##' @param sim.setting list of simulation settings, set externally.
+## ##' @param filename name of R data file to save in.
+## ##' @import parallel
+## sim_driver <- function(sim.settings, filename, dir="../data",seed=NULL,
+##                        mc.cores=4, reduce=FALSE, resid.cleanmn=NULL){
+##     levs = sim.settings$levs
+##     n.levs = length(levs)
+##     results <- replicate(n.levs, list())
+##     names(results) = paste("jump size",levs)
+##     for(i.lev in 1:n.levs){
 
-        ## Run simulations
-        cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
-        nsim = sim.settings$nsims[i.lev]
+##         ## Run simulations
+##         cat("signal strength (level)", i.lev, "out of", n.levs, fill=TRUE)
+##         nsim = sim.settings$nsims[i.lev]
 
-        ## Add tryCatch()
-        manysimresult =
-           ## mclapply(1:nsim, function(isim){
-           lapply(1:nsim, function(isim){
-               cat("\r", "simulation ", isim, "out of", nsim)
-               ## cat("simulation ", isim, "out of", nsim)
-               onesim(isim, lev=sim.settings$levs[i.lev],
-                      sigma=sim.settings$sigma,
-                      nsim.is=sim.settings$nsim.is,
-                      numSteps=sim.settings$numSteps,
-                      numIntervals=sim.settings$numIntervals,
-                      n=sim.settings$n,
-                      mn=sim.settings$mn,
-                      seed=isim,
-                      reduce=reduce,
-                      bootstrap=sim.settings$bootstrap,
-                      std.bootstrap=sim.settings$std.bootstrap,
-                      augment = sim.settings$augment,
-                      resid.cleanmn = resid.cleanmn
-                      )
-               })
-           ## }, mc.cores = mc.cores)
+##         ## Add tryCatch()
+##         manysimresult =
+##            ## mclapply(1:nsim, function(isim){
+##            lapply(1:nsim, function(isim){
+##                cat("\r", "simulation ", isim, "out of", nsim)
+##                ## cat("simulation ", isim, "out of", nsim)
+##                onesim(isim, lev=sim.settings$levs[i.lev],
+##                       sigma=sim.settings$sigma,
+##                       nsim.is=sim.settings$nsim.is,
+##                       numSteps=sim.settings$numSteps,
+##                       numIntervals=sim.settings$numIntervals,
+##                       n=sim.settings$n,
+##                       mn=sim.settings$mn,
+##                       seed=isim,
+##                       reduce=reduce,
+##                       bootstrap=sim.settings$bootstrap,
+##                       std.bootstrap=sim.settings$std.bootstrap,
+##                       augment = sim.settings$augment,
+##                       resid.cleanmn = resid.cleanmn
+##                       )
+##                })
+##            ## }, mc.cores = mc.cores)
 
-        ## Extract plist
-        plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
-        plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
-        plist.wbsfs.plain <- lapply(manysimresult, function(a)a$p.wbsfs.plain)
+##         ## Extract plist
+##         plist.bsfs <- lapply(manysimresult, function(a)a$p.bsfs)
+##         plist.wbsfs <- lapply(manysimresult, function(a)a$p.wbsfs)
+##         plist.wbsfs.plain <- lapply(manysimresult, function(a)a$p.wbsfs.plain)
 
-        ## Reformat to pmat
-        pmat.bsfs = reformat(plist.bsfs, n=sim.settings$n)
-        pmat.wbsfs = reformat(plist.wbsfs, n=sim.settings$n)
-        pmat.wbsfs.plain = reformat(plist.wbsfs.plain, n=sim.settings$n)
+##         ## Reformat to pmat
+##         pmat.bsfs = reformat(plist.bsfs, n=sim.settings$n)
+##         pmat.wbsfs = reformat(plist.wbsfs, n=sim.settings$n)
+##         pmat.wbsfs.plain = reformat(plist.wbsfs.plain, n=sim.settings$n)
 
-        ## Store results
-        results[[i.lev]] <- list(pmat.bsfs = pmat.bsfs,
-                                 pmat.wbsfs =  pmat.wbsfs,
-                                 pmat.wbsfs.plain = pmat.wbsfs.plain)
+##         ## Store results
+##         results[[i.lev]] <- list(pmat.bsfs = pmat.bsfs,
+##                                  pmat.wbsfs =  pmat.wbsfs,
+##                                  pmat.wbsfs.plain = pmat.wbsfs.plain)
 
-        save(results, sim.settings, file = file.path(dir,filename))
-        cat(fill=TRUE)
-    }
-}
+##         save(results, sim.settings, file = file.path(dir,filename))
+##         cat(fill=TRUE)
+##     }
+## }

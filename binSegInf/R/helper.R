@@ -147,8 +147,11 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
     vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
-    pvobj <- poly.pval2(y=y, poly=poly, v=v,
-                        sigma=sigma, reduce=reduce)
+
+    ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
+    ## This is because in order to partition the TG statistic, we need to form
+    ## these anyway.
+    pvobj <- poly.pval2(y, poly, v, sigma)
     vup = pvobj$vup
     vlo = pvobj$vlo
     vy = max(min(vy, vup),vlo)
@@ -167,7 +170,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
 
     ## Form p-value as well.
     pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
-                       (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+                    (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
 
     return(list(denom=denom, numer=numer, pv = pv))
 }
@@ -186,7 +189,7 @@ qqunif <- function(pp, main=NULL,...){
     graphics::axis(2); graphics::axis(1)
     graphics::abline(0,1)
     if(!is.null(main)) graphics::title(main=main)
-    return(xy)
+    invisible(xy)
 }
 
 

@@ -179,7 +179,8 @@ ff <- function(z) {
 
 
 ##' Takes vup, vlo and v and returns list(pv,vlo,vup). Originally from the
-##' selectiveInfernece package.
+##' selectiveInfernece package. Modified to take a polyhedra class object
+##' \code{poly}.
 ##' @param vup vup
 ##' @param vlo vlo
 ##' @param v Contrast vector.
@@ -196,8 +197,11 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
 
-    if(!is.null(vup) & !is.null(vlo)){
-        pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+    ## If vup&vlo are both present in poly, simply calculate and return the pv
+    if(!is.null(poly$vup) & !is.null(poly$vlo)){
+        pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits)
+        vlo = poly$vlo
+        vup = poly$vup
     } else {
         if(!reduce){
             G = poly$gamma
