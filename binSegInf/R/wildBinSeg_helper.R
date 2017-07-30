@@ -397,14 +397,19 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
     ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(seed=NULL, bits=bits){
 
-        get_cp_from_segment_contrast <- function(v){
+        .get_cp_from_segment_contrast <- function(v){
             which(dual1d_Dmat(length(v)+2)%*%c(0,v,0)!=0)[2]-1
         }
 
+        .i_covers_cp <- function(i,cp){
+            contained = (i$starts <= cp & cp<i$ends)
+            return(any(contained))
+        }
+
         ## Generate interval
-        cp <- get_cp_from_segment_contrast(v)
+        cp <- .get_cp_from_segment_contrast(v)
         i = generate_intervals(length(y), numIntervals, seed=seed)
-        if(!i.covers.cp(i,cp)){return(NULL)}
+        if(!.i_covers_cp(i,cp)){return(NULL)}
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         if(length(obj$cp)==0){return(NULL)}
 
@@ -429,3 +434,4 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
 
     return(pv)
 }
+
