@@ -35,7 +35,51 @@ circularBinSeg_fixedSteps <- function(y, numSteps){
     if(!any(is.na(node_pairs$right))) node_selected$AddChildNode(node_pairs$right)
   }
   
-  obj <- structure(list(tree = tree, numSteps = numSteps), class = "cbsFs")
+  extra_info <- .grab_info_cbs(tree)
+  
+  obj <- structure(list(tree = tree, numSteps = numSteps,
+                        cp = extra_info$cp, cp.interval = extra_info$cp_interval,
+                        cp.sign = extra_info$cp_sign, cp.depth = extra_info$cp_depth), 
+                   class = "cbsFs")
+}
+
+#' Get additional info for the circular binary segmentation tree
+#' 
+#' All elements of the object come in consecutive pairs of 2. So the
+#' first two elements of \code{cp}, \code{cp_interval}, \code{cp_sign},
+#' \code{cp_depth} refer to the same jump. Within each pair,
+#' both values in \code{cp_sign} and \code{cp_depth} refer to the same thing.
+#' 
+#' The trick part is the that \code{cp} (jumps) denote the left index of the 
+#' jump while \code{cp_interval} denotes the entire interval being investigated.
+#' For example, at some stage of CBS, the segment from indices 5 to 10 could
+#' be looked at. And let's say the indices (5,6) form the left shoulder,
+#' (7,8,9) form the middle hump, and (10) form the right shoulder. Then,
+#' \code{cp} would read \code{c(6,9)} while \code{cp_interval} would
+#' read \code{c(5,10)}. Hence, when there is no left shoulder,
+#' the first value of \code{cp} could be one less than the first value of
+#' \code{cp_interval}
+#'
+#' @param tree 
+#'
+#' @return a list
+.grab_info_cbs <- function(tree){
+  leaves <- .enumerate_splits(tree)
+  if(length(leaves) == 0) return(list(cp = NA, cp_interval = NA,
+                                      cp_sign = NA, cp_depth = NA))
+  
+  res <- sapply(leaves, function(x){data.tree::FindNode(tree, x)$breakpoint})
+  cp <- as.numeric(res)-1
+  cp[is.na(leaves)] <- 0
+  
+  cp_interval <- as.numeric(sapply(colnames(res), .get_startEnd))
+
+  cp_sign <- sign(rep(as.numeric(sapply(leaves, function(x){
+    data.tree::FindNode(tree, x)$cusum})), each = 2))
+  cp_depth <- rep(as.numeric(sapply(leaves, function(x){
+    data.tree::FindNode(tree, x)$active})), each = 2)
+  
+  list(cp = cp, cp_interval = cp_interval, cp_sign = cp_sign, cp_depth = cp_depth)
 }
 
 #' Get jumps from cbsFs objects
