@@ -397,88 +397,19 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
    ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(bits=bits){
 
-        get_cp_from_segment_contrast <- function(v){
+        .get_cp_from_segment_contrast <- function(v){
             which(dual1d_Dmat(length(v)+2)%*%c(0,v,0)!=0)[2]-1
         }
 
-    ## sigma=1; lev=0; nsim.is=100; numSteps=1;
-    ## numIntervals=20; n=6; meanfun=onejump;
-    ## reduce=TRUE;augment=TRUE;  bootstrap=FALSE; std.bootstrap=NULL;
-    ## cleanmn.bootstrap=NULL;
-    ## type = "randomized"
-
-
-        ## Generate interval
-        cp <- get_cp_from_segment_contrast(v)
-        i = generate_intervals(length(y), numIntervals)
-        if(!i.covers.cp(i,cp)){return(NULL)}
-        obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
-        if(length(obj$cp)==0){return(NULL)}
-
-        ## Calculate numer & denom of TG
-        poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
-        tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100, reduce=reduce)
-
-        return(list(numer = tg$numer, denom = tg$denom))
-    }
-
-    ## Collect weighted p-values and their weights
-    ## pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
-    pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
-    pvlist = .filternull(pvlist)
-
-    if(length(pvlist)==0) return(NULL)
-
-    ## Calculate p-value and return
-    sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
-    sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
-    pv = sumNumer/sumDenom ## sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
-
-    return(pv)
-}
-
-
-##' A /second/ attempt on doing many wild binary segmentations and computing
-##' p-values; so far, gives identical results as randomized_wildBinSeg_pv();
-##' erase later when issue is fixed.
-##' @param y data vector
-##' @param sigma standard deviation of noise
-##' @param v Fixed contrast, formed /only/ with the knowledge of the selection
-##'     event on \code{y} with some fixed interval, and not from any more
-##'     information about \code{y}.
-##' @param numIntervals number of WBS intervals you want /each time/. This
-##'     should match what you used when applying wild binary segmentation on
-##'     your observed dataset.
-##' @param numSteps number of steps to take.
-##' @param nsim.is Number of importance sampling samples you'd like to
-##'     calculate.
-##' @param reduce \code{TRUE} if reduced version of polyhedron collecting is to
-##'     be used, in polyhedra collecting functions for WBS.
-##' @param v Contrast vector.
-##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
-##' @example examples/randomized_wildBinSeg_pv-example.R
-##' @export
-randomized_wildBinSeg_pv2 <- function(y, sigma, v, numSteps=NULL,
-                                     numIntervals, nsim.is, bits=NULL,
-                                     reduce=FALSE, augment=TRUE){
-
-   ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(seed=NULL, bits=bits){
-
-        get_cp_from_segment_contrast <- function(v){
-            which(genlassoinf::makeDmat(length(v)+2, "tf",ord=0) %*%c(0,v,0)!=0)[2]-1
+        .i_covers_cp <- function(i,cp){
+            contained = (i$starts <= cp & cp<i$ends)
+            return(any(contained))
         }
 
-        set.seed(0)
-        y = rnorm(4,0,1)
-        v = c(rep(-1,2),rep(1,2))
-        reduce=FALSE
-
-
         ## Generate interval
-        cp <- get_cp_from_segment_contrast(v)
-        i = generate_intervals(length(y), numIntervals)
-        if(!i.covers.cp(i,cp)){return(NULL)}
+        cp <- .get_cp_from_segment_contrast(v)
+        i = generate_intervals(length(y), numIntervals, seed=seed)
+        if(!.i_covers_cp(i,cp)){return(NULL)}
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         if(length(obj$cp)==0){return(NULL)}
 
@@ -512,3 +443,4 @@ randomized_wildBinSeg_pv2 <- function(y, sigma, v, numSteps=NULL,
 
     return(pv)
 }
+

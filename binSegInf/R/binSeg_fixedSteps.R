@@ -34,10 +34,13 @@ binSeg_fixedSteps <- function(y, numSteps){
   }
 
   y.fit <- .refit_binseg(y, jumps(tree))
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
-
+  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
   cp <- jumps(obj)
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
+  leaves <- .enumerate_splits(tree)
+  cp.sign <- sign(as.numeric(sapply(leaves, function(x){
+      data.tree::FindNode(tree, x)$cusum})))
+  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp,
+                        cp.sign=cp.sign), class = "bsFs")
 
 }
 

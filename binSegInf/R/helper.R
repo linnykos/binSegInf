@@ -181,14 +181,15 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
 ##' Function to plot qqlot of p-values. Use extra parameter
 ##' @param pp numeric vector of p-values.
 ##' @param main label to plot as main title.
-##' @param ... other graphical parameters for \code{plot()}.
-qqunif <- function(pp, main=NULL,...){
+qqunif <- function(pp, main=NULL,plot.it=TRUE){
     xy <- stats::qqplot(x=pp,
                  y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE)
-    graphics::plot(xy, axes=FALSE,...)
-    graphics::axis(2); graphics::axis(1)
-    graphics::abline(0,1)
-    if(!is.null(main)) graphics::title(main=main)
+    if(plot.it){
+        graphics::plot(xy, axes=FALSE)
+        graphics::axis(2); graphics::axis(1)
+        graphics::abline(0,1)
+        if(!is.null(main)) graphics::title(main=main)
+    }
     invisible(xy)
 }
 
