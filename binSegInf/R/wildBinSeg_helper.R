@@ -408,7 +408,7 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
 
         ## Generate interval
         cp <- .get_cp_from_segment_contrast(v)
-        i = generate_intervals(length(y), numIntervals, seed=seed)
+        i = generate_intervals(length(y), numIntervals)
         if(!.i_covers_cp(i,cp)){return(NULL)}
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         if(length(obj$cp)==0){return(NULL)}
@@ -426,7 +426,7 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
         poly.pval2(y,poly,v,sigma,vup=poly$vup,vlo=poly$vlo)
 
 
-        return(list(numer = tg$numer, denom = tg$denom, seed=seed))
+        return(list(numer = tg$numer, denom = tg$denom))
     }
 
     ## Collect weighted p-values and their weights

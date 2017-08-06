@@ -23,7 +23,7 @@ randomized_genlasso_pv <- function(y, sigma, D, v, numSteps=NULL, numIntervals,
                                    augment=TRUE){
 
     ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(seed=NULL, bits=bits){
+    get_one <- function(bits=bits){
 
         n = length(y)
         sigmanoise = 0.1 ## sigma*0.1
@@ -33,15 +33,14 @@ randomized_genlasso_pv <- function(y, sigma, D, v, numSteps=NULL, numIntervals,
 
         ## Run fused lasso again
         D = genlassoinf::makeDmat(n, type='tf', ord=0)
-        fnew = genlassoinf::dualpathSvd2(ynew, D=D, maxsteps, approx=TRUE)
+        fnew = genlassoinf::dualpathSvd2(ynew, D=D, numSteps, approx=TRUE)
         poly <- polyhedra(fnew$Gobj.naive$G, fnew$Gobj.naive$u)
-        tg = partition_TG(ynew, poly, v, sigma, nullcontrast=0, bits=100,reduce=FALSE)
+        tg = partition_TG(ynew, poly, v, sigma, nullcontrast=0, bits=bits,reduce=FALSE)
 
-        return(list(numer = tg$numer, denom = tg$denom, seed=seed, probnoise=probnoise ))
+        return(list(numer = tg$numer, denom = tg$denom, probnoise=probnoise ))
     }
 
     ## Collect weighted p-values and their weights
-    ## pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
 

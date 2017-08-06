@@ -10,8 +10,7 @@ coriell_mn <- function(lev=1,n, std.bootstrap=1){
 }
 
 
-
-onesim_sbs <- function(sim.settings){
+onesim_bsft <- function(sim.settings){
 
     ## Reassign things
     sigma = sim.settings$sigma
@@ -26,24 +25,57 @@ onesim_sbs <- function(sim.settings){
     bootstrap = sim.settings$bootstrap
     std.bootstrap = sim.settings$std.bootstrap
     cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
+    thresh = sim.settings$thresh
 
     ## Generate data (same across all onesim_OOO functions)
     my.mn <- meanfun(lev,n)
-    if(is.null(bootstrap)) bootstrap = FALSE
-    if(bootstrap) y = (my.mn + bootstrap_sample(resid.cleanmn))
-    if(!bootstrap) y = (my.mn + stats::rnorm(n,0,sigma))
+    y = my.mn + stats::rnorm(n,0,sigma)
+
+    ## Do SBS-FS inference (basic structure is similar)
+    method <- binSeg_fixedThresh
+    obj <- method(y, thresh=thresh)
+    poly <- polyhedra(obj)
+    if(length(obj$cp)==0){
+        return(NULL)
+    } else{
+        contrasts <- make_all_segment_contrasts(obj)
+        pvec = sapply(1:length(obj$cp), function(ii){
+            poly.pval(y= y, G= poly$gamma, u=poly$u, v=contrasts[[ii]],sigma=sigma,
+                      bits=100)$pv
+        })
+        names(pvec) = obj$cp
+        return(pvec)
+    }
+}
+
+onesim_bsfs <- function(sim.settings){
+
+    ## Reassign things
+    sigma = sim.settings$sigma
+    lev = sim.settings$lev
+    nsim.is = sim.settings$nsim.is
+    numSteps = sim.settings$numSteps
+    numIntervals = sim.settings$numIntervals
+    n = sim.settings$n
+    meanfun = sim.settings$meanfun
+    reduce = sim.settings$reduce
+    augment = sim.settings$augment
+
+    ## Generate data (same across all onesim_OOO functions)
+    my.mn <- meanfun(lev,n)
+    y = (my.mn + stats::rnorm(n,0,sigma))
 
     ## Do SBS-FS inference (basic structure is similar)
     method <- binSeg_fixedSteps
     obj <- method(y, numSteps)
-    browser()
     poly <- polyhedra(obj)
-    pvec = setNames(rep(NA,length(obj$cp)), obj$cp)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = sapply(1:length(obj$cp), function(ii){
         poly.pval(y= y, G= poly$gamma, u=poly$u, v=contrasts[[ii]],sigma=sigma,
                   bits=100)$pv
     })
+    names(pvec) = obj$cp
+    return(pvec)
 }
 
 
@@ -92,7 +124,6 @@ onesim_wbs <- function(sim.settings){
                                                  numIntervals=numIntervals,
                                                  nsim.is=nsim.is, bits=100,
                                                  reduce=reduce,
-                                                 ## reduce=FALSE,
                                                  augment=augment)
         }
     }
@@ -123,7 +154,6 @@ onesim_naive <- function(sim.settings){
 
     ## Do binseg naive z-tests
     method <- binSeg_fixedSteps
-    seed = NULL##isim
     obj <- method(y, numSteps)
     pvec.naive = sapply(1:length(obj$cp), function(ii){
         ztest(contrast_vector(obj, ii), y, sigma, 0.05)})
@@ -149,17 +179,6 @@ onesim_fusedlasso <- function(sim.settings){
     cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
     type = sim.settings$type
 
-    ## Example settings
-    ## n=10
-    ## meanfun=mn.onejump
-    ## bootstrap=FALSE
-    ## lev=3
-    ## sigma=1
-    ## numSteps=1
-    ## type="plain"
-    ## reduce=FALSE
-    ## set.seed(0)
-
     ## Generate data (same across all onesim_OOO functions)
     y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
 
@@ -170,7 +189,7 @@ onesim_fusedlasso <- function(sim.settings){
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     poly <- polyhedra(obj$Gobj.naive$G, obj$Gobj.naive$u)
     for(ii in 1:length(obj$cp)){
-        if(type=="plain"){
+       if(type=="plain"){
             pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrasts[[ii]],
                                          sigma=sigma, reduce=reduce)$pv
         } else {
