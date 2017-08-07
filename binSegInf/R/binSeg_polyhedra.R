@@ -1,5 +1,5 @@
 #' Generate polyhedra matrix from bsFs object
-#' 
+#'
 #' Forms both Gamma matrix and u vector
 #'
 #' @param obj bsFs object
@@ -9,8 +9,8 @@
 #' @export
 polyhedra.bsFs <- function(obj, ...){
   is_valid(obj)
-  
-  n <- .get_startEnd(obj$tree$name)[2] 
+
+  n <- .get_startEnd(obj$tree$name)[2]
   numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
   sign.vec <- sign(jump_cusum(obj))
@@ -18,11 +18,11 @@ polyhedra.bsFs <- function(obj, ...){
 
   for(i in 1:numSteps){
     losing.mat <- comp.lis[[i]]$losing
-    
+
     gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
       losing.mat, sign.vec[i], n)
   }
-  
+
   mat <- do.call(rbind, gamma.row.lis)
   polyhedra(obj = mat, u = rep(0, nrow(mat)))
 }
@@ -34,13 +34,13 @@ polyhedra.bsFs <- function(obj, ...){
   lose.contrast <- t(apply(mat, 1, function(x){
     .cusum_contrast_full(x[1], x[2], x[3], n)
   }))
-  
+
   # add inequalities to compare winning split to all other splits
-  res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, 
+  res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win,
     rep(1, nrow(lose.contrast)))
-  res2 <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win, 
+  res2 <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win,
     -rep(1, nrow(lose.contrast)))
-  
+
   # add inequalities to compare splits to 0 (ensure correct sign)
   rbind(res, res2)
 }
@@ -50,20 +50,18 @@ polyhedra.bsFs <- function(obj, ...){
   stopifnot(length(vec) == ncol(mat))
   stopifnot(length(sign.vec) == 1, length(sign.mat) == nrow(mat))
   stopifnot(all(c(sign.vec, sign.mat) %in% c(-1,0,1)))
-  
+
   t(sign.vec * vec - t(sign.mat * mat))
 }
 
 
 
-##' Function to collect polyhedra given some output from the
-##' binSeg_fixedThresh(), of class "bsFt".
-##' 
+##' Function to collect halfsapces for output from the binSeg_fixedThresh(),
+##' embedded in an object |obj| of class "bsFt".
 ##' @param obj object of bsFt class
 ##' @param verbose Whether or not to print things.
-##'
 ##' @return An object of class polyhedra
-polyhedra.bsFt = function(obj, verbose = F) {
+polyhedra.bsFt <- function(obj, verbose = F) {
 
     ## Extracting things
     Blist = obj$bs.output$Blist
@@ -107,10 +105,10 @@ polyhedra.bsFt = function(obj, verbose = F) {
 
         newrows = my.halfspaces[["V"]]
         newconst = my.halfspaces[["u"]]
-        
+
         ## Move on if no comparisons were made i.e. lengths to left=2, right=1
         if(dim(newrows)[1]==0) next
-            
+
             ## Add to Gamma matrix
             newrowinds = nrow.G + c(1:nrow(newrows))
             if(any(newrowinds > nrow(G) )){
@@ -118,8 +116,8 @@ polyhedra.bsFt = function(obj, verbose = F) {
                 u = c(u, rep(NA,length(u)))
             }
             G[newrowinds,] = newrows
-            u[newrowinds] = newconst 
-            
+            u[newrowinds] = newconst
+
            ## Updates for loop
             nrow.G = nrow.G + nrow(newrows)
             ii = ii + 1
