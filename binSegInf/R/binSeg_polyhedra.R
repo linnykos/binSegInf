@@ -64,44 +64,33 @@ polyhedra.bsFs <- function(obj, ...){
 polyhedra.bsFt <- function(obj, verbose = F) {
 
     ## Extracting things
-    Blist = obj$bs.output$Blist
-    blist = obj$bs.output$blist
-    slist = obj$bs.output$slist
-    elist = obj$bs.output$elist
-    selist = obj$bs.output$selist
-    Zlist = obj$bs.output$Zlist
     y = obj$y
     thresh = obj$thresh
     n = length(y)
 
     ## Initialize G and u
     ii = 1
-    G = matrix(NA,nrow = nrow((Blist))*n, ncol = n)
-    u = rep(NA, nrow((Blist))*n)
+    G = matrix(NA,nrow = nrow(obj$infotable)*n, ncol = n)
+    u = rep(NA, nrow(obj$infotable)*n)
     nrow.G = 0
 
 
     ## For each node in Blist, collect halfspaces.
-    for(my.j in 1:nrow((Blist))){
-        b = Blist[my.j, "val"]
-        z = Zlist[my.j, "val"]
-        j = Blist[my.j,"j"]-1
-        k = Blist[my.j,"k"]
-        if(verbose) cat('j,k is', j,k, fill=TRUE)
-        ## Extract s,e, check if terminal node
-        ind = which(selist[,"j"]==j&selist[,"k"]==k)
-        se = c(slist[ind,"val"], elist[ind,"val"])
-        is.terminal.node = !any(apply(blist[,c(1,2)],1,function(myrow)(myrow[1]==j+1)&&(myrow[2]==k)))
+    if(nrow(obj$infotable)==0) return(polyhedra(gamma=G, u=u))
+    for(irow in 1:nrow(obj$infotable)){
+        myrow = obj$infotable[irow,]
+        if(verbose) cat('j,k is', myrow[,"j"], myrow[,"k"], fill=TRUE)
+
 
         ## Collect halfspaces
-        my.halfspaces = halfspaces(s = se[1],
-                                   e = se[2],
-                                   b = b,
-                                   z=z,
-                                   thresh = thresh,
+        my.halfspaces = halfspaces(s = myrow[,"s"],
+                                   b = myrow[,"b"],
+                                   e = myrow[,"e"],
+                                   z = myrow[,"dir"],
+                                   thresh = obj$thresh,
                                    n = n,
                                    y = y,
-                                   is.terminal.node = is.terminal.node)
+                                   is.terminal.node = (!myrow[,"pass"]))
 
         newrows = my.halfspaces[["V"]]
         newconst = my.halfspaces[["u"]]
@@ -128,4 +117,82 @@ polyhedra.bsFt <- function(obj, verbose = F) {
     G = trim(G,"row")
     u = trim(u)
     return(polyhedra(obj = G, u = u))
+}
+
+
+
+##' Calculates the halfspace vectors for the maximiiming breakpoint and all the
+##' signs, for fixed-threshold SBS.
+##' @param is.terminal.node TRUE if no CUSUMs from this node pass the threshold.
+##' @param b breakpoint location.
+##' @return A list of two objects \code{V} and \code{u}, for the halfspaces in
+##'     represented as V'y>u
+
+halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
+    if(verbose) cat("s,b,e are", s,b,e, fill=T)
+    if(!is.null(b)){
+        if(!(s <= b & b <= e)){
+            stop("s<=b<=e is not true")
+        }
+    }
+
+    ## Make empty things, initialize
+    V = matrix(NA, nrow = n^2, ncol = n)
+    u = rep(NA,n)
+    other.bs = (s:(e-1))
+    other.bs = other.bs[other.bs != b]
+    ii = 0
+
+    ## CUSUM comparison (s,b,e)
+    v.this = cusum(s=s, b=b, e=e, y=y,
+                   contrast.vec=TRUE, right.to.left=TRUE)
+    ## z.this = sign(sum(v.this * y))
+    z.this = z
+    vz.this = v.this * z.this
+
+    ## 1. Characterizing this break's sign.
+    ii = ii+1
+    V[ii,] = vz.this
+    u[ii] = 0
+
+    ## 2. Characterizing threshold exceedance/nonexceedance
+    if(!is.terminal.node){
+        ii = ii+1
+        V[ii,] = vz.this
+        u[ii] = thresh
+    } else {
+        stopifnot(sum(-vz.this*y) > -thresh)
+        ii = ii + 1
+        V[ii,] = -vz.this
+        u[ii] = -thresh
+    }
+
+    if(length(other.bs) == 0){
+        V = V[c(),]
+    } else {
+        for(other.b in other.bs){
+
+            ## Sqrt mean difference of (s,other.b,e)
+            v.other = cusum(s=s, b=other.b, e=e, y=y, contrast.vec=T,
+                            right.to.left=T)
+
+            ## 3. Characterizing maximizer of |sqrt mean difference|
+            ## if(!is.terminal.node){
+                ## other cusum is larger than -|this cusum|
+                ii = ii+1
+                stopifnot(-sum(vz.this*y) < sum(v.other*y))
+                V[ii,] = vz.this + v.other
+                u[ii] = 0
+                ## other cusum is smaller than +|this cusum|
+                ii = ii+1
+                stopifnot(sum(v.other*y) < sum(vz.this*y) )
+                V[ii,] = vz.this - v.other
+                u[ii] = 0
+            ## }
+        }
+
+        V = V[1:ii,,drop=F]
+        u = u[1:ii]
+    }
+    return(list(V=V,u=u))
 }

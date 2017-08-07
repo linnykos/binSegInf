@@ -20,33 +20,19 @@ binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return
 
     ## Create new environment |env|
     env = new.env()
-    env$slist = env$elist = env$selist = env$blist = env$Blist = env$zlist = env$Zlist =
-        ## matrix(NA, nrow = n, ncol = 2 ^(n/2))
-        ## matrix(NA,nrow=n,ncol=3)
-        cplist(n)
+    env$infotable = data.frame(j=1,k=1,s=1,b=1,e=1,pass=TRUE,dir=+1,len=0)[-1,]
     env$y = y
 
     ## Run binary segmentation on |env|
-    binseg.by.thresh.inner(y, thresh, s, e, 0, 1, verbose, env=env)
+    binseg.by.thresh.inner(y, thresh, s, e, 1, 1, verbose, env=env)
+    rownames(env$infotable) = c()
 
     ## Gather output from |env| and return it.
-    bs.output = list(slist = trim(env$slist),
-                     elist = trim(env$elist),
-                    selist = trim(env$selist),
-                     blist = trim(env$blist),
-                     Blist = trim(env$Blist),
-                     ## zlist = trim(env$zlist),
-                     Zlist = trim(env$Zlist),
-                     cp = trim.vec(env$blist$mat[,3]),
-                     cp.sign = trim.vec(env$zlist$mat[,3]),
-                     y = y,
-                     thresh = thresh)
-
-    obj = structure(list(bs.output = bs.output,
+    obj = structure(list(infotable = env$infotable,
                          y = y,
                          thresh = thresh,
-                         cp = trim.vec(env$blist$mat[,3]),
-                         cp.sign = trim.vec(env$zlist$mat[,3])) ,
+                         cp = env$infotable[env$infotable[,"pass"],"b"],
+                         cp.sign = env$infotable[env$infotable[,"pass"],"dir"]),
                     class = "bsFt")
 
     if(return.env){ return(env) } else{ return(obj) }
@@ -56,7 +42,7 @@ binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return
 ##' Checks of object is of class "bsFt", produced by binSeg_fixedThresh().
 ##' @param obj bsFt object
 is_valid.bsFt <- function(obj){
-    if(!(all(names(obj) %in% c("bs.output",
+    if(!(all(names(obj) %in% c("bs.info",
                                "y",
                                "thresh",
                                "cp",
@@ -82,16 +68,15 @@ is_valid.bsFt <- function(obj){
 ##' @param y The original data.
 ##' @param n The length of the data \code{y}.
 
-binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbose=F, env=NULL){
+binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=1, k=1, verbose=F, env=NULL){
 
     n = length(y)
 
     ## If segment is 2-lengthed, terminate
     if(e-s<1){
-        env$slist = add(env$slist,j,k,s)
-        env$elist = add(env$elist,j,k,e)
-        env$selist = add(env$selist, j  ,k, paste(s,e))
-        return()
+        newrow = data.frame(j=j,k=k,s=s,b=NULL,e=e,pass=FALSE,dir=NA,len=e-s)
+        env$infotable = rbind(env$infotable, newrow)
+
     ## Otherwise, calculate CUSUMs
     } else {
         all.bs = (s:(e-1))
@@ -108,25 +93,16 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
         ## Check threshold exceedance, then store
         if(abs(all.cusums[b]) < thresh){
 
-            env$Blist = add(env$Blist,j+1,k,b)
-            env$Zlist = add(env$Zlist,j+1,k,z)
-            env$slist = add(env$slist,j,  k,s)
-            env$elist = add(env$elist,j,  k,e)
-            env$selist = add(env$selist, j  ,k, paste(s,e))
-
+            newrow = data.frame(j=j,k=k,s=s,b=b,e=e,pass=FALSE,dir=z,len=e-s)
+            env$infotable = rbind(env$infotable, newrow)
             return(env)
         } else {
             if(verbose) cat("the biggest cusum was", all.cusums[b],
                             "which passed the threshold:", thresh,
-                            "frm between s and e:",s,e, fill=T)
+                            "from between s and e:",s,e, fill=T)
 
-            env$blist = add(env$blist, j+1,k, b)
-            env$Blist = add(env$Blist, j+1,k, b)
-            env$zlist = add(env$zlist, j+1,k, z)
-            env$Zlist = add(env$Zlist, j+1,k, z)
-            env$slist = add(env$slist, j  ,k, s)
-            env$elist = add(env$elist, j  ,k, e)
-            env$selist = add(env$selist, j  ,k, paste(s,e))
+            newrow = data.frame(j=j,k=k,s=s,b=b,e=e,pass=TRUE,dir=z,len=e-s)
+            env$infotable = rbind(env$infotable, newrow)
         }
 
         ## Recurse
@@ -139,9 +115,6 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=0, k=1, verbos
 
 ##' Print function for bsFt class
 print.bsFt <- function(obj){
-    ## if(obj$last.row==0){ print("Empty cplist object!")
-    ## } else{ print(cplist$mat[1:cplist$last.row,])}
-
     cat("Changepoint set is ", obj$cp*obj$cp.sign,fill=TRUE)
 }
 

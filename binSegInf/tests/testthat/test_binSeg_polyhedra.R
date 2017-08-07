@@ -210,6 +210,7 @@ test_that("bsFt polyhedra is correct.", {
     mypoly = polyhedra(obj)
     nsim=100
     for(isim in 1:nsim){
+        isim=2
         print(isim)
         set.seed(isim)
         ynew = y0 + rnorm(n,0,0.1)
@@ -225,3 +226,36 @@ test_that("bsFt polyhedra is correct.", {
     objnew$cp*obj$cp.sign
     }
 })
+
+
+
+## Debugging segment.
+n = 6
+set.seed(0)
+mn <- rep(c(0,lev), each=n/2)
+y0 <- mn + rnorm(n, 0, sigma)
+thresh = 1
+obj = binSeg_fixedThresh(y0, thresh, verbose=FALSE, return.env=FALSE)
+cusum(1,5,6,y=y0)
+for(b in 1:5){
+    print(cusum(s=1,b=b,e=6,y=y0))
+}
+for(b in 1:4){
+    cat("b is ", b,fill=TRUE)
+    print(cusum(s=1,b=b,e=5,y=y0))
+}
+
+
+
+
+
+set.seed(2)
+ynew = y0 + rnorm(n,0,0.1)
+objnew = binSeg_fixedThresh(ynew, thresh, verbose=FALSE,
+                            return.env=FALSE)
+
+if(all(mypoly$gamma %*% cbind(ynew) >= mypoly$u)){
+    expect_equal(obj$cp*obj$cp.sign, objnew$cp*obj$cp.sign)
+} else {
+    expect_false(all.equal(obj$cp*obj$cp.sign, objnew$cp*obj$cp.sign))
+}
