@@ -51,16 +51,21 @@ test_that("Null p-values are all uniform", {
 
 
   ## Erase when done:
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)}, mc.cores=3)
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsfs(sim.settings)}, mc.cores=3)
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings.plain)}, mc.cores=3)
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings)}, mc.cores=3)
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_fusedlasso(sim.settings.plain)}, mc.cores=3)
-    a = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_fusedlasso(sim.settings)}, mc.cores=3)
+    a1 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)}, mc.cores=3)
+    a2 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsfs(sim.settings)}, mc.cores=3)
+    a3 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings.plain)}, mc.cores=3)
+    a4 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings)}, mc.cores=3)
+    a5 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_fusedlasso(sim.settings.plain)}, mc.cores=3)
+    a6 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_fusedlasso(sim.settings)}, mc.cores=3)
 
     ## Plot and test
-    qqunif(unlist(a))
-    expect_equal(ks.test(unlist(a),punif)$p.value<0.05, FALSE)
+    methodnames = c("bsft", "bsfs", "wbs-plain", "wbs-rand", "fusedlasso-plain", "fuselasso-rand")
+    for(ii in 1:6){
+        ## qqunif(unlist(a))
+        cat("testing", methodnames[ii])
+        a = list(a1,a2,a3,a4,a5,a6)[[ii]]
+        expect_equal(ks.test(unlist(a),punif)$p.value<0.05, FALSE)
+    }
 
 
 

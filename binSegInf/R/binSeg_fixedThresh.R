@@ -31,8 +31,8 @@ binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return
     obj = structure(list(infotable = env$infotable,
                          y = y,
                          thresh = thresh,
-                         cp = env$infotable[env$infotable[,"pass"],"b"],
-                         cp.sign = env$infotable[env$infotable[,"pass"],"dir"]),
+                         cp = env$infotable[which(env$infotable[,"pass"]),"b"],
+                         cp.sign = env$infotable[which(env$infotable[,"pass"]),"dir"]),
                     class = "bsFt")
 
     if(return.env){ return(env) } else{ return(obj) }
@@ -74,7 +74,7 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=1, k=1, verbos
 
     ## If segment is 2-lengthed, terminate
     if(e-s<1){
-        newrow = data.frame(j=j,k=k,s=s,b=NULL,e=e,pass=FALSE,dir=NA,len=e-s)
+        newrow = data.frame(j=j,k=k,s=s,b=NA,e=e,pass=NA,dir=NA,len=e-s)
         env$infotable = rbind(env$infotable, newrow)
 
     ## Otherwise, calculate CUSUMs

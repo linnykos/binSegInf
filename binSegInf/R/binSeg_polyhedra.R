@@ -83,33 +83,33 @@ polyhedra.bsFt <- function(obj, verbose = F) {
 
 
         ## Collect halfspaces
-        my.halfspaces = halfspaces(s = myrow[,"s"],
-                                   b = myrow[,"b"],
-                                   e = myrow[,"e"],
-                                   z = myrow[,"dir"],
-                                   thresh = obj$thresh,
-                                   n = n,
-                                   y = y,
-                                   is.terminal.node = (!myrow[,"pass"]))
+        if(myrow[,"len"]>=1){
+            my.halfspaces = halfspaces(s = myrow[,"s"],
+                                       b = myrow[,"b"],
+                                       e = myrow[,"e"],
+                                       z = myrow[,"dir"],
+                                       thresh = obj$thresh,
+                                       n = n,
+                                       y = y,
+                                       is.terminal.node = (!myrow[,"pass"]))
+        }
 
         newrows = my.halfspaces[["V"]]
         newconst = my.halfspaces[["u"]]
+        ## rownames(newrows)= rep(paste0(j,"-",k),length(newrowinds))
 
-        ## Move on if no comparisons were made i.e. lengths to left=2, right=1
-        if(dim(newrows)[1]==0) next
+        ## Add to Gamma matrix
+        newrowinds = nrow.G + c(1:nrow(newrows))
+        if(any(newrowinds > nrow(G) )){
+            G = rbind(G, matrix(NA,nrow=nrow(G),ncol=n))
+            u = c(u, rep(NA,length(u)))
+        }
+        G[newrowinds,] = newrows
+        u[newrowinds] = newconst
 
-            ## Add to Gamma matrix
-            newrowinds = nrow.G + c(1:nrow(newrows))
-            if(any(newrowinds > nrow(G) )){
-                G = rbind(G, matrix(NA,nrow=nrow(G),ncol=n))
-                u = c(u, rep(NA,length(u)))
-            }
-            G[newrowinds,] = newrows
-            u[newrowinds] = newconst
-
-           ## Updates for loop
-            nrow.G = nrow.G + nrow(newrows)
-            ii = ii + 1
+        ## Updates for loop
+        nrow.G = nrow.G + nrow(newrows)
+        ii = ii + 1
     }
     if(verbose) cat(fill=T)
 
@@ -128,9 +128,9 @@ polyhedra.bsFt <- function(obj, verbose = F) {
 ##' @return A list of two objects \code{V} and \code{u}, for the halfspaces in
 ##'     represented as V'y>u
 
-halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
+halfspaces <- function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
     if(verbose) cat("s,b,e are", s,b,e, fill=T)
-    if(!is.null(b)){
+    if(!is.na(b)){
         if(!(s <= b & b <= e)){
             stop("s<=b<=e is not true")
         }
@@ -155,29 +155,19 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
     V[ii,] = vz.this
     u[ii] = 0
 
-    ## 2. Characterizing threshold exceedance/nonexceedance
+    ## If it isn't a terminal node
     if(!is.terminal.node){
+        ## 2. Characterizing threshold exceedance/nonexceedance
         ii = ii+1
         V[ii,] = vz.this
         u[ii] = thresh
-    } else {
-        stopifnot(sum(-vz.this*y) > -thresh)
-        ii = ii + 1
-        V[ii,] = -vz.this
-        u[ii] = -thresh
-    }
 
-    if(length(other.bs) == 0){
-        V = V[c(),]
-    } else {
         for(other.b in other.bs){
-
-            ## Sqrt mean difference of (s,other.b,e)
             v.other = cusum(s=s, b=other.b, e=e, y=y, contrast.vec=T,
                             right.to.left=T)
 
             ## 3. Characterizing maximizer of |sqrt mean difference|
-            ## if(!is.terminal.node){
+            if(!is.terminal.node){
                 ## other cusum is larger than -|this cusum|
                 ii = ii+1
                 stopifnot(-sum(vz.this*y) < sum(v.other*y))
@@ -188,11 +178,44 @@ halfspaces = function(s, b, e, z, thresh, n, y, is.terminal.node=F , verbose=F){
                 stopifnot(sum(v.other*y) < sum(vz.this*y) )
                 V[ii,] = vz.this - v.other
                 u[ii] = 0
-            ## }
+            }
         }
-
-        V = V[1:ii,,drop=F]
-        u = u[1:ii]
     }
+
+    ## If it is a terminal node
+    if(is.terminal.node){
+        for(other.b in other.bs){
+            v.other = cusum(s=s, b=other.b, e=e, y=y, contrast.vec=T,
+                            right.to.left=T)
+
+            ## 4. Characterizing nonexceedance of |cusum|
+            if(!is.terminal.node){
+                ## other cusum is larger than -thresh
+                ii = ii+1
+                stopifnot( sum(v.other*y) > -thresh)
+                V[ii,] =  v.other + thresh
+                u[ii] = thresh
+                ## other cusum is smaller than +thresh
+                ii = ii+1
+                stopifnot(sum(v.other*y) < thresh )
+                V[ii,] = - v.other + thresh
+                u[ii] = thresh
+            }
+        }
+    }
+
+    V = V[1:ii,,drop=F]
+    u = u[1:ii]
+
     return(list(V=V,u=u))
 }
+
+## Testing code
+## s = myrow[,"s"];
+##                                    b = myrow[,"b"];
+##                                    e = myrow[,"e"];
+##                                    z = myrow[,"dir"];
+##                                    thresh = obj$thresh;
+##                                    n = n;
+##                                    y = y;
+##                                    is.terminal.node = (!myrow[,"pass"])

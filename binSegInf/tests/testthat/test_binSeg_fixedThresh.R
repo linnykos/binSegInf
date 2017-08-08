@@ -8,7 +8,7 @@ sigma = 1
 
 test_that("Algorithm output is the same as wbs:sbs() each time", {
 
-    for(seed in 1:50){
+    for(seed in 1:1000){
 
         ## Generate some data
         mn <- rep(c(0,lev), each=n/2)
