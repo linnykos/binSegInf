@@ -42,7 +42,7 @@ binSeg_fixedThresh = function(y, thresh, s=1, e=length(y), verbose=FALSE, return
 ##' Checks of object is of class "bsFt", produced by binSeg_fixedThresh().
 ##' @param obj bsFt object
 is_valid.bsFt <- function(obj){
-    if(!(all(names(obj) %in% c("bs.info",
+    if(!(all(names(obj) %in% c("infotable",
                                "y",
                                "thresh",
                                "cp",
@@ -115,6 +115,5 @@ binseg.by.thresh.inner <- function(y, thresh, s=1, e=length(y), j=1, k=1, verbos
 
 ##' Print function for bsFt class
 print.bsFt <- function(obj){
-    cat("Changepoint set is ", obj$cp*obj$cp.sign,fill=TRUE)
+    cat("Changepoint set is ", obj$cp*obj$cp.sign, "produced from threshold =", obj$thresh, fill=TRUE)
 }
-

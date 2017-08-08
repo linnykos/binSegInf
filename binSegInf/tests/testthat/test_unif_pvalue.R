@@ -61,8 +61,7 @@ test_that("Null p-values are all uniform", {
     ## Plot and test
     methodnames = c("bsft", "bsfs", "wbs-plain", "wbs-rand", "fusedlasso-plain", "fuselasso-rand")
     for(ii in 1:6){
-        ## qqunif(unlist(a))
-        cat("testing", methodnames[ii])
+        cat("testing", methodnames[ii],fill=TRUE)
         a = list(a1,a2,a3,a4,a5,a6)[[ii]]
         expect_equal(ks.test(unlist(a),punif)$p.value<0.05, FALSE)
     }
