@@ -1,3 +1,4 @@
+rm(list=ls())
 library(binSegInf)
 set.seed(10)
 ## Simulation settings
@@ -28,3 +29,6 @@ for(isim in 1:nsim){
 
 plot(sort(pmat[,"pv"]), seq(0, 1, length.out = nsim))
 lines(x = c(0,1), y = c(0,1), col = "red", lwd = 2)
+
+res <- ks.test(pmat[,"pv"], punif, alternative = "two.sided")
+res$p.value
