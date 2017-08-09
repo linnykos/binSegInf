@@ -34,29 +34,28 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
 
         ## Generate interval
         cp <- .get_cp_from_segment_contrast(v)
+            set.seed(isimmm)
         i = generate_intervals(length(y), numIntervals)
+
+        ## Handle case where interval i precludes selection entirely
         if(!.i_covers_cp(i,cp)){return(NULL)}
+
+        ## Fit new wbs
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
         if(length(obj$cp)==0){return(NULL)}
 
         ## Calculate num & denom of TG
         poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
-        ## poly <- polyhedra(obj, reduce=TRUE, v=v, sigma=sigma)
         tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100,reduce=reduce)
 
-
-        ## Checking whether tg partitions things properly (Erase when done)
-        poly.pval(y,poly$gamma,poly$u,v,sigma)
-        ## Checking whether poly.pval2() is right (Erase when done)
-        poly.pval2(y,poly,v,sigma)
-        poly.pval2(y,poly,v,sigma,vup=poly$vup,vlo=poly$vlo)
-
+        ## Check if tg partition is weird
+        tg$denom = min(1, max(tg$denom,0))
+        tg$numer = min(tg$denom, max(tg$numer,0))
 
         return(list(numer = tg$numer, denom = tg$denom))
     }
 
     ## Collect weighted p-values and their weights
-    ## pvlist = lapply(1:nsim.is, function(isim) {get_one(bit=bits)})
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
 
