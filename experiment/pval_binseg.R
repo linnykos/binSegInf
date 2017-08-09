@@ -1,4 +1,5 @@
 library(binSegInf)
+set.seed(10)
 ## Simulation settings
 n <- 20
 numSteps <- 1
@@ -26,3 +27,4 @@ for(isim in 1:nsim){
 }
 
 plot(sort(pmat[,"pv"]), seq(0, 1, length.out = nsim))
+lines(x = c(0,1), y = c(0,1), col = "red", lwd = 2)
