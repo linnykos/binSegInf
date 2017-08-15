@@ -50,6 +50,13 @@ test_that("Null p-values are all uniform", {
     }, methods, settings)
 
 
+    sim.settings = list(sigma=1, lev=0, nsim.is=100, numSteps=1,
+                        numIntervals=20, n=6, meanfun=onejump,
+                        reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
+                        cleanmn.bootstrap=NULL, thresh = 1,
+                        type = "random")##plain
+    onesim_wbs(sim.settings)
+
   ## Erase when done:
     a1 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)}, mc.cores=3)
     a2 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsfs(sim.settings)}, mc.cores=3)

@@ -111,15 +111,22 @@ onesim_wbs <- function(sim.settings){
     intervals <- generate_intervals(length(y),numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
     contrasts <- make_all_segment_contrasts(obj)
+    mycontrast = rep(1/n,n)
+    ## contrasts <- list(rep(1/n,n))
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     for(ii in 1:length(obj$cp)){
-        poly <- polyhedra(obj, v = contrasts[[ii]], reduce=reduce, sigma=sigma)
+        poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
+                        , reduce=reduce, sigma=sigma)
         if(type=="plain"){
             pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrasts[[ii]],
                                          sigma=sigma, reduce=reduce)$pv
         } else {
+            print(mycontrast)
+            browser()
             pvec[ii] <- randomized_wildBinSeg_pv(y=y,
-                                                 v=contrasts[[ii]], sigma=sigma,
+                                                 v=mycontrast,
+                                                     ## contrasts[[ii]]
+                                               sigma=sigma,
                                                  numSteps=numSteps,
                                                  numIntervals=numIntervals,
                                                  nsim.is=nsim.is, bits=100,
