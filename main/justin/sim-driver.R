@@ -115,23 +115,26 @@ onesim_wbs <- function(sim.settings){
     ## contrasts <- list(rep(1/n,n))
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     for(ii in 1:length(obj$cp)){
+        if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
+            mycontrast=contrasts[[ii]]
+        } else {
+            mycontrast = sim.settings$v
+        }
         poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
                         , reduce=reduce, sigma=sigma)
+
+
         if(type=="plain"){
-            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrasts[[ii]],
+            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
                                          sigma=sigma, reduce=reduce)$pv
         } else {
-            print(mycontrast)
-            browser()
             pvec[ii] <- randomized_wildBinSeg_pv(y=y,
                                                  v=mycontrast,
-                                                     ## contrasts[[ii]]
                                                sigma=sigma,
                                                  numSteps=numSteps,
                                                  numIntervals=numIntervals,
                                                  nsim.is=nsim.is, bits=100,
-                                                 reduce=reduce,
-                                                 augment=augment)
+                                                 reduce=reduce, augment=augment)
         }
     }
     if(type=="plain"){ return(pvec.plain) } else {  return(pvec) }
@@ -196,11 +199,16 @@ onesim_fusedlasso <- function(sim.settings){
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     poly <- polyhedra(obj$Gobj.naive$G, obj$Gobj.naive$u)
     for(ii in 1:length(obj$cp)){
+        if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
+            mycontrast=contrasts[[ii]]
+        } else {
+            mycontrast = sim.settings$v
+        }
        if(type=="plain"){
-            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=contrasts[[ii]],
+            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
                                          sigma=sigma, reduce=reduce)$pv
         } else {
-            pvec[ii] <- randomized_genlasso_pv(y=y, v=contrasts[[ii]],
+            pvec[ii] <- randomized_genlasso_pv(y=y, v=mycontrast,
                                                sigma=sigma, numSteps=numSteps,
                                                numIntervals=numIntervals,
                                                nsim.is=nsim.is, bits=100,

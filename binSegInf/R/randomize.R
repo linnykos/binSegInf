@@ -33,7 +33,7 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
         }
 
         ## Generate interval
-        ## cp <- .get_cp_from_segment_contrast(v)
+         ## cp <- .get_cp_from_segment_contrast(v)
         i = generate_intervals(length(y), numIntervals)
 
         ## Fit new wbs
@@ -68,11 +68,17 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
         }
 
 
+<<<<<<< HEAD
         ## ## Check if tg partition is weird
         ## if(tg$denom >1 | tg$denom <0) print(paste("tg denom was", tg$denom))
         ## tg$denom = min(1, max(tg$denom,0))
         ## if(tg$denom < tg$numer | tg$numer < 0) print(paste("tg numer was", tg$numer))
         ## tg$numer = min(tg$denom, max(tg$numer,0))
+=======
+        ## Check if tg partition gives any negative or unusual values
+        tg$denom = min(1, max(tg$denom,0))
+        tg$numer = min(tg$denom, max(tg$numer,0))
+>>>>>>> d06b0752ffdfe33b30719a40d72036643ec330ba
 
 
         ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
@@ -136,7 +142,7 @@ randomized_genlasso_pv <- function(y, sigma, D, v, numSteps=NULL, numIntervals,
         n = length(y)
         sigmanoise = 0.1 ## sigma*0.1
         noise = rnorm(n,0,1)
-        probnoise = prod(sapply(ii:length(noise), function(ii) dnorm(noise[ii],0,sigmanoise)))
+        probnoise = prod(sapply(1:length(noise), function(ii) dnorm(noise[ii],0,sigmanoise)))
         ynew = y + noise
 
         ## Run fused lasso again

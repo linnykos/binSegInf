@@ -40,7 +40,7 @@ test_that("Null p-values are all uniform", {
     settings = list(sim.settings, sim.settings, sim.settings.plain,
                     sim.settings, sim.settings.plain, sim.settings)
 
-    ## Conduct the ks. tests
+    ## Conduct all KS tests
     Map(function(mymethod, mysetting){
         a = mclapply(1:nsim,
                      function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)},
@@ -50,12 +50,6 @@ test_that("Null p-values are all uniform", {
     }, methods, settings)
 
 
-    sim.settings = list(sigma=1, lev=0, nsim.is=100, numSteps=1,
-                        numIntervals=20, n=6, meanfun=onejump,
-                        reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
-                        cleanmn.bootstrap=NULL, thresh = 1,
-                        type = "random")##plain
-    onesim_wbs(sim.settings)
 
   ## Erase when done:
     a1 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)}, mc.cores=3)
@@ -77,3 +71,22 @@ test_that("Null p-values are all uniform", {
 
     ## Ideas:: Randomization wrapper to methods that produce obj$cp, obj$cp.sign? Or
     ## randomization wrapper once given a v?
+    source('../main/justin/sim-driver.R')
+    sim.settings = list(sigma=1, lev=0, nsim.is=10, numSteps=1,
+                        numIntervals=20, n=6, meanfun=onejump,
+                        reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
+                        cleanmn.bootstrap=NULL, thresh = 1,
+                        type = "random", v=runif(6,0,1))##plain
+    sim.settings.plain = sim.settings; sim.settings.plain[["type"]]="plain"
+    nsim=1000
+    onesim_wbs(sim.settings)
+    a3 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings)}, mc.cores=3)
+    onesim_fusedlasso(sim.settings)
+    a6 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_fusedlasso(sim.settings)}, mc.cores=3)
+    qqunif(unlist(a3))
+    qqunif(unlist(a6))
+
+    ## Not getting uniformity even after fixing the
+
+    ## Ideas: fix v and see if this is still true?
+
