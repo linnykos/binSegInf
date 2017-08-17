@@ -50,7 +50,8 @@ test_that("Null p-values are all uniform", {
     }, methods, settings)
 
 
-  ## Erase this blob when done with manual playing around:
+
+  ## Erase when done:
     a1 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsft(sim.settings)}, mc.cores=3)
     a2 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_bsfs(sim.settings)}, mc.cores=3)
     a3 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings.plain)}, mc.cores=3)
