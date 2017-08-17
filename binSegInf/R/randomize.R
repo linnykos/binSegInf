@@ -34,7 +34,6 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
 
         ## Generate interval
         cp <- .get_cp_from_segment_contrast(v)
-            set.seed(isimmm)
         i = generate_intervals(length(y), numIntervals)
 
         ## Handle case where interval i precludes selection entirely
@@ -48,7 +47,7 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
         poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
         tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100,reduce=reduce)
 
-        ## Check if tg partition is weird
+        ## Check if tg partition gives any negative or unusual values
         tg$denom = min(1, max(tg$denom,0))
         tg$numer = min(tg$denom, max(tg$numer,0))
 
@@ -102,7 +101,7 @@ randomized_genlasso_pv <- function(y, sigma, D, v, numSteps=NULL, numIntervals,
         n = length(y)
         sigmanoise = 0.1 ## sigma*0.1
         noise = rnorm(n,0,1)
-        probnoise = prod(sapply(ii:length(noise), function(ii) dnorm(noise[ii],0,sigmanoise)))
+        probnoise = prod(sapply(1:length(noise), function(ii) dnorm(noise[ii],0,sigmanoise)))
         ynew = y + noise
 
         ## Run fused lasso again
