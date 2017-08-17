@@ -1,67 +1,64 @@
 ## Synopsis: See if manual sampling works.
 
-
 ## Setting:
 n=10
 numIntervals= 10
 library(genlassoinf)
 library(binSegInf)
+library(MASS)
 
 
 ## Helpers
 do.wildbinseg <- function(y){
     I = binSegInf::generate_intervals(length(y), numIntervals)
     original.model = binSegInf::wildBinSeg_fixedSteps(y,intervals=I, numSteps=1)
-    original.cp = original.model$cp * original.model$cp.sign
 }
 do.fl <- function(y){
     original.model = genlassoinf::dualpathSvd2(y,
                                                D=genlassoinf::makeDmat(length(y),ord=1,type='tf'),
                                                maxsteps=1)
-    original.cp = original.model$cp * original.model$cp.sign
 }
 
-
-
 ## Try wild binary segmentation fused lasso (1 step)
-nsim = 300
+nsim = 1000
 nsamp = 200
 addsigma=.1
 ## method = "wbs"
 ## type="segment"
-method = "fl"
+method = "wbs"
 type="fixed"
 cat(fill=TRUE)
 pvs = mclapply(1:nsim, function(isim){
     cat('\r', isim, "out of", nsim)
     z1list = list()
 
+    ## Original data / model / contrast
+    mu = rep(0,n)
     y0 = mu + rnorm(n,0,1)
     if(method=="wbs"){
-        original.cp = do.wildbinseg(y0)
+        original.model = do.wildbinseg(y0)
     }
     if(method=="fl"){
         y1 = y0 + rnorm(n,0,addsigma)
-        original.cp = do.fl(y0)
+        original.model = do.fl(y0)
     }
+    original.cp = original.model$cp * original.model$cp.sign
 
     if(type=="fixed"){
         v = runif(n)
         v = v/sqrt(sum(v*v))
-        mu = rep(0,n)
-        Proj = cbind(v)%*%rbind(v)
-        Proj.perp = diag(rep(1,n)) - cbind(v)%*%rbind(v)
     }
     if(type=="segment"){
         contrasts <- make_all_segment_contrasts(original.model)
         v = contrasts[[as.character(original.cp[1])]]
     }
+    Proj = cbind(v)%*%rbind(v)
+    Proj.perp = diag(rep(1,n)) - cbind(v)%*%rbind(v)
 
     ## Generate new data
-    z0 = mvrnorm(nsamp, Proj%*%mu, Proj%*%t(Proj))
+    z0 = MASS::mvrnorm(nsamp, Proj%*%mu, Proj%*%t(Proj))
     z1mat = apply(z0, 1, function(myrow) Proj.perp%*%y0 + myrow)
     z1list = lapply(1:nsamp, function(isim)z1mat[,isim])
-
 
     ## Rejection sample
     if(method=="wbs"){
@@ -76,11 +73,10 @@ pvs = mclapply(1:nsim, function(isim){
         },z1list,Ilist)
     }
     if(method=="fl"){
-        addednoiselist = replicate(...)
         ## Get rejection sampled z's
         cond.z1list = lapply(z1list, function(z1){
             y1 = y0 + rnorm(n,0,addsigma)
-            new.cp = do.fl(y0)
+            new.cp = do.fl(y1)
             if(all.equal(original.cp,new.cp)==TRUE) return(z1) else return(NULL)
         })
     }
@@ -93,8 +89,8 @@ pvs = mclapply(1:nsim, function(isim){
 
     return(pv)
 
-},mc.cores=3)
+},mc.cores=2)
 
-qqunif(unlist(pvs))
-qqunif(unlist(pvs))
+## qqunif(unlist(pvs))
+
 
