@@ -102,8 +102,8 @@ poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
 
 
 ##' Temporarily added from selectiveInference package.
-tnorm.surv <- function(z, mean, sd, a, b, bits=NULL) {
-  z = max(min(z,b),a)
+tnorm.surv <- function(z, mean, sd, a, b, bits=NULL, correct.ends=TRUE) {
+    if(correct.ends) z = max(min(z,b),a)
 
   # Check silly boundary cases
   p = numeric(length(mean))
@@ -190,7 +190,7 @@ ff <- function(z) {
 ##'     pvalue. (i.e. precision of Rmpfr)
 ##'
 ##' @return List of vup, vlo and pv.
-poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, reduce=FALSE) {
+poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, reduce=FALSE, correct.ends=FALSE) {
 
 
     z = sum(v*y)
@@ -199,7 +199,7 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 
     ## If vup&vlo are both present in poly, simply calculate and return the pv
     if(!is.null(poly$vup) & !is.null(poly$vlo)){
-        pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits)
+        pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
         vlo = poly$vlo
         vup = poly$vup
     } else {
@@ -211,10 +211,10 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
             vec = (u - G %*% y + rho*z) / rho
             vlo = suppressWarnings(max(vec[rho>0]))
             vup = suppressWarnings(min(vec[rho<0]))
-            pv = tnorm.surv(z,0,sd,vlo,vup,bits)
+            pv = tnorm.surv(z,0,sd,vlo,vup,bits, correct.ends=correct.ends)
         } else {
             ## if(is.null(vlo) | is.null(vup))stop("provide vup&vlo!")
-            pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits)
+            pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
         }
     }
 

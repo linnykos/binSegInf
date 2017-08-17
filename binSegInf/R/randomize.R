@@ -16,8 +16,8 @@
 ##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
-                                     numIntervals, nsim.is, bits=NULL,
+randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
+                                     numIntervals, nsim.is, bits=100,
                                      reduce=FALSE, augment=TRUE){
 
    ## Helper to generate an interval and return /weighted/ inner tg p-value
@@ -33,41 +33,75 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, numSteps=NULL,
         }
 
         ## Generate interval
-        cp <- .get_cp_from_segment_contrast(v)
-            set.seed(isimmm)
+        ## cp <- .get_cp_from_segment_contrast(v)
         i = generate_intervals(length(y), numIntervals)
-
-        ## Handle case where interval i precludes selection entirely
-        if(!.i_covers_cp(i,cp)){return(NULL)}
 
         ## Fit new wbs
         obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
+        ## print(paste('original cp and and new cp are', cp, "and", obj$cp))
         if(length(obj$cp)==0){return(NULL)}
 
         ## Calculate num & denom of TG
         poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
-        tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=100,reduce=reduce)
+        tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=bits,reduce=reduce)
 
-        ## Check if tg partition is weird
-        tg$denom = min(1, max(tg$denom,0))
-        tg$numer = min(tg$denom, max(tg$numer,0))
+        ## Handle case where interval i precludes selection entirely
+        ## if(!.i_covers_cp(i,cp)){return(NULL)}
 
-        return(list(numer = tg$numer, denom = tg$denom))
+        ## In certain exceptions, we need to add to the denominator but handle the
+        ## numerator appropriately.
+        tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
+        selected.model.was.different = (tg$pv>1 | tg$pv < 0)
+        exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
+        if(exception){
+            ## print('exception happened!')
+            ## print(c(!.i_covers_cp(i,cp) , tg.behaves.weird , selected.model.was.different))
+            if(tg.behaves.weird) print("tg behaves weird!")
+            if(selected.model.was.different) print("selected model was different!")
+            ## Add this quantity to Wi
+            Wi = tg$denom
+            ## Add zero to pv
+            pv = 0
+        } else {
+            Wi = tg$denom
+            pv = tg$pv
+        }
+
+
+        ## ## Check if tg partition is weird
+        ## if(tg$denom >1 | tg$denom <0) print(paste("tg denom was", tg$denom))
+        ## tg$denom = min(1, max(tg$denom,0))
+        ## if(tg$denom < tg$numer | tg$numer < 0) print(paste("tg numer was", tg$numer))
+        ## tg$numer = min(tg$denom, max(tg$numer,0))
+
+
+        ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
+        return(list(pv=pv, Wi=tg$denom, exception=exception))
     }
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
-    pvlist = .filternull(pvlist)
+    ## pvlist = .filternull(pvlist)
 
     if(length(pvlist)==0) return(NULL)
 
     ## Calculate p-value and return
-    sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
-    sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
-    pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
+    ## sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
+    ## sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
+    ## pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
 
-    return(pv)
+    ## Calculate randomized p-value
+    p.vec = sapply(pvlist,function(oneobj)  oneobj[["pv"]] )
+    w.vec = sapply(pvlist, function(oneobj) oneobj[["Wi"]])
+    exceptions = sapply(pvlist, function(oneobj) oneobj[["exception"]])
+
+    sumNumer = sum(p.vec * w.vec)
+    sumDenom = sum(w.vec)
+    randomized.pv = sumNumer/sumDenom
+
+    return(list(pv=randomized.pv, p.vec = p.vec, exceptions = exceptions))
 }
+
 
 
 

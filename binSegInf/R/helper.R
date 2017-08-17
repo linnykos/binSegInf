@@ -63,7 +63,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -76,7 +76,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
     ## This is because in order to partition the TG statistic, we need to form
     ## these anyway.
-    pvobj <- poly.pval2(y, poly, v, sigma)
+    pvobj <- poly.pval2(y, poly, v, sigma,correct.ends=correct.ends)
     vup = pvobj$vup
     vlo = pvobj$vlo
     vy = max(min(vy, vup),vlo)
@@ -86,7 +86,8 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
     if(!(a<=z &  z<=b)){
-        browser()
+        ## browser()
+        print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
 
     ## Separately store and return num&denom of TG
@@ -96,8 +97,9 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce){
     ## Form p-value as well.
     pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
                     (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+    if(!(0 <= pv & pv <= 1)) print("pv was not between 0 and 1, in partition_TG()!")
 
-    return(list(denom=denom, numer=numer, pv = pv))
+    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vy=vy, vup=vup))
 }
 
 
