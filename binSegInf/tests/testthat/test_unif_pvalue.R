@@ -72,6 +72,7 @@ test_that("Null p-values are all uniform", {
     ## Ideas:: Randomization wrapper to methods that produce obj$cp, obj$cp.sign? Or
     ## randomization wrapper once given a v?
     source('../main/justin/sim-driver.R')
+<<<<<<< Updated upstream
     sim.settings = list(sigma=1, lev=0, nsim.is=10, numSteps=1,
                         numIntervals=20, n=6, meanfun=onejump,
                         reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
@@ -90,3 +91,19 @@ test_that("Null p-values are all uniform", {
 
     ## Ideas: fix v and see if this is still true?
 
+=======
+    sim.settings = list(sigma=1, lev=0, nsim.is=50, numSteps=1,
+                        numIntervals=5, n=10, meanfun=onejump,
+                        reduce=FALSE,augment=TRUE,  bootstrap=FALSE, std.bootstrap=NULL,
+                        cleanmn.bootstrap=NULL, thresh = 1,
+                        type = "random",v = runif(10,-1,1))##plain
+    nsim=100
+    a4 = mclapply(1:nsim, function(isim){printprogress(isim,nsim); onesim_wbs(sim.settings)}, mc.cores=3)
+    onesim_wbs(sim.settings)
+
+    ## If I make numIntervals small, I think exceptions will happen more.
+    ## Exceptions basically mean that WBS picked different model, or that i was
+    ## I think tg behaving weird /when/ WBS picks the same model is rare.
+    qqunif(unlist(a4))
+}
+>>>>>>> Stashed changes

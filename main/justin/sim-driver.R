@@ -110,18 +110,18 @@ onesim_wbs <- function(sim.settings){
     method <- wildBinSeg_fixedSteps
     intervals <- generate_intervals(length(y),numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
+    ## print(paste("my original changepoint is", obj$cp))
     contrasts <- make_all_segment_contrasts(obj)
-    mycontrast = rep(1/n,n)
-    ## contrasts <- list(rep(1/n,n))
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
     for(ii in 1:length(obj$cp)){
-        if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
-            mycontrast=contrasts[[ii]]
-        } else {
-            mycontrast = sim.settings$v
-        }
+        ## if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
+        ##     mycontrast=contrasts[[ii]]
+        ## } else {
+        ##     mycontrast = sim.settings$v
+        ## }
+        mycontrast = sim.settings$v
         poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
-                        , reduce=reduce, sigma=sigma)
+                          reduce=reduce, sigma=sigma)
 
 
         if(type=="plain"){
@@ -130,11 +130,13 @@ onesim_wbs <- function(sim.settings){
         } else {
             pvec[ii] <- randomized_wildBinSeg_pv(y=y,
                                                  v=mycontrast,
-                                               sigma=sigma,
+                                                 cp=obj$cp,
+                                                 sigma=sigma,
                                                  numSteps=numSteps,
                                                  numIntervals=numIntervals,
                                                  nsim.is=nsim.is, bits=100,
-                                                 reduce=reduce, augment=augment)
+                                                 reduce=reduce,
+                                                 augment=augment)$pv
         }
     }
     if(type=="plain"){ return(pvec.plain) } else {  return(pvec) }
