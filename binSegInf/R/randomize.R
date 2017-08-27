@@ -50,35 +50,22 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
 
         ## In certain exceptions, we need to add to the denominator but handle the
         ## numerator appropriately.
-        tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
-        selected.model.was.different = (tg$pv>1 | tg$pv < 0)
-        exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
-        if(exception){
-            ## print('exception happened!')
-            ## print(c(!.i_covers_cp(i,cp) , tg.behaves.weird , selected.model.was.different))
-            if(tg.behaves.weird) print("tg behaves weird!")
-            if(selected.model.was.different) print("selected model was different!")
-            ## Add this quantity to Wi
-            Wi = tg$denom
-            ## Add zero to pv
-            pv = 0
-        } else {
+        ## tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
+        ## selected.model.was.different = (tg$pv>1 | tg$pv < 0)
+        ## exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
+        ## if(exception){
+        ##     if(tg.behaves.weird) print("tg behaves weird!")
+        ##     if(selected.model.was.different) print("selected model was different!")
+        ##     Wi = tg$denom
+        ##     pv = 0
+        ## } else {
             Wi = tg$denom
             pv = tg$pv
-        }
+        ## }
 
-
-<<<<<<< HEAD
-        ## ## Check if tg partition is weird
-        ## if(tg$denom >1 | tg$denom <0) print(paste("tg denom was", tg$denom))
-        ## tg$denom = min(1, max(tg$denom,0))
-        ## if(tg$denom < tg$numer | tg$numer < 0) print(paste("tg numer was", tg$numer))
-        ## tg$numer = min(tg$denom, max(tg$numer,0))
-=======
         ## Check if tg partition gives any negative or unusual values
         tg$denom = min(1, max(tg$denom,0))
         tg$numer = min(tg$denom, max(tg$numer,0))
->>>>>>> d06b0752ffdfe33b30719a40d72036643ec330ba
 
 
         ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
