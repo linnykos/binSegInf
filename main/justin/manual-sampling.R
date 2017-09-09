@@ -1,4 +1,4 @@
-## Synopsis: See if manual sampling works. (vastly sampling original manual-sampling.R)
+## Synopsis: See if manual rejection sampling works for selected model teseting.
 n=20
 numIntervals= 10
 library(genlassoinf)

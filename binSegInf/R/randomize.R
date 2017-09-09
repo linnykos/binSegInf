@@ -69,7 +69,8 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
 
 
         ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
-        return(list(pv=pv, Wi=tg$denom, exception=exception))
+        ## return(list(pv=pv, Wi=tg$denom, exception=exception))
+        return(list(pv=pv, Wi=tg$denom))
     }
 
     ## Collect weighted p-values and their weights
