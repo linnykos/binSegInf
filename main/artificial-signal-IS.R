@@ -7,56 +7,65 @@ coriell_mn <- function(lev=1,n){
     h = max(abs(newmn))
     return((newmn / h * std) * lev)
 }
-n = length(coriell_mn(1))
+## n = length(coriell_mn(1))
+n = 100
 numSteps = 1
 numIntervals = 100
 lev=3
-nreplicate =  c(100,50,10)
-nsims.is = c(10,100,1000)
-ptm <- proc.time()
+sigma=1
+nreplicate =  c(100,50,20)
+nsims.is = c(10,100,500)
+mc.cores=5
+sim.settings = list(numIntervals=numIntervals,
+                    nreplicate=nreplicate,
+                    lev=lev,
+                    numSteps=numSteps,
+                    nsim.is=nsim.is)
+
+## ## Temporary settings
+## nreplicate =  c(100,50,10)/10
+## nsims.is=c(3,3,3)
+## sigma=1
+## n=20
+
 
 for(ii in 1:3){
-  nsim.is = nsims.is[ii]
-  cat("nsim.is is", nsim.is, "out of", nsims.is, fill=TRUE)
+    nsim.is = nsims.is[ii]
+    cat("nsim.is is", nsim.is, "out of", nsims.is, fill=TRUE)
 
-  set.seed(0)
-  y <- coriell_mn(lev,n) + rnorm(n,0,std)
-  p.wsbs.list = list()
+    ## Generate data
+    set.seed(0)
+    ## y <- coriell_mn(lev,n) + rnorm(n,0,std)
+    y <- mn.onejump(lev,n) + rnorm(n,0,1)
 
-  for(irep in 1:(nreplicate[ii])){
+    ## p.wbsfs.list = list()
+    ## for(irep in 1:(nreplicate[ii])){
+    p.wbsfs.list = mclapply(1:(nreplicate[ii]), function(irep){
 
-    cat("replicate", irep, "out of", nreplicate[ii], fill=TRUE)
-    print("this replicate starts")
-    print(proc.time() - ptm)
+        cat("\r", "replicate", irep, "out of", nreplicate[ii])
 
-    method <- wildBinSeg_fixedSteps
-    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals, seed=0)
-    obj <- method(y, numSteps=numSteps, intervals=intervals)
+        method <- wildBinSeg_fixedSteps
+        intervals <- generate_intervals(n=length(y),numIntervals=numIntervals, seed=0)
+        obj <- method(y, numSteps=numSteps, intervals=intervals)
+        poly <- polyhedra(obj)
 
-    print("ran method")
-    print(proc.time() - ptm)
+        contrast <- make_all_segment_contrasts(obj)
+        p.wbsfs = rep(NA,length(obj$cp))
+        names(p.wbsfs) = obj$cp
+        for(ii in 1:length(obj$cp)){
+            p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
+                                                    v=contrast[[ii]], sigma=sigma,
+                                                    numSteps=numSteps,
+                                                    numIntervals=numIntervals,
+                                                    nsim.is=nsim.is, bits=100)
+        }
+        ## p.wbsfs.list[[irep]] = p.wbsfs
+    }, mc.cores=mc.cores)
 
-    poly <- polyhedra(obj)
-
-    print("collected polyhedron")
-    print(proc.time() - ptm)
-
-    contrast <- make_all_segment_contrasts(obj)
-    for(ii in 1:length(obj$cp)){
-        p.wbsfs[ii] <- randomized_wildBinSeg_pv(y=y,
-                                                v=contrast[[ii]], sigma=sigma,
-                                                numSteps=numSteps,
-                                                numIntervals=numIntervals,
-                                                nsim.is=nsim.is, bits=100)
-    }
-    p.wbsfs = cbind(rep(isim,length(obj$cp)), obj$cp, p.wbsfs)
-    colnames(p.wbsfs.nonrand) = colnames(p.wbsfs) = c("isim","cp","pv")
-    p.wbsfs.list[[irep]] = p.wbsfs
-  }
-
-  ## Save each result
-  filename=paste0("artificial-nsimis-",nsim.is ,".Rdata")
-  save(p.wsfs.list, filename, dir="../main/data")
+    ## Save each result
+    filename = paste0("artificial-nsimis-", nsim.is ,".Rdata")
+    save(p.wbsfs.list, sim.settings, file = file.path("../results", filename) )
+    cat(fill=TRUE)
 }
 
 

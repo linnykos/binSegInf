@@ -42,7 +42,7 @@ adddd = function(newsigns,M,env){
 }
 
 
-##' filter NULLs out of a pvlist.
+## filter filternullNULLs out of a pvlist.
 .filternull <- function(pvlist){
     emptyguys = unlist(lapply(pvlist, function(pvobj) return(length(pvobj)==0)))
     return(pvlist[which(!emptyguys)])
@@ -74,9 +74,8 @@ maximize = function(s, e, y, getb=TRUE){
 ##'     in the relevant interval (s:e) at runtime of wbs()
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
-##' @param augment TRUE of binary segmentation is run in augment mode.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-.make_semat = function(m, s, e, intervals, y, thresh, augment){
+make_semat = function(m, s, e, intervals, y, thresh){
 
     ## Make bare matrix
     mymat = matrix(NA, ncol=7, nrow = length(m), dimnames=NULL)
@@ -84,16 +83,16 @@ maximize = function(s, e, y, getb=TRUE){
     colnames(mymat) = c("m", "s", "b", "e", "maxcusum", "maxhere",
                         "passthreshold")
 
-    ## Fill in information about selection
-   if(augment){
-    se.for.each.m = vector("list", length(m))
-    if(length(m)>1) se.for.each.m[1:(length(m)-1)] = intervals$se[m[1:(length(m)-1)]]
-    se.for.each.m[[length(m)]] = c(s,e)
-  }
-  else{
-    se.for.each.m = intervals$se[m]
-  }
+    ## Handle the case of m containing zeros.
+    which.zero = which(m==0)
+    if(length(which.zero)>0){
+        m.without.zeros = m[-which.zero]
+        se.for.each.m = c(intervals$se[m.without.zeros], list(c(s,e)))
+    } else {
+        se.for.each.m = intervals$se[m]
+    }
 
+    ## Fill in information about selection
     mymat[,"m"] = m
     mymat[,"s"] = sapply(se.for.each.m, function(vec)vec[1])
     mymat[,"b"] = sapply(se.for.each.m,
@@ -124,7 +123,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-.make_signs = function(m, s, e, intervals, y, thresh){
+make_signs = function(m, s, e, intervals, y, thresh){
 
     ## Basic checks
     stopifnot(length(m)==1)
@@ -167,10 +166,9 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param seed seed number for random interval generation; defaults to NULL.
 ##' @param start.end.list Manual list of starts and ends. Literally an R list
 ##' with two equal length vectors, each named |start| and |end|
-##' @param augment Augment the intervals with [s,e]
 ##' @return List containing starts and ends and intervals etc.
 ##' @export
-generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL, augment = FALSE){
+generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL){
 
     ## Basic checks
     stopifnot(n>1)
@@ -233,10 +231,14 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
 ## After making intervals, you can attempt to plot them.
 plot_intervals <- function(intervals){
     numIntervals = length(intervals$se)
-    plot(NA, ylim = c(0,numIntervals), xlim = c(0,n), xlab = "intervals", ylab = "")
+    graphics::plot(NA,
+                ylim = c(0,numIntervals),
+                xlim = c(0,max(intervals$e)),
+                xlab = "intervals",
+                ylab = "")
     for(ii in 1:numIntervals){
         se = intervals$se[[ii]]
-        lines(x=se, y = c(ii,ii))
+        graphics::lines(x=se, y = c(ii,ii))
     }
 }
 
@@ -248,7 +250,7 @@ plot_intervals <- function(intervals){
 ##'     \code{wbs()}, simply use \code{env$tree}.
 ##' @param returntype One of \code{c("cp","sign")}, for whether to return the
 ##'     changepoint or the sign of teh changepoints.
-.extract_cp_from_tree = function(tree, returntype = c("cp","sign")){
+extract_cp_from_tree = function(tree, returntype = c("cp","sign")){
 
     ## Extract changepoints and sign from the tree
     if(returntype == "cp"){
@@ -305,7 +307,7 @@ unsigned_contrast <- function(s,b,e,n=NULL,y){
 make_contrast = function(test.bp, adj.bps, sn, n){
 
     ## Basic checks
-    stopifnot(all(c(test.bp, adj.bps) %in% 1:n))
+    stopifnot(all(c(test.bp, adj.bps) %in% 0:n))
     stopifnot(min(adj.bps)<=test.bp)
     stopifnot(max(adj.bps)>=test.bp)
     stopifnot(length(sn)==1)
@@ -325,7 +327,7 @@ make_contrast = function(test.bp, adj.bps, sn, n){
 ##' @export
 make_all_segment_contrasts <- function(obj){
 
-    ## BAsic checks
+    ## Basic checks
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
 
@@ -349,13 +351,13 @@ make_all_segment_contrasts <- function(obj){
 }
 
 
-##' Checking if intervals is correct.
+## Checking if intervals is correct.
 .is_valid_intervals <- function(intervals){
    return(all(names(intervals) %in% c("starts","ends","intervals","se")))
 }
 
 
-##' Deduplicating any intervals.
+## Deduplicating any intervals.
 .deduplicate_intervals <- function(n, intervals){
     ## Basic checks
     stopifnot(.is_valid_intervals(intervals))
@@ -367,79 +369,5 @@ make_all_segment_contrasts <- function(obj){
                                  sapply(unique.se, function(se)se[2]))
     return(generate_intervals(n=n, start.end.list = unique.start.end.list))
 
-}
-
-
-##' Wrapper for doing many wild binary segmentations and computing p-values
-##' @param y data vector
-##' @param sigma standard deviation of noise
-##' @param v Fixed contrast, formed /only/ with the knowledge of the selection
-##'     event on \code{y} with some fixed interval, and not from any more
-##'     information about \code{y}.
-##' @param numIntervals number of WBS intervals you want /each time/. This
-##'     should match what you used when applying wild binary segmentation on
-##'     your observed dataset.
-##' @param thresh threshold.
-##' @param numSteps number of steps to take.
-##' @param nsim.is Number of importance sampling samples you'd
-##'     like to calculate.
-##' @example examples/randomized_wildBinSeg_pv-example.R
-##' @export
-randomized_wildBinSeg_pv <- function(y, sigma, v, thresh=NULL, numSteps=NULL, numIntervals, nsim.is, bits=NULL){
-
-    ## Basic checks
-    if(is.null(thresh) & is.null(numSteps))  stop("Provide one of | thresh| or |
-numSteps| (but not both)!")
-
-    if(!is.null(thresh) & !is.null(numSteps)) stop("Provide /only/ one of |
-thresh| or |numSteps|, not both!")
-
-    ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(seed=NULL, bits=bits){
-
-        get_cp_from_segment_contrast <- function(v){
-            which(dual1d_Dmat(length(v)+2)%*%c(0,v,0)!=0)[2]-1
-        }
-
-        ## Generate interval
-        cp <- get_cp_from_segment_contrast(v)
-
-        i = generate_intervals(length(y), numIntervals, seed=seed)
-        if(!i.covers.cp(i,cp)){return(NULL)}
-
-        ## Run WBS and collect polyhedron
-        if(!is.null(thresh)){
-            obj = wildBinSeg_fixedThresh(y,thresh, intervals=i)
-        } else {
-            obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i)
-        }
-        if(length(obj$cp)==0){return(NULL)}
-        poly <- polyhedra(obj)
-
-        tol = 1E-12
-        if(!all(poly$"gamma" %*%y + tol >= poly$'u')) browser()
-        stopifnot(all(poly$gamma%*%y+ tol >= poly$u))
-
-        ## Calculate num & denom of TG
-        ## poly.pval(y,poly$gamma,poly$u,v,sigma,bits=100)
-        if(!all(poly$"gamma" %*%y >= poly$'u')) browser()
-        tg = partition_TG(y,poly,v,sigma, nullcontrast=0, bits=100)
-        # stopifnot(all.equal(tg$pv, tg$numer/tg$denom))
-
-        return(list(numer = tg$numer, denom = tg$denom, seed=seed))
-    }
-
-    ## Collect weighted p-values and their weights
-    pvlist = lapply(1:nsim.is, function(isim) {get_one(bits=bits)})
-    pvlist = .filternull(pvlist)
-
-    if(length(pvlist)==0) return(NULL)
-
-    ## Calculate p-value and return
-    sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
-    sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
-    pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
-
-    return(pv)
 }
 

@@ -149,22 +149,30 @@ collapse <- function(mat){
 }
 
 
-##' Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
-##' Returns NULL if mat is all NA's.
+##' Function to trim a matrix from the right and bottom, ridding of all-NA
+##' rows/columns. Why is it a function in itself? It includes the boundary case
+##' handling that takes up code room -- so that returns NULL if mat is all NA's.
 trim.mat <- function(mat, type = c("rowcol","row")){
     type = match.arg(type)
 
     ## If all NA matrix, return NULL.
     if(all(is.na(as.numeric(mat)))) return(NULL)
 
+    ## If matrix is NULL
     if(is.null(dim(mat))){ mat = mat[1:max(which(!is.na(mat)))]; return(mat)}
-    last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
-    mat = mat[1:last.j,,drop=F]
+
+    ## If just trimming rows
+    mat <- .trimrows(mat)
     if(type=="rowcol"){
-        last.j = max(which(!(apply(mat,2,function(mycol) return(all(is.na(mycol)))))))
-        mat = mat[,1:last.j,drop=F]
+        mat <- t(.trimrows(t(mat)))
     }
     return(mat)
+}
+
+## Trims rows of a matrix. No error handling.
+.trimrows <- function(mat){
+    last.j = max(which(!(apply(mat,1,function(myrow) return(all(is.na(myrow)))))))
+    return(mat[1:last.j,,drop=F])
 }
 
 ##' Trims a list by deleting the last consecutive elements that are NULL.
@@ -264,7 +272,7 @@ addrow.cplist2 <- function(cplist2, j=NA, k=NA, s=NA, e=NA, s0=NA, e0=NA, z=NA,
     if(cplist2$last.row>= numrows){
         addmat = data.frame(matrix(NA, nrow=numrows, ncol=8))
         names(addmat) = names(cplist$mat)
-        cplist2$mat = rbind(cplist2$mat,addmat )
+        cplist2$mat = rbind(cplist2$mat, addmat)
     }
 
     ## Append the new row

@@ -1,8 +1,8 @@
 #' Checks S3 object validity
-#' 
-#' Generic function that fails noisily with a stop message if the object is 
+#'
+#' Generic function that fails noisily with a stop message if the object is
 #' invalid. Otherwise, nothing happens.
-#' 
+#'
 #' @param  obj  The object to check
 #' @return void
 #' @export
@@ -57,9 +57,12 @@ jump_sign <- function(obj, sorted = F){
   colnames(mat) = c("Jump", "Sign")
   mat[,"Jump"]<- vec
   mat[,"Sign"] <- sign(apply(cbind(obj$y.fit[vec+1], -obj$y.fit[vec]), 1, sum))
-  
+
   mat
 }
 
 .list_comparison <- function(obj) {UseMethod(".list_comparison")}
 .get_length <- function(obj) {UseMethod(".get_length")}
+
+
+

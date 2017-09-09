@@ -1,33 +1,41 @@
-#' Generate polyhedra matrix from wbs output
-#' Forms both Gamma matrix and u vector
-#'
-#' @param obj Output from wbs
-#' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you
-#'     should add (chunks) of rows instead of /all/ of them.
-#' @param v a contrast vector, if you want to use smart addition of polyhedra.
-#' @return An object of class polyhedra
-#' @export
-polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE,...){
+##' Generate polyhedra matrix from wbs output Forms both Gamma matrix and u
+##' vector.
+##'
+##' @param obj Output from wbs
+##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you
+##'     should add (chunks) of rows instead of /all/ of them.
+##' @param v a contrast vector, if you want to use smart addition of polyhedra.
+##' @param sigma noise level.
+##' @param verbose load or not.
+##' @return An object of class polyhedra
+##' @export
+polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,...){
 
     ## Basic checks
     stopifnot(is_valid.wbsFs(obj))
+    if(is.null(v) & reduce) stop("Provide v!")
+    if(!is.null(v) & is.null(sigma)) stop("Provide sigma!")
 
     ## Get all polyhedra
     actual.num.steps = (length(obj$B)-1)
-    latest.poly = polyhedra(rbind(rep(NA,n)),NA)
 
     ## Smartly add rows, if the problem size is big
     if(reduce){
+        vup = Inf
+        vlo = -Inf
         for(mystep in 1:actual.num.steps){
-            latest.poly = poly_from_snapshot(obj, mystep, reduce, latest.poly)
+            newpoly = poly_from_snapshot(obj, mystep, reduce, vup= vup, vlo=vlo,
+                                         v=v, sigma=sigma, verbose=verbose) ##TODO: erase when done
+            vup = newpoly$vup
+            vlo = newpoly$vlo
         }
-        return(latest.poly)
+        return(list(v=v,reduce=reduce,obj=obj,vup=vup,vlo=vlo, poly=NULL))
 
     ## Otherwise, just rbind and add all rows!
     } else {
         all.steps.polys <- lapply(1:actual.num.steps,
                                   function(mystep){
-            poly_from_snapshot(obj, mystep, reduce)})
+            poly_from_snapshot(obj, mystep, reduce, verbose=verbose)$poly})
         combined.poly = do.call(combine.polyhedra, all.steps.polys)
         return(combined.poly)
     }
@@ -38,21 +46,30 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE,...){
 ##' s.max) being the largest among all the competing intervals at that step.
 ##' @param obj \code{wbsFt} object.
 ##' @param mystep step in the path
-##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you
-##'     should add (chunks) of r
-##' @param latest.poly If \code{reduce} is set to TRUE, this is the latest
-##'     polyhedron outside of. This is necessary because polyhedron
-##'     approximations only work if the checking for change in (Vup, Vlo) is
-##'     done /cumulatively/. Defaults to NULL.
-##'
+##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you should
+##'     add (chunks) of the polyhedron or not. This assumes you've chosen the
+##'     contrast \code{v} already.
+##' @param contrast Contrast vector of interest of inference; only to be used
+##'     when \code{reduce==TRUE}. Approximations only work if the checking for
+##'     change in (Vup, Vlo) is done /cumulatively/. Defaults to NULL.
+##' @param vup vup.
+##' @param vlo vlo.
+##' @param v v.
+##' @param bits bits.
+##' @param sigma noise level.
+##' @param verbose load or not.
 ##' @return a polyhedra object with the selection event at that step.
 ##' @import Matrix
 ##' @export
-poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
+poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
+                               v=NULL, sigma=NULL, bits=NULL, env=NULL,
+                               verbose=FALSE){
 
     ## Basic checks
-    if(is.null(latest.poly) & reduce ) stop("Provide the latest polyhedron!")
-    latest.poly.copy <- latest.poly
+    n = length(obj$y)
+    if(is.null(vup)) vup = Inf
+    if(is.null(vlo)) vlo = -Inf
+
 
     ## Obtain snapshot
     Tcurr <- obj$T[[paste("step",mystep)]]
@@ -63,9 +80,10 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
     max.m = get_last_row_val(obj$M[[mystep+1]])
     max.b = get_last_row_val(obj$B[[mystep+1]])
     max.z = get_last_row_val(obj$Z[[mystep+1]])
+    jk.max = as.numeric(get_last_row_ind.cplist((obj$M[[mystep+1]])))
 
+    ## Special handling: m==0 is for the augmented (s:e) interval.
     if(max.m==0){
-        jk.max = as.numeric(get_last_row_ind.cplist( (obj$M[[mystep+1]])))
         max.s = extract(Scurr,jk.max[1],jk.max[2])
         max.e = extract(Ecurr,jk.max[1],jk.max[2])
     } else {
@@ -75,64 +93,134 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
 
     ## 1. First, characterize the sign of the max.cusum.contrast
     max.cusum.contrast = unsigned_contrast(max.s, max.b, max.e, y=obj$y)
-    newrows1 = rBind(max.cusum.contrast)
+    newrows1 = rbind(max.cusum.contrast)
 
     if(!reduce){
         ## For each terminal node, characterize the selection event of b.max in m.max.
-        newpolylist <- lapply(Tcurr[!sapply(Tcurr,is.null)], function(t){
+
+        Tcurr.without.nulls = Tcurr[!sapply(Tcurr,is.null)]
+
+        nTcurr = length(Tcurr.without.nulls)
+        newpolylist <- lapply(Tcurr.without.nulls, function(tt){
 
             ## Get start/end points
-            s = extract(Scurr,t[1],t[2])
-            e = extract(Ecurr,t[1],t[2])
+            s = extract(Scurr,tt[1],tt[2])
+            e = extract(Ecurr,tt[1],tt[2])
             ms = which(.get_which_qualify(s,e,obj$intervals))
-            if(obj$augment) ms = c(ms,0)
+            if(obj$augment){
+                if(!any(sapply(obj$intervals$se[ms], function(se)identical(as.numeric(se),c(s,e))))){
+                    ms = c(ms,0)
+                }
+            }
             if(length(ms)==0) return()
 
             ## 2. Second, Compare /all other/ cusums to that of the grand max
-            newrows2 = do.call(rBind, lapply(ms, function(m){
-                if(m==0){se = c(s,e)}else{se = obj$intervals$se[[m]]}
+            newrows2 = matrix(NA, nrow = n*10, ncol = n)
+            modified = FALSE
+            irow=0
+
+            for(ii in 1:length(ms)){
+             if(verbose)      cat('\r', 'out of', length(ms), "qualifying intervals")
+
+                m = ms[ii]
+                if(m==0){
+                    se = c(s,e)
+                } else {
+                    se = obj$intervals$se[[m]]
+                }
                 s.to.e = (se[1]:se[2])
                 other.bs = s.to.e[-which(s.to.e == se[2])]
-                if(m==max.m) other.bs = other.bs[other.bs!=max.b]
-                if(length(other.bs)==0) return(rBind(rep(NA,length(obj$y)))[-1,])
+                if(m==max.m & identical(jk.max, tt)) other.bs = other.bs[other.bs!=max.b]
 
-                ## Subtract all other contrast from the maximum cusum contrast
-                other.cusum.contrasts = do.call(rBind, lapply(other.bs, function(other.b){
-                    signed_contrast(se[1], other.b, se[2], y=obj$y)}))
-                subtracted.contrasts = rBind(sweep(-rBind(other.cusum.contrasts), 2,
-                                                   max.cusum.contrast, "+" ),
-                                             sweep(+rBind(other.cusum.contrasts), 2,
-                                                   max.cusum.contrast, "+" ))
-                if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
-                cat("nrow is", nrow(subtracted.contrasts),fill=TRUE)
-                return(subtracted.contrasts)
-            }))
 
-            newrows = rBind(newrows1, newrows2)
-            newu = rep(0,nrow(newrows))
+                if(length(other.bs)!=0){
+                    modified <- TRUE
 
+                    ## Subtract all other contrast from the maximum cusum contrast
+                    other.cusum.contrasts = matrix(NA, nrow=length(other.bs), ncol=n)
+                    for(jj in 1:length(other.bs)){
+                        other.cusum.contrasts[jj,] = signed_contrast(se[1], other.bs[jj], se[2], y=obj$y)
+                    }
+                    nr = (nrow(other.cusum.contrasts))
+                    subtracted.contrasts = matrix(NA, nrow=2*nr, ncol=n)
+                    subtracted.contrasts[1:nr,] = sweep(-rbind(other.cusum.contrasts),
+                                                       2, max.cusum.contrast, "+" )
+                    subtracted.contrasts[(nr+1):(2*nr),] = sweep(+rbind(other.cusum.contrasts), 2,
+                                                       max.cusum.contrast, "+" )
+                    if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
+
+
+                    ## Augment the matrix if needed
+                    while(irow + 2*nr > nrow(newrows2)){
+                        newrows2 = rbind(newrows2,
+                                         matrix(NA, nrow = n*10, ncol = n) )
+                    }
+
+                    ## Allocate rows and prep for next step
+                    newrows2[irow +(1:(2*nr)), ] = subtracted.contrasts
+                    irow = irow + 2*nr
+                    ## print("inner irow")
+                    ## print(irow)
+
+                }
+
+            }
+            if(verbose) cat(fill=TRUE)
+
+
+            if(modified){
+                newrows2 = trim(newrows2)
+                newrows = matrix(NA,nrow=nrow(newrows2)+1, ncol = n)
+                newrows[1:nrow(newrows2),] = newrows2
+                newrows[nrow(newrows2)+1,] = newrows1
+                newu = rep(0,nrow(newrows))
+            } else {
+                newrows2 = matrix(NA,nrow=0,ncol=n)
+                newrows = matrix(NA, nrow=1, ncol = n)
+                newrows[1,] = newrows1
+                newu = rep(0,1)
+            }
+
+            ## print('here1')
 
             ## If newrows is empty (no comparisons to be made), then don't do anything
             if(length(as.numeric(newrows))==0){ return(NULL)}
+
 
             ## Return it as a polyhedron
             return(polyhedra.matrix(obj = newrows, u = newu))
         })
 
-        return(do.call(combine.polyhedra, newpolylist))
+
+        ## print('here2')
+        names(newpolylist) = Tcurr.without.nulls
+        vup = NULL
+        vlo = NULL
+        ## if(mystep==3) browser()
+        return(list(poly = do.call(combine.polyhedra, newpolylist),
+                    v = v,
+                    vup = vup,
+                    vlo = vlo,
+                    reduce = reduce))
     }
 
     if(reduce){
-        for(t in Tcurr[!sapply(Tcurr,is.null)]){
+
+        for(tt in Tcurr[!sapply(Tcurr,is.null)]){
+
             ## Get start/end points
-            s = extract(Scurr,t[1],t[2])
-            e = extract(Ecurr,t[1],t[2])
+            s = extract(Scurr,tt[1],tt[2])
+            e = extract(Ecurr,tt[1],tt[2])
             ms = which(.get_which_qualify(s,e,obj$intervals))
             if(obj$augment) ms = c(ms,0)
             if(length(ms)==0) next
 
             ## 2. Second, Compare /all other/ cusums to that of the grand max
-            for(m in ms){
+            for(kk in 1:length(ms)){#m in ms
+
+                m = ms[kk]
+
+                if(verbose) cat('\r', kk, 'out of', length(ms), "qualifying intervals")
                 if(m==0){se = c(s,e)}else{se = obj$intervals$se[[m]]}
                 s.to.e = (se[1]:se[2])
                 other.bs = s.to.e[-which(s.to.e == se[2])]
@@ -140,24 +228,38 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, latest.poly=NULL){
                 if(length(other.bs)==0) next
 
                 ## Subtract all other contrast from the maximum cusum contrast
-                other.cusum.contrasts = do.call(rBind, lapply(other.bs, function(other.b){
-                                                           signed_contrast(se[1], other.b, se[2], y=obj$y)}))
-                subtracted.contrasts = rBind(sweep(-rBind(other.cusum.contrasts), 2,
-                                                   max.cusum.contrast, "+" ),
-                                             sweep(+rBind(other.cusum.contrasts), 2,
-                                                   max.cusum.contrast, "+" ))
+                other.cusum.contrasts = matrix(NA, nrow=length(other.bs), ncol=n)
+                for(jj in 1:length(other.bs)){
+                    other.cusum.contrasts[jj,] = signed_contrast(se[1], other.bs[jj], se[2], y=obj$y)
+                }
+                nr = (nrow(other.cusum.contrasts))
+                subtracted.contrasts = matrix(NA, nrow=2*nr, ncol=n)
+                subtracted.contrasts[1:nr,] = sweep(-(other.cusum.contrasts),
+                                                    2, max.cusum.contrast, "+" )
+                subtracted.contrasts[(nr+1):(2*nr),] = sweep(+(other.cusum.contrasts), 2,
+                                                             max.cusum.contrast, "+" )
                 if(ncol(subtracted.contrasts)!=length(obj$y)) subtracted.contrasts = t(subtracted.contrasts)
-                ## return(subtracted.contrasts)
+
 
                 ## Add a clump of rows after checking whether Vup & Vlo changes.
                 clump.poly = polyhedra(subtracted.contrasts, rep(0,nrow(subtracted.contrasts)))
-                latest.poly.copy <- smartadd(orig.poly = latest.poly.copy,
-                                             new.poly = clump.poly,
-                                             v=v,
-                                             y=obj$y)
+                pobj.clump = poly.pval2(y = obj$y,
+                                       poly=clump.poly,
+                                       reduce=FALSE,
+                                       v = v,
+                                       sigma = sigma,
+                                       bits = bits)
+
+                vup = pmin(vup, pobj.clump$vup)
+                vlo = pmax(vlo, pobj.clump$vlo)
             }
+            if(verbose) cat(fill=TRUE)
         }
-        return(latest.poly.copy)
+        return(list(poly = NULL,
+                    v = v,
+                    vup = vup,
+                    vlo = vlo,
+                    reduce = reduce))
     }
 }
 
@@ -172,4 +274,3 @@ check_polyhedra <- function(poly, y){
     ## print(poly$gamma%*%y >= poly$u)
     stopifnot(all(poly$gamma %*% y >= poly$u))
 }
-
