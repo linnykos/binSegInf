@@ -192,16 +192,23 @@ ff <- function(z) {
 ##' @return List of vup, vlo and pv.
 poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, reduce=FALSE, correct.ends=FALSE) {
 
-
     z = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
 
     ## If vup&vlo are both present in poly, simply calculate and return the pv
-    if(!is.null(poly$vup) & !is.null(poly$vlo)){
-        pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
-        vlo = poly$vlo
-        vup = poly$vup
+    poly.vup.vlo.are.present = (!is.null(poly$vup) & !is.null(poly$vlo))
+    vup.vlo.are.present = (!is.null(vup) & !is.null(vlo))
+    if(poly.vup.vlo.are.present & vup.vlo.are.present){
+        stop("Don't provide vup and vlo in both polyhedron and as plain arguments!!'")
+    }
+    if(poly.vup.vlo.are.present | vup.vlo.are.present){
+        if(poly.vup.vlo.are.present){
+            vlo = poly$vlo
+            vup = poly$vup
+        }
+        pv = tnorm.surv(z,0,sd,vlo,vup,bits, correct.ends=correct.ends)
+
     } else {
         if(!reduce){
             G = poly$gamma
@@ -214,7 +221,9 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
             pv = tnorm.surv(z,0,sd,vlo,vup,bits, correct.ends=correct.ends)
         } else {
             ## if(is.null(vlo) | is.null(vup))stop("provide vup&vlo!")
-            pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
+            ## pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
+            print('here')
+            pv = tnorm.surv(z,0,sd,vlo,vup,bits, correct.ends=correct.ends)
         }
     }
 

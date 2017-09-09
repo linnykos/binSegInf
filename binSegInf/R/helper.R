@@ -189,7 +189,8 @@ get_morethan_cusums2 <- function(s,e,cumsums){
     cusums <- getcusums2(s,e,cumsums)
     max.b.ind = which.max(abs(cusums))
     max.b = max.b.ind + s - 1
-    max.z = sign(cusums[which.max(cusums)])
+    max.z = sign(cusums[max.b.ind])
+    ## max.z = sign(cusums[which.max(cusums)])
     return(list(max.b = max.b,
                 max.z = max.z,
                 max.cusum = cusums[max.b.ind]))

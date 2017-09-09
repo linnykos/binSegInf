@@ -61,6 +61,7 @@ test_that("wildBinSeg_fixedThresh() doesn't produce environment |env| whose tree
     s=1
     e=60
     y = rnorm(rep(0,4,each=30),0,1)
+    augment=FALSE
     env = wildBinSeg_fixedThresh(y,1,10,return.env=TRUE, augment)
 
     ## See if the tree has any empty (NULL) elements
@@ -140,8 +141,8 @@ test_that("make_semat() finds breakpoints that are between the start and end poi
 
     ## Pick some indices and check breakpoints
     set.seed(0)
-    m = sample(1:numInterval,10,replace=FALSE)
-    semat = make_semat(m=m,s=s,e=e,intervals=intervals,y=y,thresh=thresh)
+    M = sample(1:numInterval,10,replace=FALSE)
+    semat = make_semat(m=M,s=s,e=e,intervals=intervals,y=y,thresh=thresh)
     sapply(M, function(m){
         se = intervals$se[[m]]
         expect_true(se[1] <= semat[semat[,"m"]==m,"b"])
@@ -209,8 +210,6 @@ test_that("Fixed Threshold WBS Polyhedron is exactly correct. (with and without 
             ## you the same fit. No need to do Gaussian generation of ynew.
             ## for(jj in 100000:1001){
             for(jj in 100000:99001){
-                ## ynew <- mn + rnorm(n,0,sigma)
-                print(jj)
                 ynew = y0 + rnorm(n,0,0.5)
                 if(all(poly$gamma%*% (ynew) >= poly$u)){
                     if(!augment)inds1<-c(inds1,jj)
@@ -303,8 +302,7 @@ test_that("Fixed Step Polyhedron contains y (a really basic check)",{
 })
 
 test_that("Fixed Step Polyhedron is exactly correct",{
-    ## Make this a test:
-    ## numIntervals = 100 ## 10
+
     numIntervals=10
     n = 10 ## 4
     lev = 0
@@ -314,7 +312,8 @@ test_that("Fixed Step Polyhedron is exactly correct",{
     set.seed(seed)
     thresh = 0
     y0 <- mn + rnorm(n, 0, sigma)
-    numSteps = 5
+    ## numSteps = 5
+    numSteps = 2
 
     ## Run method on original data |y0|, collect things.
     intervals = generate_intervals(n,numIntervals,seed)
@@ -326,8 +325,6 @@ test_that("Fixed Step Polyhedron is exactly correct",{
 
     poly <- polyhedra.wbsFs(obj)
 
-poly$gamma %*% cbind(y0) - poly$u
-
     ## Check that the polyhedron is in it.
     stopifnot(all(poly$gamma %*% cbind(y0) >= poly$u))
 
@@ -337,7 +334,6 @@ poly$gamma %*% cbind(y0) - poly$u
         set.seed(jj)
         ynew = y0 + rnorm(n,0,0.5)
         if(all(poly$gamma%*% (ynew) >= poly$u)){
-            print(jj)
             objnew =  wildBinSeg_fixedSteps(y=ynew,numSteps=numSteps ,intervals=intervals,verbose=FALSE,augment=TRUE)
             expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
         }
@@ -374,7 +370,6 @@ test_that("Reduced WBS p-values still returns the same p-values.",{
 
     expect_equal(poly.pval2(y=y,vup=poly1$vup, vlo=poly1$vlo, sigma=sigma, v=v),
                  poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma, bits=100))
-
 })
 
 

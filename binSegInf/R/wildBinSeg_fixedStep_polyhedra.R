@@ -50,9 +50,8 @@ polyhedra.wbsFs <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,
 ##'     add (chunks) of the polyhedron or not. This assumes you've chosen the
 ##'     contrast \code{v} already.
 ##' @param contrast Contrast vector of interest of inference; only to be used
-##'     when \code{reduce==TRUE}.
-##'     approximations only work if the checking for change in (Vup, Vlo) is
-##'     done /cumulatively/. Defaults to NULL.
+##'     when \code{reduce==TRUE}. Approximations only work if the checking for
+##'     change in (Vup, Vlo) is done /cumulatively/. Defaults to NULL.
 ##' @param vup vup.
 ##' @param vlo vlo.
 ##' @param v v.
@@ -83,6 +82,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
     max.z = get_last_row_val(obj$Z[[mystep+1]])
     jk.max = as.numeric(get_last_row_ind.cplist((obj$M[[mystep+1]])))
 
+    ## Special handling: m==0 is for the augmented (s:e) interval.
     if(max.m==0){
         max.s = extract(Scurr,jk.max[1],jk.max[2])
         max.e = extract(Ecurr,jk.max[1],jk.max[2])
@@ -94,8 +94,6 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
     ## 1. First, characterize the sign of the max.cusum.contrast
     max.cusum.contrast = unsigned_contrast(max.s, max.b, max.e, y=obj$y)
     newrows1 = rbind(max.cusum.contrast)
-
-
 
     if(!reduce){
         ## For each terminal node, characterize the selection event of b.max in m.max.
@@ -121,24 +119,13 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
             modified = FALSE
             irow=0
 
-            ## print('step is')
-            ## print(mystep)
-            ## print('tt is')
-            ## print(tt)
-            ## print('nrow is')
-            ## env$k <- env$k + nrow(trim(newrows))
-            ## print( env$k)
-
-            ## if(mystep == 2 & tt[1]==2 & tt[2]==1)browser()
             for(ii in 1:length(ms)){
              if(verbose)      cat('\r', 'out of', length(ms), "qualifying intervals")
 
                 m = ms[ii]
-                ## print("m")
-                ## print(m)
                 if(m==0){
                     se = c(s,e)
-                }else{
+                } else {
                     se = obj$intervals$se[[m]]
                 }
                 s.to.e = (se[1]:se[2])
@@ -148,6 +135,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
 
                 if(length(other.bs)!=0){
                     modified <- TRUE
+
                     ## Subtract all other contrast from the maximum cusum contrast
                     other.cusum.contrasts = matrix(NA, nrow=length(other.bs), ncol=n)
                     for(jj in 1:length(other.bs)){
@@ -167,6 +155,7 @@ poly_from_snapshot <- function(obj, mystep, reduce=FALSE, vup=NULL, vlo=NULL,
                         newrows2 = rbind(newrows2,
                                          matrix(NA, nrow = n*10, ncol = n) )
                     }
+
                     ## Allocate rows and prep for next step
                     newrows2[irow +(1:(2*nr)), ] = subtracted.contrasts
                     irow = irow + 2*nr

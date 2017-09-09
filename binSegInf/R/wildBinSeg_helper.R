@@ -307,7 +307,7 @@ unsigned_contrast <- function(s,b,e,n=NULL,y){
 make_contrast = function(test.bp, adj.bps, sn, n){
 
     ## Basic checks
-    stopifnot(all(c(test.bp, adj.bps) %in% 1:n))
+    stopifnot(all(c(test.bp, adj.bps) %in% 0:n))
     stopifnot(min(adj.bps)<=test.bp)
     stopifnot(max(adj.bps)>=test.bp)
     stopifnot(length(sn)==1)

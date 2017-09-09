@@ -10,6 +10,7 @@
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
   if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
+  if(numSteps <= 0) step("numSteps must be at least 1.")
 
   #initialization
   n <- length(y); tree <- .create_node(1, n)

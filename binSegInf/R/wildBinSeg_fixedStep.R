@@ -51,8 +51,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
 
     ## At general step
     for(mystep in 2:(numSteps+1)){
-        ## print('mystep')
-        ## print(mystep)
 
         ## Goal is to get max.m, max.b, max.j, max.k
         .get_max.mbc <- function(Tcurr){
@@ -78,11 +76,11 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
               max.cusum = maxcusums[max.ind.of.maxcusums]
               max.z = sapply(info.aug[ms.aug], '[[', "max.z")[max.ind.of.maxcusums]
               max.b = sapply(info.aug[ms.aug], '[[', "max.b")[max.ind.of.maxcusums]
+              ## if(tt[1]==2 & tt[2]==1 ) print(c(s,e,max.b,max.z, max.cusum))
 
               return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum, max.z=max.z))})
         }
       mbc.list <- .get_max.mbc(Tcurr)
-        ## if(mystep == 4) browser()
       if(all(sapply(mbc.list, is.null))){
         if(verbose){
           print(paste("There were no qualifying intervals during step ", mystep-1));
@@ -91,10 +89,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       }
 
       ## Extract m,b,z,j,k
-        ## browser()
-
       ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)){ -Inf} else{ abs(a$max.cusum)}))
-      ## ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
+        ## ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
 
 
       ## ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)){ -Inf} else{ abs(a$max.cusum)}))
@@ -104,6 +100,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       m.max <- mbc.list[[ind]]$max.m
       b.max <- mbc.list[[ind]]$max.b
       z.max <- mbc.list[[ind]]$max.z  ## sign(mbc.list[[ind]]$max.cusum)
+      ## if(j.max==2 & k.max==1)  browser()
 
       ## Update S and E
       s.max <- extract(Scurr,j.max,k.max)
