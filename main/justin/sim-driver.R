@@ -96,12 +96,6 @@ onesim_wbs <- function(sim.settings){
     cleanmn.bootstrap = sim.settings$cleanmn.bootstrap
     type = sim.settings$type
 
-    ## sigma=1; lev=0; nsim.is=100; numSteps=1;
-    ## numIntervals=20; n=6; meanfun=onejump;
-    ## reduce=TRUE;augment=TRUE;  bootstrap=FALSE; std.bootstrap=NULL;
-    ## cleanmn.bootstrap=NULL;
-    ## type = "randomized"
-
 
     ## Generate data
     y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
@@ -110,16 +104,17 @@ onesim_wbs <- function(sim.settings){
     method <- wildBinSeg_fixedSteps
     intervals <- generate_intervals(length(y),numIntervals)
     obj <- method(y, numSteps=numSteps, intervals=intervals)
+
     ## print(paste("my original changepoint is", obj$cp))
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
+
     for(ii in 1:length(obj$cp)){
-        ## if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
-        ##     mycontrast=contrasts[[ii]]
-        ## } else {
-        ##     mycontrast = sim.settings$v
-        ## }
-        mycontrast = sim.settings$v
+        if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
+            mycontrast=contrasts[[ii]]
+        } else {
+            mycontrast = sim.settings$v
+        }
         poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
                           reduce=reduce, sigma=sigma)
 
@@ -128,15 +123,13 @@ onesim_wbs <- function(sim.settings){
             pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
                                          sigma=sigma, reduce=reduce)$pv
         } else {
-            pvec[ii] <- randomized_wildBinSeg_pv(y=y,
-                                                 v=mycontrast,
-                                                 cp=obj$cp,
-                                                 sigma=sigma,
-                                                 numSteps=numSteps,
-                                                 numIntervals=numIntervals,
-                                                 nsim.is=nsim.is, bits=100,
-                                                 reduce=reduce,
-                                                 augment=augment)$pv
+            pvec[ii] <-  randomized_wildBinSeg_pv(y=y, v=mycontrast, cp=obj$cp,
+                                                  sigma=sigma,
+                                                  numSteps=numSteps,
+                                                  numIntervals=numIntervals,
+                                                  nsim.is=nsim.is, bits=100,
+                                                  reduce=reduce,
+                                                  augment=augment)$pv
         }
     }
     if(type=="plain"){ return(pvec.plain) } else {  return(pvec) }

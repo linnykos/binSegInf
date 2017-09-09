@@ -319,6 +319,7 @@ make_contrast = function(test.bp, adj.bps, sn, n){
     d[(test.bp+1):(max(adj.bps))] = +1/(max(adj.bps)-test.bp)
     return(sn*d)
 }
+make_segment_contrast = make_contrast
 
 
 ##' Helper function for making segment contrasts from a wildBinSeg object OR

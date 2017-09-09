@@ -120,3 +120,16 @@ get_condit_pvals <- function(my.pmat, loc){
 ## Generates one/two-jumped means
 onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
 twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
+
+
+
+## Performs check to see if conditional samples actually match in the
+## conditioned Proj.perp^T y_obs.
+sanity.check <- function(z1list, Proj.perp, tolerance){
+    z00list = (lapply(z1list, function(z1) Proj.perp%*%z1))
+    if(!(all(sapply(z00list, all.equal, z00list[[1]], tolerance=tolerance)))){
+        stop("sanity check didn't pass! Conditional samples are not equal in the conditioned Proj.perp^T y_obs.")
+    } else {
+        return(z1list)
+    }
+}

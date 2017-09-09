@@ -46,10 +46,9 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
         tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=bits,reduce=reduce)
 
         ## Handle case where interval i precludes selection entirely
-        ## if(!.i_covers_cp(i,cp)){return(NULL)}
+        if(!.i_covers_cp(i,cp)){return(NULL)}
 
-        ## In certain exceptions, we need to add to the denominator but handle the
-        ## numerator appropriately.
+        ## Handle three exceptions
         ## tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
         ## selected.model.was.different = (tg$pv>1 | tg$pv < 0)
         ## exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
@@ -67,7 +66,6 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
         tg$denom = min(1, max(tg$denom,0))
         tg$numer = min(tg$denom, max(tg$numer,0))
 
-
         ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
         ## return(list(pv=pv, Wi=tg$denom, exception=exception))
         return(list(pv=pv, Wi=tg$denom))
@@ -75,16 +73,16 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
-    ## pvlist = .filternull(pvlist)
+    pvlist = .filternull(pvlist)
 
-    if(length(pvlist)==0) return(NULL)
+    if(length(pvlist)==0)  stop("No inner p-values calculated! Try again with bigger |nsim.is|.")
 
-    ## Calculate p-value and return
+    ## Calculate p-value and return (don't do this, for now)
     ## sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
     ## sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
     ## pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
 
-    ## Calculate randomized p-value
+    ## Calculate randomized p-value without partitioning the num&denom.
     p.vec = sapply(pvlist,function(oneobj)  oneobj[["pv"]] )
     w.vec = sapply(pvlist, function(oneobj) oneobj[["Wi"]])
     exceptions = sapply(pvlist, function(oneobj) oneobj[["exception"]])

@@ -1,24 +1,24 @@
-## Synopsis: See if manual rejection sampling works for selected model teseting.
+## Synopsis: See if manual rejection sampling works for selected model testing.
 n=20
 numIntervals= 10
 library(genlassoinf)
 library(binSegInf)
 library(MASS)
+source("../main/justin/sim-helper.R")
 
 ## Try wild binary segmentation fused lasso (1 step)
-nsim = 1000
-nsamp = 1000
+## nsim = 1000
+## nsamp = 1000
+nsim=1000
+nsamp=300
 addsigma=.1
 ## method = "wbs"
 ## type="segment"
 method = "wbs"
 type="fixed"
 cat(fill=TRUE)
-pvs = mclapply(1:nsim, function(isim){
-    cat('\r', isim, "out of", nsim)
-    z1list = list()
-
-    ## Original data / model / contrast
+pvs = mclapply(1:nsim, function(isim){cat('\r', isim, "out of", nsim)
+    z1list = list() ## Original data / model / contrast
     mu = rep(0,n)
     y0 = mu + rnorm(n,0,1)
 
@@ -38,21 +38,13 @@ pvs = mclapply(1:nsim, function(isim){
     v = contrasts[[as.character(original.cp[1])]]
     v = v/sqrt(sum(v*v))
 
-    ## v = runif(n)
-    ## v = v/sqrt(sum(v*v))
-
     Proj = cbind(v)%*%rbind(v)
     Proj.perp = diag(rep(1,n)) - cbind(v)%*%rbind(v)
 
     ## Generate new data
     z0 = MASS::mvrnorm(nsamp, rep(0,n), Proj%*%t(Proj))
     z1mat = apply(z0, 1, function(myrow) Proj.perp%*%(y0+noise0) + myrow) ## For Fused lasso
-    ## z1mat = apply(z0, 1, function(myrow) Proj.perp%*%(y0) + myrow) ## For WBS
-    z1list = lapply(1:nsamp, function(isim)z1mat[,isim])
-
-    ## Sanity check
-    ## z00list = (lapply(z1list, function(z1) Proj.perp%*%z1))
-    ## stopifnot(all(sapply(z00list, all.equal, z00list[[1]])))
+    z1list = sanity.check(lapply(1:nsamp, function(isim)z1mat[,isim]), Proj.perp, 1E-6)
 
     ## Sample intervals (or noises)
     Ilist = lapply(1:nsamp, function(isim)binSegInf::generate_intervals(n, numIntervals))
@@ -83,9 +75,9 @@ pvs = mclapply(1:nsim, function(isim){
 
     return(pv)
 
-},mc.cores=2)
+},mc.cores=3)
 
-## qqunif(unlist(pvs))
+qqunif(unlist(pvs))
 
 ## pdf("~/Desktop/example.pdf",width=5,height=5)
 ## qqunif(c(unlist(pvs)))

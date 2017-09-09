@@ -143,11 +143,13 @@ test_that("make_semat() finds breakpoints that are between the start and end poi
     set.seed(0)
     M = sample(1:numInterval,10,replace=FALSE)
     semat = make_semat(m=M,s=s,e=e,intervals=intervals,y=y,thresh=thresh)
-    sapply(M, function(m){
+
+    ## Check that the breakpoints are all between start/ends
+    for(m in M){
         se = intervals$se[[m]]
         expect_true(se[1] <= semat[semat[,"m"]==m,"b"])
         expect_true(semat[semat[,"m"]==m,"b"] <= se[2])
-    })
+    }
 })
 
 
@@ -184,7 +186,7 @@ test_that("Single polyhedron is correct",{
 
 
 
-test_that("Fixed Threshold WBS Polyhedron is exactly correct. (with and without augmentation)",{
+test_that("Fixed-threshold WBS Polyhedron is exactly correct. (with and without augmentation)",{
 
     inds1 = c()
     inds2 = c()
@@ -301,7 +303,7 @@ test_that("Fixed Step Polyhedron contains y (a really basic check)",{
 
 })
 
-test_that("Fixed Step Polyhedron is exactly correct",{
+test_that("Fixed Step WBS Polyhedron is exactly correct",{
 
     numIntervals=10
     n = 10 ## 4

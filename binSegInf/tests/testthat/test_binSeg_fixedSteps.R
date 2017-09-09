@@ -39,7 +39,8 @@ test_that(".cusum returns negatives", {
 
 test_that(".find_breakpoint is correct", {
   set.seed(10)
-  y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
+  ## y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
+  y <- c(rep(0,3), rep(1,7)) + 0.01*rnorm(10)
   res <- .find_breakpoint(y, 1, 10)
 
   expect_true(length(res) == 2)
