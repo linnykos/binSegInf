@@ -7,11 +7,11 @@
 #'
 #' @return An object of class polyhedra
 #' @export
-polyhedra.bsFs <- function(obj, ...){
+polyhedra.bsFs <- function(obj, numSteps = NA, ...){
   is_valid(obj)
   
   n <- .get_startEnd(obj$tree$name)[2] 
-  numSteps <- obj$numSteps
+  if(is.na(numSteps)) numSteps <- obj$numSteps
   comp.lis <- .list_comparison(obj)
   sign.vec <- sign(jump_cusum(obj))
   gamma.row.lis <- vector("list", numSteps)
