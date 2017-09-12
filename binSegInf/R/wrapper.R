@@ -8,22 +8,22 @@
 ##' @param consec Number of rises in IC before stop is to happen. Defaults to 2.
 ##' @return list containing two objects: ''poly'' and ''stoptime''.
 ##' @example examples/ic_wrapper-example.R
-##' 
+##'
 ##' @export
-ic_wrapper <- function(obj, y, consec=2, maxsteps=length(cp), sigma,
+ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
                        type = "bic"){## Basic checks
     stopifnot(c("cp") %in% objects(obj))
     if(type!="bic") stop("Only BIC is possible, for now.")
-    
+
     ## Get ic information
     tryCatch({
         ic_obj = get_ic(obj$cp, y, consec=2, sigma=sigma, type = type)
     },
     warning = function() return(NULL)
-    ) 
+    )
     newpoly = ic_to_poly(ic_obj)
-    
-    ## Return 
+
+    ## Return
     return(list(poly=newpoly, stoptime = ic_obj$stoptime+1))
 }
 
@@ -31,7 +31,7 @@ ic_wrapper <- function(obj, y, consec=2, maxsteps=length(cp), sigma,
 ##' @param resid list of residual vectors
 ##' @param obj object of class \code{ic} from \code{get_ic()}, which contains
 ##'     things needed for sequential information criteria (ic) comparison.
-##' 
+##'
 ##' @return Object of class \code{polyhedra}, for sequential IC comparisons.
 ic_to_poly <- function(obj){
 
@@ -46,16 +46,16 @@ ic_to_poly <- function(obj){
                      ncol = length(obj$y))
     newu = rep(NA, 2*(obj$stoptime+obj$consec))
     irow = 0
-    
+
     ## Collect halfspaces
     for(jj in 1:(obj$stoptime + obj$consec)){
 
-    
+
         residual = obj$resid[[jj+1]]
         const    = obj$pen[jj+1] - obj$pen[jj]
 
         if(seqdirs[jj+1] > 0){
-            ## Add one row \sqrt{C} < z_a \times a^Ty 
+            ## Add one row \sqrt{C} < z_a \times a^Ty
             newrows[irow+1,] = sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
             newu[irow+1] = sqrt(const)
             irow = irow + 1
@@ -63,7 +63,7 @@ ic_to_poly <- function(obj){
             ## Add two rows -\sqrt{C} < z_a \times a^Ty < \sqrt{C}
             newrows[irow+1,] = sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
             newrows[irow+2,] = -sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
-            newu[irow+1] = -sqrt(const) 
+            newu[irow+1] = -sqrt(const)
             newu[irow+2] = -sqrt(const)
             irow = irow + 2
         }
@@ -89,31 +89,31 @@ ic_to_poly <- function(obj){
 get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verbose=FALSE){
     ## Basic checks
     if(type!="bic") stop("Only BIC is coded so far!")
-    
+
     ## Collect things
     n = length(y)
     D = dual1d_Dmat(n)
     ic = pen = RSS = rep(NA, maxsteps)
     resid = list()
-    
+
     ## Collect BIC at each step 0 ~ (maxsteps-1)
     for(ii in 1:pmin(maxsteps,length(cp))){
         ## if(verbose)  cat('step', ii, '\n')
          cat('step', ii, '\n')
-        
+
         ## Form proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
         tD = cbind(t(D)[,-cp[1:ii]])
         rr = rankMatrix(tD)
         tDb = svd(tD)$u[,1:rr]
         curr.proj = .proj(tDb)
         y.fitted = (diag(1,n) - curr.proj) %*% y
-        
+
         ## Obtain RSS and penalty
         myRSS = sum( (y - y.fitted)^2 )
         mydf  = n-rr
         if(ii==1) prev.df = mydf
-        mypen = (sigma^2) * mydf * log(n) 
-        
+        mypen = (sigma^2) * mydf * log(n)
+
         ## Obtain (2norm-scaled) residual projection vectors
         if(ii==1){
             myresid = rep(NA,n)
@@ -121,19 +121,19 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
             myresid = svd(curr.proj - prev.proj)$u[,1]
             myresid = myresid / sqrt(sum((myresid)^2))
         }
-        
+
         ## Store BIC and resid proj vector
         ic[ii] <- myRSS + mypen
         pen[ii] <- mypen
         RSS[ii] <- myRSS
         resid[[ii]] <- myresid
-        
+
         ## Update things for next step.
         prev.proj = curr.proj
     }
 
     ## Obtain stoptime
-    stoptime = .whichrise(ic,consec) - 1 
+    stoptime = .whichrise(ic,consec) - 1
     stoptime = pmin(stoptime, length(y)-consec-1)
 
     ## Return NULL if path hasn't stopped
@@ -160,14 +160,14 @@ is_valid.ic <- function(obj){
 
 
 
-##' Helper function to project on /column/ space of matrix.
+## Helper function to project on /column/ space of matrix.
 .proj <- function(mymat){
     return(mymat %*% solve(t(mymat)%*%mymat, t(mymat)))
 }
 
-##' Returns a sequence of +1 and -1 for sequential incr and decrements in a
-##' vector; assume first step always dips; _almost_ always true
-##' @param ic a numeric vector
+## Returns a sequence of +1 and -1 for sequential incr and decrements in a
+## vector; assume first step always dips; _almost_ always true
+## @param ic a numeric vector
 .getorder = function(ic){
   return(c(NA,sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)])))
 }
@@ -175,16 +175,16 @@ is_valid.ic <- function(obj){
 
 
 
-##' Locates first point of \code{consec} rises in IC path
-##' @param ic numeric vector containing information criteria.
-##'
-##' @return First point at which ic rises.
-##' @export
+## Locates first point of \code{consec} rises in IC path
+## @param ic numeric vector containing information criteria.
+##
+## @return First point at which ic rises.
+## @export
 .whichrise = function(ic, consec = 2, direction=c("forward","backward")){
 
   direction = match.arg(direction)
   if(direction != "forward") stop("That direction IC selection is not coded yet.")
-  if(length(ic) < consec+1) stop("Not enough steps to do forward sequential BIC/AIC!")  
+  if(length(ic) < consec+1) stop("Not enough steps to do forward sequential BIC/AIC!")
 
   ind = 1
   done = FALSE

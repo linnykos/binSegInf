@@ -10,6 +10,7 @@
 #' @export
 binSeg_fixedSteps <- function(y, numSteps){
   if(numSteps >= length(y)) stop("numSteps must be strictly smaller than the length of y")
+  if(numSteps <= 0) step("numSteps must be at least 1.")
 
   #initialization
   n <- length(y); tree <- .create_node(1, n)
@@ -34,15 +35,13 @@ binSeg_fixedSteps <- function(y, numSteps){
   }
 
   y.fit <- .refit_binseg(y, jumps(tree))
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
+  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps), class = "bsFs")
   cp <- jumps(obj)
-  obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp), class = "bsFs")
   leaves <- .enumerate_splits(tree)
   cp.sign <- sign(as.numeric(sapply(leaves, function(x){
       data.tree::FindNode(tree, x)$cusum})))
   obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp,
                         cp.sign=cp.sign), class = "bsFs")
-
 
 }
 
@@ -93,13 +92,13 @@ jump_cusum.bsFs <- function(obj, sorted = F, ...){
   jump_cusum(obj$tree, sorted)
 }
 
-#' Summary of bsFs object
-#'
-#' @param object  bsFs object
-#' @param ... not used
-#'
-#' @return matrix of summary statistics
-#' @export
+##' Summary of bsFs object
+##'
+##' @param object  bsFs object
+##' @param ... not used
+##'
+##' @return matrix of summary statistics
+##' @export
 summary.bsFs <- function(object, ...){
   summary(object$tree)
 }

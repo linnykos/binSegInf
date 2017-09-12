@@ -1,12 +1,9 @@
-load("../data/artificial-smaller.Rdata")
+load("../results/artificial.Rdata")
 
 ## Extract results
 results[[1]]$pmat.bsfs[,"cp"]
 results[[1]]$pmat.wbsfs[,"cp"]
 results[[1]]$pmat.wbsfs.nonrand[,"cp"]
-
-
-ii=2
 
 ## Plot settings
 xlab = "Location"
@@ -38,3 +35,40 @@ rep(max(y0)*.8, length(cp))+runif(length(cp),0,0.1)
 legend("bottomright", pch=c(pch,NA,NA), lty=c(NA,1,2),lwd=c(NA,lwd,1),
        col = c(pcol,"blue","black"),legend=c("aCGH Data","Estimate","Changepoint"), bg="white")
 ## graphics.off()
+
+
+
+
+
+## #########################
+## ### Artificial signal ###
+## #########################
+
+## ## load(file="~/Desktop/data/artificial.Rdata")
+## load(file="../data/artificial-smaller.Rdata")
+
+## newmn2 = (newmn[1101:1300][seq(from=1,to=200,length=100)])
+## mndf = makeDmat(length(newmn2),type="tf",ord=0)%*%newmn2
+## mndf[abs(mndf)<1E-10]=0
+## cp <- which(mndf!=0)
+
+
+
+
+## par(mfrow=c(4,4))
+## n = sim.settings$n
+## for(ii in 1:length(results)){
+
+##   for(jj in 1:length(cp)){
+##     qqunif(myextract(myresult = results[[ii]],
+##                      objname = "pmat.bsfs",
+##                      locs = cp[jj]), plot.it = TRUE, ylim=c(0,1),xlim=c(0,1))
+
+##     xy = qqunif(myextract(myresult = results[[ii]],
+##                      objname = "pmat.wbsfs",
+##                      locs = cp[jj]), xlim =c(0,1), plot.it=FALSE)
+##     points(xy$y~xy$x, col='red')
+##     title(main=paste("jump size =", sim.settings$levs[ii], "\n location=", cp[jj]),ylim=c(0,1))
+##     legend("bottomright", col=c("black","red"), pch = c(1,1), legend = c("Binseg","WildBinSeg"))
+## }
+## }

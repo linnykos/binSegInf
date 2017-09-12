@@ -14,7 +14,8 @@
 ##'     segmentation output.
 ##' @export
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
-                return.env=FALSE, seed=NULL, verbose=FALSE, intervals = NULL, augment=FALSE){
+                                      return.env=FALSE, seed=NULL, verbose=FALSE,
+                                      intervals = NULL, augment=TRUE){
     ## Basic checks
     if(numSteps > length(y)-1) stop(paste("You should ask for less than", length(y), "steps!"))
     if(round(numSteps) != numSteps) stop(paste("You should provide an integer value for numSteps!"))
@@ -28,15 +29,19 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     if(is.null(intervals)){
         intervals = generate_intervals(length(y), numIntervals)
     }
-
-    ## De-duplicate the intervals
     intervals = .deduplicate_intervals(length(y), intervals)
+
+    ## Pre-calculate things
+    cumsums <- cumsum(y)
+    info <- Map(function(s,e){
+        get_morethan_cusums2(s,e,cumsums)},
+        intervals$starts, intervals$ends)
 
     ## Initialize things
     A = T = c()
     S = E = B = Z = M = list()
     Scurr = Ecurr = Bcurr = Zcurr = Mcurr = cplist(2*numSteps)
-    Tcurr=Acurr=list()
+    Tcurr = Acurr = list()
 
     ## At step 1,
     Scurr = add(Scurr,1,1,1)
@@ -51,21 +56,29 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
         .get_max.mbc <- function(Tcurr){
 
           ## Get maximizing quantities
-          max.m.b.cusums <- lapply(Tcurr, function(t){
-            if(is.null(t)) return()
-            s = extract(Scurr,t[1],t[2])
-            e = extract(Ecurr,t[1],t[2])
-            ms = which(.get_which_qualify(s,e,intervals))
-            if(augment) ms = c(ms,0)
-            if(length(ms)==0) return()
+          max.m.b.cusums <- lapply(Tcurr, function(tt){
+              if(is.null(tt)) return()
+              s = extract(Scurr,tt[1],tt[2])
+              e = extract(Ecurr,tt[1],tt[2])
+              ms = which(.get_which_qualify(s,e,intervals))
+              if(augment) ms = c(ms,0)
+              if(length(ms)==0) return()
 
-            ## Get the maximizer (m,b,z)
-            max.m = ms[which.max(sapply(ms, function(m) .get_max_b(m,s,e,intervals,y,"cusums")))]
-            max.cusum = max(sapply(ms, function(m) .get_max_b(m,s,e,intervals,y,"cusums")))
-            max.z = .get_max_b(max.m, s, e, intervals,y,"max.z")
-            max.b = .get_max_b(max.m, s, e, intervals,y,"max.b")
+              ## Augmentation is painful.. programmatically
+              info.aug = c(info, list(get_morethan_cusums2(s,e,cumsums)))
+              ms.aug = ms
+              ms.aug[which(ms.aug==0)] = length(intervals$se) + 1
 
-            return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum))})
+              ## Get the maximizer (m,b,z)
+              maxcusums = sapply(info.aug[ms.aug], '[[', "max.cusum")
+              max.ind.of.maxcusums = which.max(abs(maxcusums))
+              max.m = ms[max.ind.of.maxcusums]
+              max.cusum = maxcusums[max.ind.of.maxcusums]
+              max.z = sapply(info.aug[ms.aug], '[[', "max.z")[max.ind.of.maxcusums]
+              max.b = sapply(info.aug[ms.aug], '[[', "max.b")[max.ind.of.maxcusums]
+              ## if(tt[1]==2 & tt[2]==1 ) print(c(s,e,max.b,max.z, max.cusum))
+
+              return(list(max.m = max.m, max.b = max.b, max.cusum = max.cusum, max.z=max.z))})
         }
       mbc.list <- .get_max.mbc(Tcurr)
       if(all(sapply(mbc.list, is.null))){
@@ -76,13 +89,18 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       }
 
       ## Extract m,b,z,j,k
-      ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
+      ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)){ -Inf} else{ abs(a$max.cusum)}))
+        ## ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)) FALSE else a$max.cusum))
+
+
+      ## ind <- which.max(lapply(mbc.list, function(a) if(is.null(a)){ -Inf} else{ abs(a$max.cusum)}))
       jk.max <- Tcurr[[ind]]
       j.max <-  jk.max[1]
       k.max <-  jk.max[2]
       m.max <- mbc.list[[ind]]$max.m
       b.max <- mbc.list[[ind]]$max.b
-      z.max <- sign(mbc.list[[ind]]$max.cusum)
+      z.max <- mbc.list[[ind]]$max.z  ## sign(mbc.list[[ind]]$max.cusum)
+      ## if(j.max==2 & k.max==1)  browser()
 
       ## Update S and E
       s.max <- extract(Scurr,j.max,k.max)
@@ -101,7 +119,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
       A[[mystep]] = trim(Acurr)
       T[[mystep]] = trim(Tcurr)
       S[[mystep]] = df_to_cplist(trim(Scurr))
-
       E[[mystep]] = df_to_cplist(trim(Ecurr))
       B[[mystep]] = df_to_cplist(trim(Bcurr))
       Z[[mystep]] = df_to_cplist(trim(Zcurr))
@@ -139,10 +156,9 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
 
 
 
-
-##' Helper function to trim tree and deduplicate env$signs
-##' @param env An environment created as a result of the outer-most run of
-##'     \code{.wbs_inner(.., s=1,e=length(y))}
+## Helper function to trim tree and deduplicate env$signs, for WBS-ft and WBS-fs
+## @param env An environment created as a result of the outer-most run of
+##     \code{.wbs_inner(.., s=1,e=length(y))}
 .clean_env <- function(env){
     ## Rid env$tree of the empty element
     env$tree = env$tree[lapply(env$tree,length)>1]
@@ -154,6 +170,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     })
     env$signs = (env$signs)[unique.first.m.ind]
 }
+
 
 #' is_valid for wbs
 #'
@@ -195,4 +212,3 @@ print.wbsFs <- function(obj){
 ##                                    "passthreshold"))) stop("semat must be a matrix that contains certain elements!")
 ##   TRUE
 ## }
-
