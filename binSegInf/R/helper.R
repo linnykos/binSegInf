@@ -73,6 +73,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
 
+
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
     ## This is because in order to partition the TG statistic, we need to form
     ## these anyway.
@@ -287,4 +288,45 @@ piecewise_mean <- function(y,cp){
   cleanmn = rep(NA,length(y))
   lapply(1:length(segments), function(ii){cleanmn[segments[[ii]]] <<- segment.means[ii]})
   return(cleanmn)
+}
+
+
+##' Helper function for making segment contrasts from a wildBinSeg object OR
+##' bsFt object or path object (from genlassoinf package), or just cps
+##' @param obj Result from running wbs()
+##' @export
+make_all_segment_contrasts <- function(obj){
+
+    ## Basic checks
+    if(length(obj$cp)==0) stop("No detected changepoints!")
+    if(all(is.na(obj$cp)))stop("No detected changepoints!")
+
+    return(make_all_segment_contrasts_from_cps(obj$cp, obj$cp.sign, length(obj$y)))
+}
+
+
+##' Take |cp| and |cp.sign| and make all segment contrasts.
+##' @param cp integer vector of changepoints.
+##' @param cp.sign integer vector of changepoint signs.
+##' @param n length of data.
+##' @export
+make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n){
+
+    ## Augment the changepoint set for convenience
+    ord = order(cp)
+    cp_aug = c(0,cp[ord], n)
+    sn_aug = c(NA,cp.sign[ord],NA)
+    dlist = list()
+
+    ## Make each contrast
+    for(ii in (2:(length(cp_aug)-1))){
+        d = rep(0,n)
+        ind1 = (cp_aug[ii-1]+1):cp_aug[ii] ## 1 to 3, 4 to 9
+        ind2 = (cp_aug[ii]+1):cp_aug[ii+1]
+        d[ind1] = -1/length(ind1)
+        d[ind2] = 1/length(ind2)
+        dlist[[ii-1]] = d * sn_aug[ii]
+    }
+    names(dlist) = (cp * cp.sign)[ord]
+    return(dlist)
 }
