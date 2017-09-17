@@ -133,3 +133,21 @@ sanity.check <- function(z1list, Proj.perp, tolerance){
         return(z1list)
     }
 }
+
+
+##' Function to print progress of simulations.
+printprogress <- function(isim,nsim){cat("\r", "simulation ", isim,
+                                             "out of", nsim)}
+
+
+## Simulation helper
+.get_cp_from_segment_contrast <- function(v){
+    D =genlassoinf::makeDmat(length(v)+2)
+    which(D%*%c(0,v,0)!=0)[2]-1
+}
+
+## Simulation helper
+.i_covers_cp <- function(i,cp){
+    contained = (i$starts <= cp & cp<i$ends)
+    return(any(contained))
+}

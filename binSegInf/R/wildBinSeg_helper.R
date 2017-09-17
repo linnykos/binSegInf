@@ -322,36 +322,6 @@ make_contrast = function(test.bp, adj.bps, sn, n){
 make_segment_contrast = make_contrast
 
 
-##' Helper function for making segment contrasts from a wildBinSeg object OR
-##' bsFt object.
-##' @param obj Result from running wbs()
-##' @export
-make_all_segment_contrasts <- function(obj){
-
-    ## Basic checks
-    if(length(obj$cp)==0) stop("No detected changepoints!")
-    if(all(is.na(obj$cp)))stop("No detected changepoints!")
-
-    ## Augment the changepoint set for convenience
-    ord = order(obj$cp)
-    cp_aug = c(0,obj$cp[ord],length(obj$y))
-    sn_aug = c(NA,obj$cp.sign[ord],NA)
-    dlist = list()
-
-    ## Make each contrast
-    for(ii in (2:(length(cp_aug)-1))){
-        d = rep(0,length(obj$y))
-        ind1 = (cp_aug[ii-1]+1):cp_aug[ii] ## 1 to 3, 4 to 9
-        ind2 = (cp_aug[ii]+1):cp_aug[ii+1]
-        d[ind1] = -1/length(ind1)
-        d[ind2] = 1/length(ind2)
-        dlist[[ii-1]] = d * sn_aug[ii]
-    }
-    names(dlist) = (obj$cp * obj$cp.sign)[ord]
-    return(dlist)
-}
-
-
 ## Checking if intervals is correct.
 .is_valid_intervals <- function(intervals){
    return(all(names(intervals) %in% c("starts","ends","intervals","se")))
