@@ -103,7 +103,7 @@ test_that("poly.pval_kevin works", {
 })
 
 test_that("poly.pval_kevin forms uniform pvalues", {
-  trials <- 500
+  trials <- 2000
   vec <- sapply(1:trials, function(x){
     set.seed(10*x)
     y <- rnorm(10)
@@ -112,9 +112,47 @@ test_that("poly.pval_kevin forms uniform pvalues", {
     contrast <- .polyhedron_vector_generator(i, length(y))
 
     val <- poly.pval_kevin(mat, y, 1, contrast)$pvalue
-    if(val == 0) print(x)
     val
   })
 
+  # plot(sort(vec), seq(0,1,length.out = length(vec)))
+  # lines(c(0,1), c(0,1), col = "red", lwd = 2)
+
   expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1))) <= 0.1)
+})
+
+#################
+
+## .truncated_gauss_cdf is correct
+
+test_that(".truncated_gauss_cdf works", {
+  set.seed(10)
+  y <- rnorm(10)
+  i <- estimate_kevin(y)
+  mat <- polyhedron_kevin(y, i)
+  contrast <- .polyhedron_vector_generator(i, length(y))
+  terms <- .compute_truncGaus_terms(y, mat, contrast, sigma = 1)
+
+  res <- .truncated_gauss_cdf(terms$term, terms$sigma, terms$a, terms$b)
+
+  expect_true(length(res) == 3)
+  expect_true(all(is.numeric(unlist(res))))
+  expect_true(res$pvalue <= 1)
+  expect_true(res$pvalue >= 0)
+  expect_true(all(unlist(res) >= 0))
+})
+
+test_that(".truncated_gauss_cdf will not return 0 in this test case", {
+  set.seed(1470)
+  y <- rnorm(10)
+  i <- estimate_kevin(y)
+  mat <- polyhedron_kevin(y,i)
+  contrast <- .polyhedron_vector_generator(i, length(y))
+  terms <- .compute_truncGaus_terms(y, mat, contrast, sigma = 1)
+
+  res <- .truncated_gauss_cdf(terms$term, terms$sigma, terms$a, terms$b)
+
+  bool1 <- terms$term >= terms$a
+  bool2 <- res$pvalue != 0
+  expect_true(bool1 == bool2)
 })

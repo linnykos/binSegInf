@@ -100,7 +100,7 @@ sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
 #'
 #' @return a pvalue, its numerator and its denominator
 #' @export
-.truncated_gauss_cdf <- function(value, sigma, a, b, tol_prec = 1e-2){
+.truncated_gauss_cdf <- function(value, sigma, a, b, tol_prec = 1e-5){
   if(b < a) stop("b must be greater or equal to a")
 
   a_scaled <- a/sigma; b_scaled <- b/sigma
@@ -118,10 +118,10 @@ sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
   val <- numerator/denom
 
   #fix any source of possible imprecision
-  issue <- is.na(val) | is.nan(val) | any(denom < tol_prec) | any(numerator < tol_prec) |
-    any(val < tol_prec) | any(val > 1-tol_prec)
+  issue <- is.na(val) | is.nan(val) | denom < tol_prec | numerator < tol_prec |
+    val < tol_prec | val > 1-tol_prec
 
-  if(any(issue)) {
+  if(issue) {
     res <- .truncated_gauss_cdf_Rmpfr(value, sigma, a, b, 10)
     val <- res$val; numerator <- res$numerator; denom <- res$denom
   }
@@ -129,8 +129,8 @@ sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
   list(pvalue = val, numerator = numerator, denominator = denom)
 }
 
-.truncated_gauss_cdf_Rmpfr <- function(value, sigma, a, b, tol_zero = 1e-5,
-                                       precBits = 10){
+.truncated_gauss_cdf_Rmpfr <- function(value, sigma, a, b, tol_zero = 1e-8,
+                                       precBits = 50){
 
   a_scaled <- Rmpfr::mpfr(a/sigma, precBits = precBits)
   b_scaled <- Rmpfr::mpfr(b/sigma, precBits = precBits)
