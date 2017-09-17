@@ -20,7 +20,17 @@ estimate_kevin <- function(y){
 #' @return a matrix to be the Gamma matrix
 #' @export
 polyhedron_kevin <- function(y, i){
-  NULL
+  n <- length(y)
+
+  winning_contrast <- .polyhedron_vector_generator(i, n)
+
+  idx <- c(1:(n-1))[-i]
+  mat <- sapply(idx, function(x){
+    losing_contrast <- .polyhedron_vector_generator(x, n)
+    winning_contrast - losing_contrast
+  })
+
+  t(mat)
 }
 
 #' Compute pvalue from polyhedron
@@ -48,4 +58,13 @@ poly.pval_kevin <- function(mat, y, sigma2, contrast){
 #' @export
 sampler_kevin <- function(y, sigma02, sigma2, num_trials, contrast){
   NULL
+}
+
+##########
+
+.polyhedron_vector_generator <- function(i, n){
+  vec <- rep(0, n)
+  vec[1:i] <- 1/i
+  vec[(i+1):n] <- -1/(n-i)
+  vec
 }
