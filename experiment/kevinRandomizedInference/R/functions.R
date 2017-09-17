@@ -37,13 +37,13 @@ polyhedron_kevin <- function(y, i){
 #'
 #' @param mat Gamma matrix
 #' @param y data vector
-#' @param sigma2 variance of the generative process of y
+#' @param sigma sd of the generative process of y
 #' @param contrast vector
 #'
 #' @return a list of the pvalue, the numerator of the pvalue, and the denominator of the pvalue
 #' @export
-poly.pval_kevin <- function(mat, y, sigma2, contrast){
-  terms <- .compute_truncGaus_terms(y, mat, contrast, sigma2)
+poly.pval_kevin <- function(mat, y, sigma, contrast){
+  terms <- .compute_truncGaus_terms(y, mat, contrast, sigma)
 
   res <- .truncated_gauss_cdf(terms$term, sigma = terms$sigma, a = terms$a,
                               b = terms$b)
@@ -52,14 +52,14 @@ poly.pval_kevin <- function(mat, y, sigma2, contrast){
 #' Sampler for randomized inference
 #'
 #' @param y data vector
-#' @param sigma02 variance of the randomized noise being added
-#' @param sigma2 variance of the generative process of y
+#' @param sigma0 sd of the randomized noise being added
+#' @param sigma sd of the generative process of y
 #' @param num_trials number of trials for the sampler
 #' @param contrast vector
 #'
 #' @return pvalue
 #' @export
-sampler_kevin <- function(y, sigma02, sigma2, num_trials, contrast){
+sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
   NULL
 }
 
@@ -73,11 +73,11 @@ sampler_kevin <- function(y, sigma02, sigma2, num_trials, contrast){
 }
 
 
-.compute_truncGaus_terms <- function(y, mat, contrast, sigma2){
+.compute_truncGaus_terms <- function(y, mat, contrast, sigma){
   z <- as.numeric(contrast %*% y)
 
   vv <- contrast %*% contrast
-  sd <- as.numeric(sigma2*sqrt(vv))
+  sd <- as.numeric(sigma*sqrt(vv))
 
   rho <- as.numeric(mat %*% contrast) / vv
   vec <- as.numeric((rep(0, nrow(mat)) - mat %*% y + rho * z)/rho)
@@ -88,55 +88,60 @@ sampler_kevin <- function(y, sigma02, sigma2, num_trials, contrast){
   list(term = z, sigma = sd, a = vlo, b = vup)
 }
 
-#' Title
+#' Computing pvalue with vlo and vhigh
 #'
 #' The mean that is being tested is always assumed to be 0.
 #'
-#' @param value
-#' @param sigma
-#' @param a
-#' @param b
-#' @param tol_prec
+#' @param value the observed value to compute the density at
+#' @param sigma sd of the truncated Gaussian
+#' @param a left (lower) truncation of Gaussian
+#' @param b right (upper) truncation of Gaussian
+#' @param tol_prec require precision
 #'
-#' @return
+#' @return a pvalue, its numerator and its denominator
 #' @export
-#'
-#' @examples
-.truncated_gauss_cdf <- function(value, sigma2, a, b, tol_prec = 1e-2){
+.truncated_gauss_cdf <- function(value, sigma, a, b, tol_prec = 1e-2){
   if(b < a) stop("b must be greater or equal to a")
 
-  if(val <= a) return(0)
-  if(val >= b) return(1)
-
-  a_scaled <- a/sigma2; b_scaled <- b/sigma2
-  z_scaled <- value/sigma2
+  a_scaled <- a/sigma; b_scaled <- b/sigma
+  z_scaled <- value/sigma
   denom <- stats::pnorm(b_scaled) - stats::pnorm(a_scaled)
-  numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
+
+  if(value <= a){
+    numerator <- 0
+  } else if (value >= b){
+    numerator <- 1
+  } else {
+    numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
+  }
+
 
   val <- numerator/denom
 
-  #fix any NAs first
-  issue <- any(is.na(val) | is.nan(val))
-  if(any(issue)) val <- .truncated_gauss_cdf_Rmpfr(value, sigma2, a, b, 10)
-
   #fix any source of possible imprecision
-  issue <- any(denom < tol_prec) | any(numerator < tol_prec) |
+  issue <- is.na(val) | is.nan(val) | any(denom < tol_prec) | any(numerator < tol_prec) |
     any(val < tol_prec) | any(val > 1-tol_prec)
 
-  if(any(issue) & !is.na(precBits)) val <- .truncated_gauss_cdf_Rmpfr(value, sigma2, a, b, 10)
+  if(any(issue)) {
+    res <- .truncated_gauss_cdf_Rmpfr(value, sigma, a, b, 10)
+    val <- res$val; numerator <- res$numerator; denom <- res$denom
+  }
 
-  val
+  list(pvalue = val, numerator = numerator, denominator = denom)
 }
 
-.truncated_gauss_cdf_Rmpfr <- function(value, sigma2, a, b, tol_zero = 1e-5,
+.truncated_gauss_cdf_Rmpfr <- function(value, sigma, a, b, tol_zero = 1e-5,
                                        precBits = 10){
 
-  a_scaled <- Rmpfr::mpfr(a/sigma2, precBits = precBits)
-  b_scaled <- Rmpfr::mpfr(b/sigma2, precBits = precBits)
-  z_scaled <- Rmpfr::mpfr(value/sigma2, precBits = precBits)
+  a_scaled <- Rmpfr::mpfr(a/sigma, precBits = precBits)
+  b_scaled <- Rmpfr::mpfr(b/sigma, precBits = precBits)
+  z_scaled <- Rmpfr::mpfr(value/sigma, precBits = precBits)
 
   denom <- Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(a_scaled)
   if(denom < tol_zero) denom <- tol_zero
-  as.numeric(Rmpfr::mpfr((Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))/denom, precBits = precBits))
+  numerator <- as.numeric(Rmpfr::pnorm(b_scaled) - Rmpfr::pnorm(z_scaled))
+  val <- as.numeric(Rmpfr::mpfr(numerator/denom, precBits = precBits))
+
+  list(val = val, numerator = numerator, denom = denom)
 }
 

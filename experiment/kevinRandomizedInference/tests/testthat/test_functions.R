@@ -84,4 +84,20 @@ test_that("polyhedron_kevin generates Gamma specific to selection", {
 
 ###################
 
+## poly.pval_kevin is correct
 
+test_that("poly.pval_kevin works", {
+  set.seed(10)
+  y <- rnorm(10)
+  i <- estimate_kevin(y)
+  mat <- polyhedron_kevin(y, i)
+  contrast <- .polyhedron_vector_generator(i, length(y))
+
+  res <- poly.pval_kevin(mat, y, 1, contrast)
+
+  expect_true(length(res) == 3)
+  expect_true(all(is.numeric(unlist(res))))
+  expect_true(res$pvalue <= 1)
+  expect_true(res$pvalue >= 0)
+  expect_true(all(unlist(res) >= 0))
+})
