@@ -73,7 +73,8 @@ sampler_kevin <- function(y, sigma0, sigma, num_trials, contrast){
     c(res$pvalue, res$denominator)
   })
 
-  vec[1,]%*%vec[2,]/sum(vec[2,])
+  half <- floor(num_trials/2)
+  vec[1,1:half]%*%vec[2,1:half]/sum(vec[2,(half+1):num_trials])
 }
 
 ##########
