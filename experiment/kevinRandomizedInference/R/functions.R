@@ -5,7 +5,11 @@
 #' @return an index (positive integer)
 #' @export
 estimate_kevin <- function(y){
-NULL
+  n <- length(y)
+  vec <- sapply(1:(n-1), function(i){
+    mean(y[1:i]) - mean(y[(i+1):n])
+  })
+  which.max(vec)
 }
 
 #' Compute polyhedraon of \code{estimate_kevin}
