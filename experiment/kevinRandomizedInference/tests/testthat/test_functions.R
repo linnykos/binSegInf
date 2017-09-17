@@ -111,7 +111,9 @@ test_that("poly.pval_kevin forms uniform pvalues", {
     mat <- polyhedron_kevin(y,i)
     contrast <- .polyhedron_vector_generator(i, length(y))
 
-    poly.pval_kevin(mat, y, 1, contrast)$pvalue
+    val <- poly.pval_kevin(mat, y, 1, contrast)$pvalue
+    if(val == 0) print(x)
+    val
   })
 
   expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1))) <= 0.1)

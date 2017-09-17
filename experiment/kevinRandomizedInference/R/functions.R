@@ -115,7 +115,6 @@ sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
     numerator <- stats::pnorm(b_scaled) - stats::pnorm(z_scaled)
   }
 
-
   val <- numerator/denom
 
   #fix any source of possible imprecision
