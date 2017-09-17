@@ -118,7 +118,55 @@ test_that("poly.pval_kevin forms uniform pvalues", {
   # plot(sort(vec), seq(0,1,length.out = length(vec)))
   # lines(c(0,1), c(0,1), col = "red", lwd = 2)
 
-  expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1))) <= 0.1)
+  expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1)))/trials <= 1e-5)
+})
+
+test_that("poly.pval_kevin does not crash when contrast is chosen independent of Gamma matrix", {
+  set.seed(10)
+  y <- rnorm(10)
+  contrast <- c(rep(1/5,5), rep(-1/5,5))
+
+  n <- length(y); unique_seed <- sum(abs(y))
+  set.seed(2*10*unique_seed)
+  y_boot <- y + stats::rnorm(n, sd = 1)
+  i <- estimate_kevin(y_boot)
+  mat <- polyhedron_kevin(y_boot, i)
+  res <- poly.pval_kevin(mat, y_boot, 1, contrast)
+
+  expect_true(length(res) == 3)
+})
+
+####################
+
+## .compute_truncGaus_terms is correct
+
+test_that(".compute_truncGaus_terms works", {
+  set.seed(10)
+  y <- rnorm(10)
+  i <- estimate_kevin(y)
+  mat <- polyhedron_kevin(y,i)
+  contrast <- .polyhedron_vector_generator(i, length(y))
+
+  res <- .compute_truncGaus_terms(y, mat, contrast, 1)
+
+  expect_true(is.list(res))
+  expect_true(length(res) == 4)
+  expect_true(res$a <= res$b)
+})
+
+test_that(".compute_truncGaus_terms works when contrast is chosen independent of Gamma matrix", {
+  set.seed(10)
+  y <- rnorm(10)
+  contrast <- c(rep(1/5,5), rep(-1/5,5))
+
+  n <- length(y); unique_seed <- sum(abs(y))
+  set.seed(2*10*unique_seed)
+  y_boot <- y + stats::rnorm(n, sd = 1)
+  i <- estimate_kevin(y_boot)
+  mat <- polyhedron_kevin(y_boot, i)
+  res <- .compute_truncGaus_terms(y_boot, mat, contrast, 1)
+
+  expect_true(res$a <= res$b)
 })
 
 #################
@@ -155,4 +203,18 @@ test_that(".truncated_gauss_cdf will not return 0 in this test case", {
   bool1 <- terms$term >= terms$a
   bool2 <- res$pvalue != 0
   expect_true(bool1 == bool2)
+})
+
+#################
+
+## sampler_kevin is correct
+
+test_that("sampler_kevin works", {
+  set.seed(10)
+  y <- rnorm(10)
+  contrast <- c(rep(1/5,5), rep(-1/5,5))
+  res <- sampler_kevin(y, 1, 1, 100, contrast)
+
+  expect_true(is.numeric(res))
+  expect_true(length(res) == 1)
 })

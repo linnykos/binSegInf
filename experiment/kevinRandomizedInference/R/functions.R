@@ -59,8 +59,21 @@ poly.pval_kevin <- function(mat, y, sigma, contrast){
 #'
 #' @return pvalue
 #' @export
-sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
-  NULL
+sampler_kevin <- function(y, sigma0, sigma, num_trials, contrast){
+  n <- length(y); unique_seed <- sum(abs(y))
+
+  vec <- sapply(1:num_trials, function(x){
+    set.seed(x*10*unique_seed)
+
+    y_boot <- y + stats::rnorm(n, sd = sigma0)
+    i <- estimate_kevin(y_boot)
+    mat <- polyhedron_kevin(y_boot, i)
+    res <- poly.pval_kevin(mat, y_boot, sigma, contrast)
+
+    c(res$pvalue, res$denominator)
+  })
+
+  vec[1,]%*%vec[2,]/sum(vec[2,])
 }
 
 ##########
@@ -71,7 +84,6 @@ sampler_kevin <- function(y, sigma02, sigma, num_trials, contrast){
   vec[(i+1):n] <- -1/(n-i)
   vec
 }
-
 
 .compute_truncGaus_terms <- function(y, mat, contrast, sigma){
   z <- as.numeric(contrast %*% y)
