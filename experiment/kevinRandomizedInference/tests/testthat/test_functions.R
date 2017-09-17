@@ -218,3 +218,25 @@ test_that("sampler_kevin works", {
   expect_true(is.numeric(res))
   expect_true(length(res) == 1)
 })
+
+test_that("poly.pval_kevin forms uniform pvalues", {
+  trials <- 1000
+  contrast <- c(rep(1/5,5), rep(-1/5,5))
+  doMC::registerDoMC(cores = 3)
+
+  func <- function(i){
+    print(i)
+    set.seed(10*i)
+    y <- rnorm(10)
+    sampler_kevin(y, 1, 1, 500, contrast)
+  }
+
+  vec <- foreach::"%dopar%"(foreach::foreach(i = 1:trials),
+                           func(i))
+
+  # plot(sort(vec), seq(0,1,length.out = length(vec)))
+  # lines(c(0,1), c(0,1), col = "red", lwd = 2)
+
+
+  expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1)))/trials <= 1e-5)
+})
