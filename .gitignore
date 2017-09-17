@@ -5,8 +5,6 @@
 *.Rout
 *.out
 .Rproj.user
-.Rd
-*.Rd
 *.RData
 *.Rdata
 \#*\#
