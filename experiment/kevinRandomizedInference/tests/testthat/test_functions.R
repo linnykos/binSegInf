@@ -101,3 +101,18 @@ test_that("poly.pval_kevin works", {
   expect_true(res$pvalue >= 0)
   expect_true(all(unlist(res) >= 0))
 })
+
+test_that("poly.pval_kevin forms uniform pvalues", {
+  trials <- 500
+  vec <- sapply(1:trials, function(x){
+    set.seed(10*x)
+    y <- rnorm(10)
+    i <- estimate_kevin(y)
+    mat <- polyhedron_kevin(y,i)
+    contrast <- .polyhedron_vector_generator(i, length(y))
+
+    poly.pval_kevin(mat, y, 1, contrast)$pvalue
+  })
+
+  expect_true(sum(abs(quantile(vec) - c(0, 0.25, 0.5, 0.75, 1))) <= 0.1)
+})
