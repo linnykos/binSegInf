@@ -42,9 +42,10 @@ polyhedron_kevin <- function(y, i){
 #'
 #' @return a list of the pvalue, the numerator of the pvalue, and the denominator of the pvalue
 #' @export
-poly.pval_kevin <- function(mat, y, sigma, contrast){
+poly.pval_kevin <- function(mat, y, sigma, contrast, modifier = 0){
   terms <- .compute_truncGaus_terms(y, mat, contrast, sigma)
 
+  terms$term <- terms$term - modifier
   res <- .truncated_gauss_cdf(terms$term, sigma = terms$sigma, a = terms$a,
                               b = terms$b)
 }
@@ -65,13 +66,17 @@ sampler_kevin <- function(y, sigma0, sigma, num_trials, contrast){
   vec <- sapply(1:num_trials, function(x){
     set.seed(x*10*unique_seed)
 
-    y_boot <- y + stats::rnorm(n, sd = sigma0)
+    rvec <- stats::rnorm(n, sd = sigma0)
+    y_boot <- y + rvec
     i <- estimate_kevin(y_boot)
     mat <- polyhedron_kevin(y_boot, i)
-    res <- poly.pval_kevin(mat, y_boot, sigma, contrast)
+    res <- poly.pval_kevin(mat, y_boot, sigma, contrast, modifier = contrast %*% rvec)
 
     c(res$pvalue, res$denominator)
   })
+
+  # half <- floor(num_trials/2)
+  # vec[1,1:half]%*%vec[2,1:half]/sum(vec[2,(half+1):num_trials])
 
   mean(vec[1,])
 }
