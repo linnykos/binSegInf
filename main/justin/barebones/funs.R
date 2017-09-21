@@ -46,7 +46,7 @@ contrast <- function(cp,n){
 }
 
 ##' Gets information regarding TG statistic
-tg_inf <- function(y, G, u, v, sigma, nullcontrast=0, bits=50, reduce){
+tg_inf <- function(y, G, u, v, sigma, shift=NULL, nullcontrast=0, bits=50, reduce){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -55,6 +55,14 @@ tg_inf <- function(y, G, u, v, sigma, nullcontrast=0, bits=50, reduce){
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
 
+    ## Shift polyhedron if needed
+    if(!is.null(shift)){
+        stopifnot(length(shift)==n)
+        u = u - G%*%shift
+    }
+
+
+    ## Obtain quantities (intersection points) along the line of v+y
     pvobj <- poly.pval(y=y, G=G, u=u, v=v, sigma=sigma)
     vup = pvobj$vup
     vlo = pvobj$vlo
@@ -82,14 +90,18 @@ tg_inf <- function(y, G, u, v, sigma, nullcontrast=0, bits=50, reduce){
 
 
 ##' sampler for RTG
-rtg <- function(y, sigma, sigma.add, nsim.inner=100){
+rtg <- function(y, shift, sigma, sigma.add, cp, nsim.inner=100){
+
+    ## Original information
+    cp <-  estim(y+shift)
+    gamma = polyhedron(cp, n)
+    v <- contrast(cp, n)
+
+    ## Get many fudged TG statistics.
     inner.tgs = sapply(1:nsim.inner, function(isim){
-        y.new = y + rnorm(n,0,sigma.add)
-        max.cp.new = estim(y.new)
-        gamma.new = polyhedron(max.cp.new, n)
-        v = contrast(max.cp.new, n)
-        obj.new = tg_inf(y=y.new, G=gamma.new, u=rep(0,nrow(gamma.new)),
-                         v = v, sigma=sqrt(sigma^2+sigma.add^2)) ## Do we need to use the added noise?
+        new.noise = rnorm(n,0,sigma.add)
+        obj.new = tg_inf(y=y, G=gamma, u=rep(0,nrow(gamma)), shift=new.noise,
+                         v=v, sigma=sqrt(sigma^2))
         pv.new = obj.new$pv
         weight.new = obj.new$denom
         return(c(pv.new, weight.new))
@@ -100,5 +112,6 @@ rtg <- function(y, sigma, sigma.add, nsim.inner=100){
 
     ## Calculate randomized TG statistic
     rtg.pv = sum(pvs*denoms)/sum(denoms)
+    ## if(rtg.pv==1) browser()
     return(rtg.pv)
 }
