@@ -30,20 +30,21 @@ polyhedron_kevin <- function(y, i){
     winning_contrast - losing_contrast
   })
 
-  t(mat)
+  mat <- t(mat)
+  list(gamma = mat, u = rep(0, nrow(mat)))
 }
 
 #' Compute pvalue from polyhedron
 #'
-#' @param mat Gamma matrix
 #' @param y data vector
-#' @param sigma sd of the generative process of y
+#' @param poly polyhedron object
 #' @param contrast vector
+#' @param sigma sd of the generative process of y
 #'
 #' @return a list of the pvalue, the numerator of the pvalue, and the denominator of the pvalue
 #' @export
-poly.pval_kevin <- function(mat, y, sigma, contrast){
-  terms <- .compute_truncGaus_terms(y, mat, contrast, sigma)
+poly.pval_kevin <- function(y, poly, contrast, sigma){
+  terms <- .compute_truncGaus_terms(y, poly, contrast, sigma)
 
   res <- .truncated_gauss_cdf(terms$term, sigma = terms$sigma, a = terms$a,
                               b = terms$b)
@@ -59,24 +60,24 @@ poly.pval_kevin <- function(mat, y, sigma, contrast){
 #'
 #' @return pvalue
 #' @export
-sampler_kevin <- function(y, sigma0, sigma, num_trials, contrast){
-  n <- length(y); unique_seed <- sum(abs(y))
+sampler_kevin <- function(y, noise, sigma0, sigma, num_trials, contrast){
+  stopifnot(length(y) == length(noise))
+  unique_seed <- sum(abs(y))
+
+  n <- length(y)
+  i <- estimate_kevin(y + noise)
+  poly <- polyhedron_kevin(y + noise, i)
 
   vec <- sapply(1:num_trials, function(x){
     set.seed(x*10*unique_seed)
-
-    y_boot <- y + stats::rnorm(n, sd = sigma0)
-    i <- estimate_kevin(y_boot)
-    mat <- polyhedron_kevin(y_boot, i)
-    res <- poly.pval_kevin(mat, y_boot, sigma, contrast)
+    new_noise <- stats::rnorm(n, sd = sigma0)
+    poly$u <- poly$gamma %*% new_noise
+    res <- poly.pval_kevin(y, poly, contrast, sigma)
 
     c(res$pvalue, res$denominator)
   })
 
-  half <- floor(num_trials/2)
-  vec[1,1:half]%*%vec[2,1:half]/sum(vec[2,(half+1):num_trials])
-
-  # mean(vec[1,])
+  as.numeric(vec[1,]%*%vec[2,]/sum(vec[2,]))
 }
 
 ##########
@@ -88,14 +89,14 @@ sampler_kevin <- function(y, sigma0, sigma, num_trials, contrast){
   vec
 }
 
-.compute_truncGaus_terms <- function(y, mat, contrast, sigma){
+.compute_truncGaus_terms <- function(y, poly, contrast, sigma){
   z <- as.numeric(contrast %*% y)
 
   vv <- contrast %*% contrast
   sd <- as.numeric(sigma*sqrt(vv))
 
-  rho <- as.numeric(mat %*% contrast) / vv
-  vec <- as.numeric((rep(0, nrow(mat)) - mat %*% y + rho * z)/rho)
+  rho <- as.numeric(poly$gamma %*% contrast) / vv
+  vec <- as.numeric(poly$u - poly$gamma %*% y + rho * z)/rho
 
   if(any(rho > 0)) vlo <- max(vec[rho > 0]) else vlo <- -Inf
   if(any(rho < 0)) vup <- min(vec[rho < 0]) else vup <- Inf

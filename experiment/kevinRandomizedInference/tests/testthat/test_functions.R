@@ -43,8 +43,8 @@ test_that("polyhedron_kevin works", {
   res <- polyhedron_kevin(y,i)
 
   n <- length(y)
-  expect_true(all(dim(res) == c(n-2,n)))
-  expect_true(is.matrix(res))
+  expect_true(all(dim(res$gamma) == c(n-2,n)))
+  expect_true(is.matrix(res$gamma))
 })
 
 test_that("polyhedron_kevin satisfies polyhedron inequality", {
@@ -53,9 +53,9 @@ test_that("polyhedron_kevin satisfies polyhedron inequality", {
     set.seed(x)
     y <- rnorm(10)
     i <- estimate_kevin(y)
-    gam <- polyhedron_kevin(y,i)
+    poly <- polyhedron_kevin(y,i)
 
-    all(gam %*% y >= 0)
+    all(poly$gamma %*% y >= 0)
   })
 
   expect_true(all(res))
@@ -66,7 +66,7 @@ test_that("polyhedron_kevin generates Gamma specific to selection", {
   set.seed(1)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  gam <- polyhedron_kevin(y,i)
+  poly <- polyhedron_kevin(y,i)
 
   res <- sapply(1:trials, function(x){
     set.seed(10*x)
@@ -74,7 +74,7 @@ test_that("polyhedron_kevin generates Gamma specific to selection", {
     i2 <- estimate_kevin(y2)
 
     bool1 <- i == i2
-    bool2 <- all(gam%*%y2 >= 0)
+    bool2 <- all(poly$gamma%*%y2 >= 0)
 
     bool1 == bool2
   })
@@ -90,10 +90,10 @@ test_that("poly.pval_kevin works", {
   set.seed(10)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  mat <- polyhedron_kevin(y, i)
+  poly <- polyhedron_kevin(y, i)
   contrast <- .polyhedron_vector_generator(i, length(y))
 
-  res <- poly.pval_kevin(mat, y, 1, contrast)
+  res <- poly.pval_kevin(y, poly, contrast, 1)
 
   expect_true(length(res) == 3)
   expect_true(all(is.numeric(unlist(res))))
@@ -108,10 +108,10 @@ test_that("poly.pval_kevin forms uniform pvalues", {
     set.seed(10*x)
     y <- rnorm(10)
     i <- estimate_kevin(y)
-    mat <- polyhedron_kevin(y,i)
+    poly <- polyhedron_kevin(y,i)
     contrast <- .polyhedron_vector_generator(i, length(y))
 
-    val <- poly.pval_kevin(mat, y, 1, contrast)$pvalue
+    val <- poly.pval_kevin(y, poly, contrast, 1)$pvalue
     val
   })
 
@@ -130,8 +130,8 @@ test_that("poly.pval_kevin does not crash when contrast is chosen independent of
   set.seed(2*10*unique_seed)
   y_boot <- y + stats::rnorm(n, sd = 1)
   i <- estimate_kevin(y_boot)
-  mat <- polyhedron_kevin(y_boot, i)
-  res <- poly.pval_kevin(mat, y_boot, 1, contrast)
+  poly <- polyhedron_kevin(y_boot, i)
+  res <- poly.pval_kevin(y_boot, poly, contrast, 1)
 
   expect_true(length(res) == 3)
 })
@@ -212,16 +212,17 @@ test_that(".truncated_gauss_cdf will not return 0 in this test case", {
 test_that("sampler_kevin works", {
   set.seed(10)
   y <- rnorm(10)
+  noise <- rnorm(10)
   contrast <- c(rep(1/5,5), rep(-1/5,5))
-  res <- sampler_kevin(y, 1, 1, 100, contrast)
+  res <- sampler_kevin(y, noise, 1, 1, 100, contrast)
 
   expect_true(is.numeric(res))
   expect_true(length(res) == 1)
+  expect_true(res >= 0)
 })
 
 test_that("sampler_kevin forms uniform pvalues", {
-  #trials <- 100
-  trials <- 1000
+  trials <- 100
   contrast <- c(rep(1/5,5), rep(-1/5,5))
   doMC::registerDoMC(cores = 3)
 
@@ -229,13 +230,11 @@ test_that("sampler_kevin forms uniform pvalues", {
     print(i)
     set.seed(10*i)
     y <- rnorm(10)
-    #sampler_kevin(y, 1, 1, 100, contrast)
-    sampler_kevin(y, 1, 1, 500, contrast)
+    noise <- rnorm(10)
+    sampler_kevin(y, noise, 1, 1, 50, contrast)
   }
 
-  vec <- foreach::"%dopar%"(foreach::foreach(i = 1:trials),
-                           func(i))
-  vec <- unlist(vec)
+  vec <- sapply(1:trials, func(i))
 
   # plot(sort(vec), seq(0,1,length.out = length(vec)))
   # lines(c(0,1), c(0,1), col = "red", lwd = 2)
