@@ -19,9 +19,7 @@ estimate_kevin <- function(y){
 #'
 #' @return a matrix to be the Gamma matrix
 #' @export
-polyhedron_kevin <- function(y, i){
-  n <- length(y)
-
+polyhedron_kevin <- function(n, i){
   winning_contrast <- .polyhedron_vector_generator(i, n)
 
   idx <- c(1:(n-1))[-i]
@@ -66,12 +64,14 @@ sampler_kevin <- function(y, noise, sigma0, sigma, num_trials, contrast){
 
   n <- length(y)
   i <- estimate_kevin(y + noise)
-  poly <- polyhedron_kevin(y + noise, i)
+  poly <- polyhedron_kevin(n, i)
 
   vec <- sapply(1:num_trials, function(x){
+    print(x)
     set.seed(x*10*unique_seed)
+
     new_noise <- stats::rnorm(n, sd = sigma0)
-    poly$u <- poly$gamma %*% new_noise
+    poly$u <- -poly$gamma %*% new_noise
     res <- poly.pval_kevin(y, poly, contrast, sigma)
 
     c(res$pvalue, res$denominator)

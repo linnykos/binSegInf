@@ -38,11 +38,9 @@ test_that(".polyhedron_vector_generator works", {
 ## polyhedron_kevin is correct
 
 test_that("polyhedron_kevin works", {
-  y <- rep(0, 10)
-  i <- 7
-  res <- polyhedron_kevin(y,i)
+  n <- 10
+  res <- polyhedron_kevin(10,2)
 
-  n <- length(y)
   expect_true(all(dim(res$gamma) == c(n-2,n)))
   expect_true(is.matrix(res$gamma))
 })
@@ -53,7 +51,7 @@ test_that("polyhedron_kevin satisfies polyhedron inequality", {
     set.seed(x)
     y <- rnorm(10)
     i <- estimate_kevin(y)
-    poly <- polyhedron_kevin(y,i)
+    poly <- polyhedron_kevin(length(y),i)
 
     all(poly$gamma %*% y >= 0)
   })
@@ -66,7 +64,7 @@ test_that("polyhedron_kevin generates Gamma specific to selection", {
   set.seed(1)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  poly <- polyhedron_kevin(y,i)
+  poly <- polyhedron_kevin(length(y),i)
 
   res <- sapply(1:trials, function(x){
     set.seed(10*x)
@@ -90,7 +88,7 @@ test_that("poly.pval_kevin works", {
   set.seed(10)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  poly <- polyhedron_kevin(y, i)
+  poly <- polyhedron_kevin(length(y), i)
   contrast <- .polyhedron_vector_generator(i, length(y))
 
   res <- poly.pval_kevin(y, poly, contrast, 1)
@@ -108,7 +106,7 @@ test_that("poly.pval_kevin forms uniform pvalues", {
     set.seed(10*x)
     y <- rnorm(10)
     i <- estimate_kevin(y)
-    poly <- polyhedron_kevin(y,i)
+    poly <- polyhedron_kevin(length(y),i)
     contrast <- .polyhedron_vector_generator(i, length(y))
 
     val <- poly.pval_kevin(y, poly, contrast, 1)$pvalue
@@ -130,7 +128,7 @@ test_that("poly.pval_kevin does not crash when contrast is chosen independent of
   set.seed(2*10*unique_seed)
   y_boot <- y + stats::rnorm(n, sd = 1)
   i <- estimate_kevin(y_boot)
-  poly <- polyhedron_kevin(y_boot, i)
+  poly <- polyhedron_kevin(length(y_boot), i)
   res <- poly.pval_kevin(y_boot, poly, contrast, 1)
 
   expect_true(length(res) == 3)
@@ -144,7 +142,7 @@ test_that(".compute_truncGaus_terms works", {
   set.seed(10)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  mat <- polyhedron_kevin(y,i)
+  mat <- polyhedron_kevin(length(y),i)
   contrast <- .polyhedron_vector_generator(i, length(y))
 
   res <- .compute_truncGaus_terms(y, mat, contrast, 1)
@@ -163,7 +161,7 @@ test_that(".compute_truncGaus_terms works when contrast is chosen independent of
   set.seed(2*10*unique_seed)
   y_boot <- y + stats::rnorm(n, sd = 1)
   i <- estimate_kevin(y_boot)
-  mat <- polyhedron_kevin(y_boot, i)
+  mat <- polyhedron_kevin(length(y_boot), i)
   res <- .compute_truncGaus_terms(y_boot, mat, contrast, 1)
 
   expect_true(res$a <= res$b)
@@ -177,7 +175,7 @@ test_that(".truncated_gauss_cdf works", {
   set.seed(10)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  mat <- polyhedron_kevin(y, i)
+  mat <- polyhedron_kevin(length(y), i)
   contrast <- .polyhedron_vector_generator(i, length(y))
   terms <- .compute_truncGaus_terms(y, mat, contrast, sigma = 1)
 
@@ -194,7 +192,7 @@ test_that(".truncated_gauss_cdf will not return 0 in this test case", {
   set.seed(1470)
   y <- rnorm(10)
   i <- estimate_kevin(y)
-  mat <- polyhedron_kevin(y,i)
+  mat <- polyhedron_kevin(length(y),i)
   contrast <- .polyhedron_vector_generator(i, length(y))
   terms <- .compute_truncGaus_terms(y, mat, contrast, sigma = 1)
 
@@ -234,7 +232,7 @@ test_that("sampler_kevin forms uniform pvalues", {
     sampler_kevin(y, noise, 1, 1, 50, contrast)
   }
 
-  vec <- sapply(1:trials, func(i))
+  vec <- sapply(1:trials, func)
 
   # plot(sort(vec), seq(0,1,length.out = length(vec)))
   # lines(c(0,1), c(0,1), col = "red", lwd = 2)

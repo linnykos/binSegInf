@@ -5,8 +5,8 @@ doMC::registerDoMC(cores = 3)
 func <- function(i){
   if(i %% floor(trials/10) == 0) cat('*')
   set.seed(10*i)
-  y <- rnorm(10)
-  noise <- rnorm(10)
+  y <- rnorm(30)
+  noise <- rnorm(30)
   sampler_kevin(y, noise, 1, 1, 100, contrast)
 }
 
