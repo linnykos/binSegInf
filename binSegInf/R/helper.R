@@ -301,7 +301,7 @@ make_all_segment_contrasts <- function(obj){
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
 
-    return(make_all_segment_contrasts_from_cps(obj$cp, obj$cp.sign, length(obj$y)))
+    return(make_all_segment_contrasts_from_cp(obj$cp, obj$cp.sign, length(obj$y)))
 }
 
 

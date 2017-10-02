@@ -32,58 +32,31 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
             return(any(contained))
         }
 
-        ## Generate interval
-         ## cp <- .get_cp_from_segment_contrast(v)
-        i = generate_intervals(length(y), numIntervals)
+        ## Generate interval; stop when interval i precludes selection
+        ## entirely
+        cp <- .get_cp_from_segment_contrast(v)
+        new.i = generate_intervals(length(y), numIntervals)
+        if(!.i_covers_cp(new.i,cp)){return(NULL)}
 
         ## Fit new wbs
-        obj = wildBinSeg_fixedSteps(y, numSteps, intervals=i, augment=augment)
-        ## print(paste('original cp and and new cp are', cp, "and", obj$cp))
-        if(length(obj$cp)==0){return(NULL)}
+        new.obj = wildBinSeg_fixedSteps(y, numSteps, intervals=new.i, augment=augment)
+        if(length(new.obj$cp)==0){return(NULL)}
 
         ## Calculate num & denom of TG
-        poly <- polyhedra(obj, reduce=reduce, v=v, sigma=sigma)
-        tg = partition_TG(y, poly, v, sigma, nullcontrast=0, bits=bits,reduce=reduce)
+        new.poly <- polyhedra(new.obj, reduce=reduce, v=v, sigma=sigma)
+        tg = partition_TG(y, new.poly, v, sigma, nullcontrast=0, bits=bits,reduce=FALSE)
 
-        ## Handle case where interval i precludes selection entirely
-        if(!.i_covers_cp(i,cp)){return(NULL)}
-
-        ## Handle three exceptions
-        ## tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
-        ## selected.model.was.different = (tg$pv>1 | tg$pv < 0)
-        ## exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
-        ## if(exception){
-        ##     if(tg.behaves.weird) print("tg behaves weird!")
-        ##     if(selected.model.was.different) print("selected model was different!")
-        ##     Wi = tg$denom
-        ##     pv = 0
-        ## } else {
-            Wi = tg$denom
-            pv = tg$pv
-        ## }
-
-        ## Check if tg partition gives any negative or unusual values
-        tg$denom = min(1, max(tg$denom,0))
-        tg$numer = min(tg$denom, max(tg$numer,0))
-
-        ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
-        ## return(list(pv=pv, Wi=tg$denom, exception=exception))
-        return(list(pv=pv, Wi=tg$denom))
+        return(list(pv=tg$pv, Wi=tg$denom))
     }
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
 
-    if(length(pvlist)==0)  stop("No inner p-values calculated! Try again with bigger |nsim.is|.")
-
-    ## Calculate p-value and return (don't do this, for now)
-    ## sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
-    ## sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
-    ## pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
+    if(length(pvlist)==0)  stop("No inner TG statistics calculated! Try again with bigger |nsim.is|.")
 
     ## Calculate randomized p-value without partitioning the num&denom.
-    p.vec = sapply(pvlist,function(oneobj)  oneobj[["pv"]] )
+    p.vec = sapply(pvlist, function(oneobj) oneobj[["pv"]] )
     w.vec = sapply(pvlist, function(oneobj) oneobj[["Wi"]])
     exceptions = sapply(pvlist, function(oneobj) oneobj[["exception"]])
 
@@ -96,6 +69,25 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
 
 
 
+#### Handle exceptions
+        ## Handle three exceptions
+        ## tg.behaves.weird = (tg$denom >1 | tg$denom <0 | tg$denom < tg$numer | tg$numer < 0)
+        ## selected.model.was.different = (tg$pv>1 | tg$pv < 0)
+        ## exception <- (!.i_covers_cp(i,cp) | tg.behaves.weird | selected.model.was.different )
+        ## if(exception){
+        ##     if(tg.behaves.weird) print("tg behaves weird!")
+        ##     if(selected.model.was.different) print("selected model was different!")
+        ##     Wi = tg$denom
+        ##     pv = 0
+        ## } else {
+## ...
+        ## return(list(numer = tg$numer, denom = tg$denom, weird=weird))
+        ## return(list(pv=pv, Wi=tg$denom, exception=exception))
+
+
+        ## ## Check if tg partition gives any negative or unusual values
+        ## tg$denom = min(1, max(tg$denom,0))
+        ## tg$numer = min(tg$denom, max(tg$numer,0))
 
 
 ##' Wrapper for doing many noise-added fused lassos and computing randomized
@@ -118,46 +110,33 @@ randomized_wildBinSeg_pv <- function(y, sigma, v, cp, numSteps=NULL,
 ##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
 ##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
-randomized_genlasso_pv <- function(y, sigma, D, v, numSteps=NULL, numIntervals,
-                                   nsim.is, bits=NULL, reduce=FALSE,
-                                   augment=TRUE){
+randomized_genlasso_pv <- function(y, sigma, shift, sigma.add, D, v, orig.poly,
+                                   numSteps=NULL, numIntervals, nsim.is,
+                                   bits=NULL, reduce=FALSE, augment=TRUE){
 
     ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(bits=bits){
 
         n = length(y)
-        sigmanoise = 0.1 ## sigma*0.1
-        noise = rnorm(n,0,1)
-        probnoise = prod(sapply(1:length(noise), function(ii) dnorm(noise[ii],0,sigmanoise)))
-        ynew = y + noise
+        new.noise = rnorm(n,0,sigma.add)
+        tg = tg_inf(y=y, G=orig.poly$gamma, u=orig.poly$u, shift=new.noise, v=v, sigma=sqrt(sigma^2))
+        pv.new = tg$pv
+        weight.new = tg$denom
 
-        ## Run fused lasso again
-        D = genlassoinf::makeDmat(n, type='tf', ord=0)
-        fnew = genlassoinf::dualpathSvd2(ynew, D=D, numSteps, approx=TRUE)
-        poly <- polyhedra(fnew$Gobj.naive$G, fnew$Gobj.naive$u)
-        tg = partition_TG(ynew, poly, v, sigma, nullcontrast=0, bits=bits,reduce=FALSE)
-
-        return(list(numer = tg$numer, denom = tg$denom, probnoise=probnoise ))
+        return(list(pv=pv.new, weight=weight.new))
     }
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
     pvlist = .filternull(pvlist)
-
     if(length(pvlist)==0) return(NULL)
 
     ## Calculate p-value and return
-    ## sumNumer = sum(sapply(pvlist, function(nd)nd[["numer"]]))
-    Numers = sapply(pvlist, function(nd)nd[["numer"]])
-    Weights = sapply(pvlist, function(nd)nd[["probnoise"]])
-    sumNumer = sum(Numers * Weights)
+    pvs = sapply(pvlist, function(nd)nd[["pv"]])
+    denoms = sapply(pvlist, function(nd)nd[["weight"]])
+    rtg.pv = sum(pvs*denoms)/sum(denoms)
 
-    Denoms = (sapply(pvlist, function(nd)nd[["denom"]]))
-    sumDenom = sum(Denoms*Weights)
-    ## sumDenom = sum(sapply(pvlist, function(nd)nd[["denom"]]))
-    pv = sumNumer/sumDenom # sum(unlist(pvmat["numer",]))/ sum(unlist(pvmat["denom",]))
-
-    return(pv)
+    return(rtg.pv)
 }
 
 
@@ -202,3 +181,75 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
         return(combined.poly)
     }
 }
+
+
+
+##' Wrapper for doing many wild binary segmentations and computing p-values
+##' @param y data vector
+##' @param sigma standard deviation of noise
+##' @param v Fixed contrast, formed /only/ with the knowledge of the selection
+##'     event on \code{y} with some fixed interval, and not from any more
+##'     information about \code{y}.
+##' @param numIntervals number of WBS intervals you want /each time/. This
+##'     should match what you used when applying wild binary segmentation on
+##'     your observed dataset.
+##' @param numSteps number of steps to take.
+##' @param nsim.is Number of importance sampling samples you'd like to
+##'     calculate.
+##' @param reduce \code{TRUE} if reduced version of polyhedron collecting is to
+##'     be used, in polyhedra collecting functions for WBS.
+##' @param v Contrast vector.
+##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
+##' @example examples/randomized_wildBinSeg_pv-example.R
+##' @export
+randomized_wildBinSeg_pv_new <- function(y, sigma, v, cp, numSteps=NULL,
+                                         numIntervals, winning.s, winning.e,
+                                         nsim.is, bits=100, reduce=FALSE,
+                                         augment=TRUE){
+
+   ## Helper to generate an interval and return /weighted/ inner tg p-value
+    get_one <- function(bits=bits){
+        .get_cp_from_segment_contrast <- function(v){
+            which(dual1d_Dmat(length(v)+2)%*%c(0,v,0)!=0)[2]-1
+        }
+
+        .i_covers_cp <- function(i,cp){
+            contained = (i$starts <= cp & cp<i$ends)
+            return(any(contained))
+        }
+
+        ## Generate (numIntervals-1) intervals, append winning interval
+        new.i.rest = generate_intervals(length(y), numIntervals-1)
+        new.i = add(intervals=new.i.rest,
+                   new.s=winning.s,
+                    new.e=winning.e)
+
+        ## Fit new wbs
+        new.obj = wildBinSeg_fixedSteps(y, numSteps, intervals=new.i, augment=augment)
+        if(length(new.obj$cp)==0){return(NULL)}
+
+        ## Calculate num & denom of TG
+        new.poly <- polyhedra(new.obj, reduce=reduce, v=v, sigma=sigma)
+        tg = partition_TG(y, new.poly, v, sigma, nullcontrast=0, bits=bits,reduce=FALSE)
+
+        return(list(pv=tg$pv, Wi=tg$denom))
+    }
+
+    ## Collect weighted p-values and their weights
+    pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
+    pvlist = .filternull(pvlist)
+
+    if(length(pvlist)==0)  stop("No inner TG statistics calculated! Try again with bigger |nsim.is|.")
+
+    ## Calculate randomized p-value without partitioning the num&denom.
+    p.vec = sapply(pvlist, function(oneobj) oneobj[["pv"]] )
+    w.vec = sapply(pvlist, function(oneobj) oneobj[["Wi"]])
+    exceptions = sapply(pvlist, function(oneobj) oneobj[["exception"]])
+
+    sumNumer = sum(p.vec * w.vec)
+    sumDenom = sum(w.vec)
+    randomized.pv = sumNumer/sumDenom
+
+    return(list(pv=randomized.pv, p.vec = p.vec, exceptions = exceptions))
+}
+

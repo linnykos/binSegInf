@@ -11,7 +11,7 @@
 ##'
 ##' @return either an environment address which contains output
 ##'     (\code{env$intervals} and \code{env$tree}), or a list of wild binary
-##'     segmentation output.
+##'     segmentation output
 ##' @export
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
                                       return.env=FALSE, seed=NULL, verbose=FALSE,
@@ -145,11 +145,20 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals = NULL,
     names(B) = names(M) = names(Z) =
     names(T) = names(S) = names(E) = paste("step", 0:(length(B)-1))
 
+    ## Temporary addition of winning intervals, for one-step WBS.
+    if(numSteps==1){
+        winning.interval = c(s.max, e.max)
+    } else {
+        winning.interval = NULL
+    }
+
     ## Bundle
     obj <- structure(list(A=A, T=T, S= S, E=E, B=B, Z=Z, M=M,
-                          intervals=intervals, cp=((B[[length(B)]])$mat)[,"val"],
-                          cp.sign=((Z[[length(Z)]])$mat)[,"val"], numSteps=numSteps, y=y,
-                          augment=augment),
+                          intervals=intervals,
+                          winning.interval = winning.interval,
+                          cp=((B[[length(B)]])$mat) [,"val"],
+                          cp.sign=((Z[[length(Z)]])$mat)[,"val"],
+                          numSteps=numSteps, y=y, augment=augment),
                      class="wbsFs")
     return(obj)
 }

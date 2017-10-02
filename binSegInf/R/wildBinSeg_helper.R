@@ -222,24 +222,10 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
     ends = sapply(intervals,function(se)se[length(se)])
 
     ## return
-    return(list(starts = starts,
-                ends = ends,
-                intervals = intervals,
-                se = Map(c,starts,ends)))
-}
-
-## After making intervals, you can attempt to plot them.
-plot_intervals <- function(intervals){
-    numIntervals = length(intervals$se)
-    graphics::plot(NA,
-                ylim = c(0,numIntervals),
-                xlim = c(0,max(intervals$e)),
-                xlab = "intervals",
-                ylab = "")
-    for(ii in 1:numIntervals){
-        se = intervals$se[[ii]]
-        graphics::lines(x=se, y = c(ii,ii))
-    }
+    return(structure(list(starts = starts,
+                          ends = ends,
+                          intervals = intervals,
+                          se = Map(c,starts,ends)),class="intervals"))
 }
 
 

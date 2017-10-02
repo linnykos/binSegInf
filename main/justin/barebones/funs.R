@@ -115,3 +115,33 @@ rtg <- function(y, shift, sigma, sigma.add, cp, nsim.inner=100){
     ## if(rtg.pv==1) browser()
     return(rtg.pv)
 }
+
+
+##' rejection sampler for RTG
+rtg.rejection <- function(y, sigma, sigma.add, cp, nsim.inner=100){
+
+    ## Original information
+    cp <-  estim(y+shift)
+    gamma = polyhedron(cp, n)
+    v <- contrast(cp, n)
+
+    ##
+
+    ## Get many fudged TG statistics.
+    inner.tgs = sapply(1:nsim.inner, function(isim){
+        new.noise = rnorm(n,0,sigma.add)
+        obj.new = tg_inf(y=y, G=gamma, u=rep(0,nrow(gamma)), shift=new.noise,
+                         v=v, sigma=sqrt(sigma^2))
+        pv.new = obj.new$pv
+        weight.new = obj.new$denom
+        return(c(pv.new, weight.new))
+    })
+    rownames(inner.tgs) = c("pv", "denom")
+    pvs = inner.tgs["pv",]
+    denoms = inner.tgs["denom",]
+
+    ## Calculate randomized TG statistic
+    rtg.pv = sum(pvs*denoms)/sum(denoms)
+    ## if(rtg.pv==1) browser()
+    return(rtg.pv)
+}
