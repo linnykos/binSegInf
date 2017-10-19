@@ -35,7 +35,7 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     env$intervals = intervals ## Carry through the intervals!
 
     ## Run WBS
-    .wildBinSeg_inner(y, thresh, 1, length(y), 0, 1, verbose, env=env, augment=augment)
+    .wildBinSeg_fixedThresh_inner(y, thresh, 1, length(y), 0, 1, verbose, env=env, augment=augment)
 
     ## Clean the result and return
     .clean_env(env)
@@ -54,8 +54,8 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     if(return.env){ return(env) } else{ return(obj) }
 }
 
-## Inner function for wbs-ft
-.wildBinSeg_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL, augment){
+##' Inner function for wbs-ft
+.wildBinSeg_fixedThresh_inner <- function(y, thresh, s, e, j, k, verbose=FALSE, env=NULL, augment){
 
     if(verbose) cat('j,k are', j,k,fill=TRUE)
     if(verbose) cat('s,e are', s,e,fill=TRUE)
@@ -73,12 +73,12 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
         if(length(m)==0) return()
 
         ## Form a matrix of results and save them
-        semat = make_semat(m, s=s, e=e, env$intervals, y, thresh)
+        semat = .make_semat(m, s=s, e=e, env$intervals, y, thresh)
         env$tree = addd(env$tree, j, k, semat)
 
         ## Add the cusum sign information to the |env|ironment
         newsigns = lapply(m, function(single.m){
-            make_signs(single.m, s, e, env$intervals, y)})
+            .make_signs(single.m, s, e, env$intervals, y)})
         adddd(newsigns, m, env)
 
         ## If threshold is /not/ exceeded, then terminate
@@ -97,10 +97,8 @@ wildBinSeg_fixedThresh <- function(y, thresh, numIntervals = NULL,
     }
 }
 
-#' is_valid for wbs
-#'
-#' @param obj wbs object
-#'
+#' is_valid for wbs-ft
+#' @param obj wbsft object
 #' @return TRUE if valid
 #' @export
 is_valid.wbsFt <- function(obj){
@@ -129,8 +127,6 @@ print.wbsFt <- function(obj){
     print(obj$thresh)
 }
 
-
-
 ## #' is_valid for semat; not using this because it destroys the data frame, makes it into a general structure, which screws code.
 ## #'
 ## #' @param semat semat object
@@ -143,9 +139,7 @@ print.wbsFt <- function(obj){
 ##   TRUE
 ## }
 
-
-
 ## Collect list of (starts,ends) that qualify at this branch for comparison
-.get_which_qualify = function(s,e, intervals){
+.get_which_qualify <- function(s,e, intervals){
     return(sapply(intervals$se, function(se){ return(s<=se[1] && se[2]<=e)}))
 }

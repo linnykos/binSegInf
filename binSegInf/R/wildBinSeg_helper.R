@@ -1,3 +1,5 @@
+##TODO: Most of these are obsolete. Get rid of the ones that are not used.
+
 ##' Adds a matrix containing information about wbs selection even, as a last
 ##' element to an existing list of such matrices. the name of this new element
 ##' is of the form "j,k". this is in lieu of |cplist| which was used to store
@@ -42,14 +44,8 @@ adddd = function(newsigns,M,env){
 }
 
 
-## filter filternullNULLs out of a pvlist.
-.filternull <- function(pvlist){
-    emptyguys = unlist(lapply(pvlist, function(pvobj) return(length(pvobj)==0)))
-    return(pvlist[which(!emptyguys)])
-}
-
 ##' Helper function for a /single/ start and end.
-maximize = function(s, e, y, getb=TRUE){
+.maximize <- function(s, e, y, getb=TRUE){
 
     ## collect all cusums and signs
     all.bs = (s:(e-1))
@@ -75,7 +71,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-make_semat = function(m, s, e, intervals, y, thresh){
+.make_semat = function(m, s, e, intervals, y, thresh){
 
     ## Make bare matrix
     mymat = matrix(NA, ncol=7, nrow = length(m), dimnames=NULL)
@@ -97,7 +93,7 @@ make_semat = function(m, s, e, intervals, y, thresh){
     mymat[,"s"] = sapply(se.for.each.m, function(vec)vec[1])
     mymat[,"b"] = sapply(se.for.each.m,
                        function(se){
-                           maximize(se[1], se[2], y, TRUE) })
+                           .maximize(se[1], se[2], y, TRUE) })
     mymat[,"e"] = sapply(se.for.each.m, function(vec)vec[2])
     mymat[,"maxcusum"] = sapply(se.for.each.m,
                        function(se){ maximize(se[1], se[2], y, FALSE) })
@@ -123,7 +119,7 @@ make_semat = function(m, s, e, intervals, y, thresh){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-make_signs = function(m, s, e, intervals, y, thresh){
+.make_signs <- function(m, s, e, intervals, y, thresh){
 
     ## Basic checks
     stopifnot(length(m)==1)
@@ -290,7 +286,7 @@ unsigned_contrast <- function(s,b,e,n=NULL,y){
 ##' @examples
 ##' make_contrast(20,c(1,40),+1,60)
 ##' @export
-make_contrast = function(test.bp, adj.bps, sn, n){
+make_contrast <- function(test.bp, adj.bps, sn, n){
 
     ## Basic checks
     stopifnot(all(c(test.bp, adj.bps) %in% 0:n))
@@ -327,4 +323,3 @@ make_segment_contrast = make_contrast
     return(generate_intervals(n=n, start.end.list = unique.start.end.list))
 
 }
-
