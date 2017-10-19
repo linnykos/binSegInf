@@ -14,16 +14,17 @@
 ##'     contrast with |y| positive, or the absolute value of the contrast.
 ##' @export
 
-cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FALSE, unsigned = FALSE){
+cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FALSE, unsigned = FALSE, sign.of.vy=NULL){
 
     ## Form temporary quantities
     nn = e-b+1
     n1 = b+1-s
     n2 = e-b
-    if(nn==1) stop("n cannot be 1!")
+    ## browser()
+    ## if(nn==1) stop("n cannot be 1!") ## Not sure why this was here.
     if(b>=e) stop("b must be strictly smaller than e!")
     if(s>b) stop("b must be larger than or equal to!")
-    if(unsigned & is.null(y)) stop("Can't produce an unsigned linear contrast or contrast vector without a y")
+    if(unsigned & is.null(y) & is.null(sign.of.vy)) stop("Can't produce an unsigned linear contrast or contrast vector without a |y| or |sign.of.vy|")
     ## if(!is.null(y)) stopifnot(length(y)==n)
     if(is.null(y)){ if(is.null(n)) stop("Must provide one of y or n.")}
     if(is.null(n)) n = length(y)
@@ -34,10 +35,17 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
     v[(b+1):e]  = 1/n2
     v = v * sqrt(1/((1/n1)+(1/n2)))
     if(!right.to.left) v = -v
-    if(unsigned) v = v * sign(sum(v*y)) ## This needs to change! Have the
-                                        ## function require the sign of v*y
-                                        ## beforehand, or check only if it isn't
-                                        ## provided, or something!
+
+    ## Appropriately sign it
+    if(unsigned){
+        if(!is.null(y)){
+            v = v * sign(sum(v*y))
+        } else if (!is.null(sign.of.vy)){
+            v = v * sign.of.vy
+        } else {
+            stop("Provide either |y| or |sign.of.vy| for an unsigned quantity!")
+        }
+    }
 
     ## Return the right thing
     if(contrast.vec){
@@ -64,6 +72,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
 partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE){
+    ## browser()
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -77,7 +86,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
     ## This is because in order to partition the TG statistic, we need to form
     ## these anyway.
-    pvobj <- poly.pval2(y, poly, v, sigma,correct.ends=correct.ends)
+    pvobj <- poly.pval2(y, poly, v, sigma, correct.ends=correct.ends)
     vup = pvobj$vup
     vlo = pvobj$vlo
     vy = max(min(vy, vup),vlo)
@@ -87,8 +96,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
     if(!(a<=z &  z<=b)){
-        ## browser()
-        print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
+        warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
 
     ## Separately store and return num&denom of TG
@@ -98,7 +106,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     ## Form p-value as well.
     pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
                     (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
-    if(!(0 <= pv & pv <= 1)) print("pv was not between 0 and 1, in partition_TG()!")
+    ## if(!(0 <= pv & pv <= 1)) print("pv was not between 0 and 1, in partition_TG()!")
 
     return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vy=vy, vup=vup))
 }
@@ -143,7 +151,6 @@ qqunif_add <- function(pp, main=NULL,...){
 ##'
 ##' @return list of information about the cusum calculations and maximizers in
 ##'     this interval.
-##' @example examples/getcusums-example.R
 ##' @export
 getcusums <- function(s,e,y, unsigned=FALSE, simplereturn=FALSE){
 
@@ -300,8 +307,9 @@ make_all_segment_contrasts <- function(obj){
     ## Basic checks
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
+    assert_that(!is.null(obj$y), msg="in make_all_segment_contrasts(), you need an object that contains the data vector.")
 
-    return(make_all_segment_contrasts_from_cps(obj$cp, obj$cp.sign, length(obj$y)))
+    return(make_all_segment_contrasts_from_cp(obj$cp, obj$cp.sign, length(obj$y)))
 }
 
 
@@ -310,7 +318,9 @@ make_all_segment_contrasts <- function(obj){
 ##' @param cp.sign integer vector of changepoint signs.
 ##' @param n length of data.
 ##' @export
-make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n){
+make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n, scaletype = c("segmentmean", "unitnorm")){
+
+    scaletype = match.arg(scaletype)
 
     ## Augment the changepoint set for convenience
     ord = order(cp)
@@ -326,7 +336,21 @@ make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n){
         d[ind1] = -1/length(ind1)
         d[ind2] = 1/length(ind2)
         dlist[[ii-1]] = d * sn_aug[ii]
+
+        if(scaletype == "unitnorm"){
+            d = d/sqrt(sum(d*d))
+        } else if (scaletype == "segmentmean"){
+        } else {
+            stop("scaletype not written yet!")
+        }
     }
     names(dlist) = (cp * cp.sign)[ord]
     return(dlist)
+}
+
+
+## filters NULL elements out of a list.
+.filternull <- function(mylist){
+    emptyguys = unlist(lapply(mylist, function(myobj) return(length(myobj)==0)))
+    return(mylist[which(!emptyguys)])
 }

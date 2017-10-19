@@ -89,7 +89,8 @@ onesim_wbs <- function(sim.settings){
     numIntervals = sim.settings$numIntervals
     n = sim.settings$n
     meanfun = sim.settings$meanfun
-    reduce = sim.settings$reduce
+    ## reduce = sim.settings$reduce
+    reduce=FALSE
     augment = sim.settings$augment
     bootstrap = sim.settings$bootstrap
     std.bootstrap = sim.settings$std.bootstrap
@@ -102,37 +103,26 @@ onesim_wbs <- function(sim.settings){
 
     ## Do WBS_FS inference (basic structure is similar)
     method <- wildBinSeg_fixedSteps
-    intervals <- generate_intervals(length(y),numIntervals)
-    obj <- method(y, numSteps=numSteps, intervals=intervals)
+    orig.i <- generate_intervals(length(y), numIntervals)
+    obj <- method(y, numSteps=numSteps, intervals=orig.i)
 
     ## print(paste("my original changepoint is", obj$cp))
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
+    ## poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
+    ##                   reduce=reduce, sigma=sigma)
 
     for(ii in 1:length(obj$cp)){
-        if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
-            mycontrast=contrasts[[ii]]
-        } else {
-            mycontrast = sim.settings$v
-        }
-        poly <- polyhedra(obj, v = mycontrast,## contrasts[[ii]]
-                          reduce=reduce, sigma=sigma)
-
-
-        if(type=="plain"){
-            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
-                                         sigma=sigma, reduce=reduce)$pv
-        } else {
-            pvec[ii] <-  randomized_wildBinSeg_pv(y=y, v=mycontrast, cp=obj$cp,
-                                                  sigma=sigma,
-                                                  numSteps=numSteps,
-                                                  numIntervals=numIntervals,
-                                                  nsim.is=nsim.is, bits=100,
-                                                  reduce=reduce,
-                                                  augment=augment)$pv
-        }
+        mycontrast=contrasts[[ii]]
+        pvec[ii] <-  randomized_wildBinSeg_pv(y=y, v=mycontrast, cp=obj$cp,
+                                              sigma=sigma,
+                                              numSteps=numSteps,
+                                              numIntervals=numIntervals,
+                                              nsim.is=nsim.is, bits=100,
+                                              reduce=reduce,
+                                              augment=augment)$pv
     }
-    if(type=="plain"){ return(pvec.plain) } else {  return(pvec) }
+    return(pvec)
 }
 
 
@@ -171,6 +161,7 @@ onesim_fusedlasso <- function(sim.settings){
 
     ## Reassign things
     sigma = sim.settings$sigma
+    sigma.add = sim.settings$sigma.add
     lev = sim.settings$lev
     nsim.is = sim.settings$nsim.is
     numSteps = sim.settings$numSteps
@@ -186,13 +177,14 @@ onesim_fusedlasso <- function(sim.settings){
 
     ## Generate data (same across all onesim_OOO functions)
     y = meanfun(lev,n) + stats::rnorm(n,0,sigma)
+    added.noise = rep(0,n) + rnorm(n,0,sigma.add)
 
     ## Do fused lasso inference (basic structure is similar)
-    D = genlassoinf::makeDmat(n,type='tf',ord=0)
-    obj <- genlassoinf::dualpathSvd2(y,D=D,maxsteps=numSteps,approx=TRUE)
+    D = genlassoinf::makeDmat(n, type='tf',ord=0)
+    obj <- genlassoinf::dualpathSvd2(y+added.noise, D=D,maxsteps=numSteps,approx=TRUE)
     contrasts <- make_all_segment_contrasts(obj)
     pvec = pvec.plain = setNames(rep(NA,length(obj$cp)), obj$cp)
-    poly <- polyhedra(obj$Gobj.naive$G, obj$Gobj.naive$u)
+    orig.poly <- polyhedra(obj$Gobj.naive$G, obj$Gobj.naive$u)
     for(ii in 1:length(obj$cp)){
         if(is.null(sim.settings$v)){ ## temporarily added to manually pass a contrast
             mycontrast=contrasts[[ii]]
@@ -200,16 +192,20 @@ onesim_fusedlasso <- function(sim.settings){
             mycontrast = sim.settings$v
         }
        if(type=="plain"){
-            pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
-                                         sigma=sigma, reduce=reduce)$pv
+            ## pvec.plain[ii] <- poly.pval2(y=y, poly=poly, v=mycontrast,
+            ##                              sigma=sigma, reduce=reduce)$pv
+           stop("need to change arguments and logic!Not done yet")
         } else {
-            pvec[ii] <- randomized_genlasso_pv(y=y, v=mycontrast,
-                                               sigma=sigma, numSteps=numSteps,
+            pvec[ii] <- randomized_genlasso_pv(y=y, v=mycontrast, orig.poly = orig.poly,
+                                               shift = added.noise, sigma=sigma,
+                                               sigma.add = sigma.add,
+                                               numSteps=numSteps,
                                                numIntervals=numIntervals,
                                                nsim.is=nsim.is, bits=100,
                                                reduce=reduce, augment=augment)
         }
     }
+
     if(type=="plain"){
         return(pvec.plain)
     } else {
