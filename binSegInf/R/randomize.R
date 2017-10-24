@@ -94,7 +94,7 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 
 
 ##' Synopsis: randomization wrapper for WBS.
-randomize_wbsft <- function(y, numSteps, numIntervals, numIS = 100, comprehensive=FALSE){
+randomize_wbsfs <- function(y, numSteps, numIntervals, numIS = 100, comprehensive=FALSE){
 
     ## Prepare original set of |numIntervals| intervals
     n = length(y)
@@ -150,6 +150,8 @@ randomize_wbsft <- function(y, numSteps, numIntervals, numIS = 100, comprehensiv
         })
         pv = sum(unlist(Map('*', things["pv",], things["weight",])))/sum(unlist(things["weight",]))
     })
+
+    names(pvs) = (g.orig$cp) * (g.orig$cp.sign)
 
     return(pvs)
 }
