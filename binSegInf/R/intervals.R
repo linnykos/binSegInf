@@ -148,10 +148,10 @@ add.intervals <- function(intervals, new.s, new.e){
 add2 <- function(intervals,...){ UseMethod("add2")}
 
 ##' Add winning intervals from the original object, to the |intervals| object.
-add2.intervals <- function(intervals, winning.wbs){
-    intervals$starts = c(intervals$starts, winning.wbs$results[,"max.s"])
-    intervals$ends = c(intervals$ends, winning.wbs$results[,"max.e"])
-    intervals$numIntervals = intervals$numIntervals + nrow(winning.wbs$results)
+add2.intervals <- function(intervals, winning.wbs.obj){
+    intervals$starts = c(intervals$starts, winning.wbs.obj$results[,"max.s"])
+    intervals$ends = c(intervals$ends, winning.wbs.obj$results[,"max.e"])
+    intervals$numIntervals = intervals$numIntervals + nrow(winning.wbs.obj$results)
     return(intervals)
 
 }

@@ -92,6 +92,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                           cp=results[,"max.b"], cp.sign=results[,"max.sign"],
                           numSteps=numSteps,
                           mimic=mimic,
+                          intervals=intervals,
+                          numIntervals=numIntervals,
                           y=y), class="wbsFs"))
 }
 
@@ -104,11 +106,14 @@ print.wbsFs <- function(obj){
 
 ##' Checks if obj is a valid |wbs| class object
 is_valid.wbsFs <- function(obj){
-    return(all(names(obj) %in% c("results", "gamma", "u", "cp", "cp.sign", "y", "numSteps", "mimic", "rows.list")))
+    return(all(names(obj) %in% c("results", "gamma", "u", "cp", "cp.sign", "y",
+                                 "numSteps", "mimic", "rows.list","intervals",
+                                 "numIntervals")))
 }
 
+.get_max_info <- function(wbs.obj,...){ UseMethod(".get_max_info")}
 ##' Helper to /manually/ obtain maximizing information from a |wbs| class object, at i'th step
-.get_max_info <- function(wbs.obj, istep){
+.get_max_info.wbsFs <- function(wbs.obj, istep){
     assert_that(is_valid.wbsFs(wbs.obj))
     myrow  = wbs.obj$results[istep,]
     mylist = lapply(myrow, function(a) a)
@@ -116,7 +121,6 @@ is_valid.wbsFs <- function(obj){
     mylist[["max.i"]] = NA
     return(mylist)
 }
-
 
 
 

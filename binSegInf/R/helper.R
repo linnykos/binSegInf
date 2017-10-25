@@ -72,11 +72,11 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
 partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE){
-    ## browser()
 
     ## Basic checks
     stopifnot(length(v)==length(y))
     ## stopifnot(is_valid.polyhedra(poly))
+
 
     vy = sum(v*y)
     vv = sum(v^2)
@@ -90,6 +90,8 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     vup = pvobj$vup
     vlo = pvobj$vlo
     vy = max(min(vy, vup),vlo)
+
+    ## Make it so that vlo<vup is ensured
 
     ## Calculate a,b,z for TG = (F(b)-F(z))/(F(b)-F(a))
     z = Rmpfr::mpfr(vy/sd, precBits=bits)
