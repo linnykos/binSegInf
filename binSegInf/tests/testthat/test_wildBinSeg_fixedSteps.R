@@ -1,56 +1,65 @@
 test_that("WBS.FT gives uniform p-values",{
 
-    nsim=3000
-    pvs = lapply(1:nsim, function(isim){
+    mysim = function(n){
+        cat("Sample size=", n, fill=TRUE)
+        nsim = 3000
+        pvs = mclapply(1:nsim, function(isim){
+            printprogress(isim,nsim)
 
-        ## Generate some data
-        n = 10
-        lev = 0
-        mn = c(rep(0,n/2), rep(lev,n/2))
-        sigma = 1
-        y = mn + rnorm(n, 0, sigma)
+            ## Generate some data
+            lev = 0
+            mn = c(rep(0,n/2), rep(lev,n/2))
+            sigma = 1
+            y = mn + rnorm(n, 0, sigma)
 
-        ## Fit WBS
-        numIntervals = 3
-        numSteps = 3
-        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
-        poly = polyhedra(obj=g$gamma, u=g$u)
-        vlist <- make_all_segment_contrasts(g)
-        return(sapply(vlist, function(v){
-            return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
-        }))
-    })
-    expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+            ## Fit WBS
+            numIntervals = 3
+            numSteps = 3
+            g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+            poly = polyhedra(obj=g$gamma, u=g$u)
+            vlist <- make_all_segment_contrasts(g)
+            return(sapply(vlist, function(v){
+                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
+            }))
+        }, mc.cores=2)
+        expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+        return(pvs)
+    }
+    null.pvals.by.samplesize = sapply(c(10,20,50,100), mysim)
 })
 
 test_that("WBS has power when signal is present.",{
-    lev = 5
-    nsim = 1000
-    n = 10
-    numSteps = 3
-    sigma = 1
 
-    pvs = mclapply(1:nsim,function(isim){
+    mysim = function(n){
 
-        ## Generate some data
-        mn = c(rep(0,n/2), rep(lev,n/2))
-        set.seed(isim)
-        y = mn + rnorm(n, 0, sigma)
+        lev = 5
+        nsim = 1000
+        numSteps = 3
+        sigma = 1
 
-        ## Fit WBS
-        numIntervals = 30
-        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
-        poly = polyhedra(obj=g$gamma, u=g$u)
-        vlist <- make_all_segment_contrasts(g)
-        pvs = sapply(vlist, function(v){
-            return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
-        })
-        names(pvs) = g$cp*g$cp.sign
-        return(pvs)
-    },mc.cores=4)
-    pvs = unlist(pvs)
-    pvs = unique(pvs) ## Sometimes ties occur numerically. Not sure why.
-    expect_true(ks.test(unlist(pvs), punif)$p.value < 0.01)
+        pvs = mclapply(1:nsim,function(isim){
+
+            ## Generate some data
+            mn = c(rep(0,n/2), rep(lev,n/2))
+            set.seed(isim)
+            y = mn + rnorm(n, 0, sigma)
+
+            ## Fit WBS
+            numIntervals = 30
+            g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+            poly = polyhedra(obj=g$gamma, u=g$u)
+            vlist <- make_all_segment_contrasts(g)
+            pvs = sapply(vlist, function(v){
+                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
+            })
+            names(pvs) = g$cp*g$cp.sign
+            return(pvs)
+        },mc.cores=4)
+        pvs = unlist(pvs)
+        pvs = unique(pvs) ## Sometimes ties occur numerically. Not sure why.
+        expect_true(ks.test(unlist(pvs), punif)$p.value < 0.01)
+    }
+    null.pvals.by.samplesize = sapply(c(10,20,50,100), mysim)
 })
 
 
@@ -92,27 +101,85 @@ test_that("WBS polyhedron is exact",{
     }, mc.cores=4)
 })
 
-test_that("Randomized wbs inference has uniform null p-values",{
+test_that("Randomized wbs inference has uniform null p-values, and right-skewed nonnull p-values",{
 
-    ## Simulation settings
-    n = 4
-    lev = 0
-    mn = c(rep(0,n/2), rep(lev,n/2))
-    sigma = 1
-    numIntervals = 3
-    numSteps=1
+    mysim <- function(n, lev, test.type=c("none", "ks.unif","ks.nonunif"),mc.cores=6){
+        test.type = match.arg(test.type)
+        cat("Sample size=", n, fill=TRUE)
 
-    ## Get randomized p-values
-    nsim = 1000
-    pvs = mclapply(1:nsim, function(isim){
-        printprogress(isim,nsim)
-        set.seed(isim)
-        y = mn + rnorm(n, 0, sigma)
-        pv = suppressWarnings(randomize_wbsft(y=y, numSteps=numSteps, numIntervals=numIntervals, numIS = 20,
-                                            comprehensive=TRUE)[[1]])
-    }, mc.cores=4)
-    ## qqunif(unlist(pvs))
+        ## Simulation settings
+        mn = c(rep(0,n/2), rep(lev,n/2))
+        sigma = 1
+        numIntervals = n
+        numSteps=1
+        numIS = 100
+
+        ## Get randomized p-values
+        nsim = 1000
+        pvs = mclapply(1:nsim, function(isim){
+            printprogress(isim,nsim)
+            set.seed(isim)
+            y = mn + rnorm(n, 0, sigma)
+            g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+            poly = polyhedra(obj=g$gamma, u=g$u)
+            vlist <- make_all_segment_contrasts(g)
+            v = vlist[[1]]
+
+            pv.rand = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
+                                                        sigma=sigma,
+                                                        numIS = numIS))
+
+        }, mc.cores=mc.cores)
+        pvs = unlist(pvs)
+        if(test.type=="ks.unif") expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+        if(test.type=="ks.nonunif") expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+        return(pvs)
+    }
+    null.pvals.by.samplesize = lapply(c(10,20,50,100), mysim, lev=0, test.type="ks.unif")
+    nonnull.pvals.by.samplesize = lapply(c(10,20,50,100), mysim, lev=3, test.type="ks.nonunif")
 })
+
+
+test_that("Randomized wbs inference has uniform nulls in further steps (2+).",{
+
+    mysim <- function(n, lev, test.type=c("none", "ks.unif","ks.nonunif"),mc.cores=6){
+        test.type = match.arg(test.type)
+        cat("Sample size=", n, fill=TRUE)
+
+        ## Simulation settings
+        mn = c(rep(0,n/2), rep(lev,n/2))
+        sigma = 1
+        numIntervals = n
+        numSteps=4
+        numIS = 100
+
+        ## Get randomized p-values
+        nsim = 100
+        pvs = mclapply(1:nsim, function(isim){
+            printprogress(isim,nsim)
+            set.seed(isim)
+            y = mn + rnorm(n, 0, sigma)
+            g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+            poly = polyhedra(obj=g$gamma, u=g$u)
+            vlist <- make_all_segment_contrasts(g)
+            ## v = vlist[[1]]
+            pv.rands = sapply(vlist, function(v){
+                suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
+                                                 sigma=sigma,
+                                                 numIS = numIS))
+            }
+            return(pv.rands)
+        }, mc.cores=mc.cores)
+        pvs = unlist(pvs)
+        if(test.type=="ks.unif") expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+        if(test.type=="ks.nonunif") expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+        return(pvs)
+    }
+    null.pvals.by.samplesize = lapply(c(10,20,50,100), mysim, lev=0, test.type="ks.unif")
+
+})
+
+
 
 test_that("WBS output matched wbs::wbs()",{
 print('not written yet')
