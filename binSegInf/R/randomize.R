@@ -63,7 +63,7 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
 
         n = length(y)
         new.noise = rnorm(n,0,sigma.add)
-        tg = partition_TG(y=y, poly= polyhedra(obj=orig.poly$gamma,
+        tg = partition_TG(y=pathobj$y, poly= polyhedra(obj=orig.poly$gamma,
                                                u=orig.poly$u - orig.poly$gamma%*%new.noise),
                           v=v, sigma=sqrt(sigma^2))
         pv.new = tg$pv
