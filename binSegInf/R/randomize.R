@@ -44,6 +44,8 @@ randomized_genlasso_pv <- function(y, sigma, shift, sigma.add, D, v, orig.poly,
     ## Calculate p-value and return
     pvs = sapply(pvlist, function(nd)nd[["pv"]])
     denoms = sapply(pvlist, function(nd)nd[["weight"]])
+
+
     rtg.pv = sum(pvs*denoms)/sum(denoms)
 
     return(rtg.pv)
@@ -67,6 +69,12 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
                           v=v, sigma=sqrt(sigma^2))
         pv.new = tg$pv
         weight.new = tg$denom
+
+        if(is.nan(pv.new)) pv.new=0 ## temporary fix for pv being nan..
+        ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
+        ## along the line trapped in the polyhedron, is zero.
+
+        if(weight.new<0 | weight.new>1) weight.new = 0
         return(list(pv=pv.new, weight=weight.new))
     }
 
@@ -78,6 +86,7 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
     ## Calculate p-value and return
     pvs = sapply(pvlist, function(nd)nd[["pv"]])
     denoms = sapply(pvlist, function(nd)nd[["weight"]])
+    if(any(is.nan(pvs))) browser()
     rtg.pv = sum(pvs*denoms)/sum(denoms)
 
     return(rtg.pv)

@@ -150,7 +150,7 @@ qqunif <- function(pp, main=NULL,plot.it=TRUE,cols=NULL,...){
                 }
             }
         }
-        if(length(names(lev0))>0){
+        if(length(names(allpoints))>0){
             legend("bottomright",legend=names(pp),col=cols,pch=rep(16,length(pp)))
         }
         return(invisible(allpoints))
