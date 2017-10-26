@@ -94,12 +94,13 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE){
 
     numIntervals = winning.wbs.obj$numIntervals
-    numSteps = winning.wbs.obj$intervals
+    numSteps = winning.wbs.obj$numSteps
 
     ##' New PV information based on newly drawn |numIntervals| - |numSteps|
     ##' intervals
 
     if(comprehensive) numIS=1
+
     parts = sapply(1:numIS, function(isim){
         rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                   numIntervals=numIntervals,
@@ -143,6 +144,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
     ## Partition TG to denom and numer
     pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE)
     pv = pvobj$pv
+    if(is.nan(pv)) pv=0 ## temporary fix
     weight = pvobj$denom
 
     ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
