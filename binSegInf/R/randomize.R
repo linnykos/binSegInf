@@ -124,7 +124,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
 rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
 
     ## Basic checks
-    assert_that(is.valid(winning.wbs.obj))
+    assert_that(is_valid.wbsFs(winning.wbs.obj))
 
     ## New intervals added onto old winning intervals
     n = length(v)
