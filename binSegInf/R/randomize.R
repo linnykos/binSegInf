@@ -61,8 +61,7 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
     ## Helper to generate an interval and return /weighted/ inner tg p-value
     get_one <- function(bits=bits){
 
-        n = length(y)
-        new.noise = rnorm(n,0,sigma.add)
+        new.noise = rnorm(length(pathobj$y),0,sigma.add)
         tg = partition_TG(y=pathobj$y, poly= polyhedra(obj=orig.poly$gamma,
                                                u=orig.poly$u - orig.poly$gamma%*%new.noise),
                           v=v, sigma=sqrt(sigma^2))
