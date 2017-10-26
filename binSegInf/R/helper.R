@@ -119,17 +119,42 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
 ##' Function to plot qqlot of p-values. Use extra parameter
 ##' @param pp numeric vector of p-values.
 ##' @param main label to plot as main title.
+##' @param cols colors if |pp| is a list of numeric vectors.
 ##' @export
-qqunif <- function(pp, main=NULL,plot.it=TRUE,...){
-    xy <- stats::qqplot(x=pp,
-                 y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE)
-    if(plot.it){
-        graphics::plot(xy, axes=FALSE, ylim=c(0,1), xlim=c(0,1),...)
-        graphics::axis(2); graphics::axis(1)
-        graphics::abline(0,1)
-        if(!is.null(main)) graphics::title(main=main)
+qqunif <- function(pp, main=NULL,plot.it=TRUE,cols=NULL,...){
+
+    ## Internal helper
+    myplotter <- function(xy,main,...){
+            graphics::plot(xy, axes=FALSE, ylim=c(0,1), xlim=c(0,1),...)
+            graphics::axis(2); graphics::axis(1)
+            graphics::abline(0,1)
+            if(!is.null(main)) graphics::title(main=main)
     }
-    invisible(xy)
+
+    ## If single numeric vector, plot it.
+    if(class(pp)!="list"){
+        xy <- stats::qqplot(x=pp,
+                     y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE, pch=16)
+        if(plot.it) myplotter(xy, main)
+        return(invisible(xy))
+
+    ## Else, if a list of p-values is given, plot all of them
+    } else {
+        assert_that(!is.null(cols))
+        allpoints = lapply(pp, function(pvs){qqunif(pvs, plot.it=FALSE)})
+        if(plot.it){
+            myplotter(allpoints[[1]], main, col=cols[1],pch=16)
+            if(length(allpoints)>1){
+                for(ii in 2:length(allpoints)){
+                    points(allpoints[[ii]], col = cols[ii], pch=16)
+                }
+            }
+        }
+        if(length(names(lev0))>0){
+            legend("bottomright",legend=names(pp),col=cols,pch=rep(16,length(pp)))
+        }
+        return(invisible(allpoints))
+    }
 }
 
 

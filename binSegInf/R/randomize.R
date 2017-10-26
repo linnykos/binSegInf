@@ -1,5 +1,7 @@
-##' Wrapper for doing many noise-added fused lassos and computing randomized
-##' p-value.
+##' Function for doing many noise-added fused lassos and computing randomized
+##' p-value, from the beginning. It is more desirable to use the wrapper
+##' randomized_genlasso(); this function will probably be retired not far from
+##' now.
 ##' @param y data vector
 ##' @param sigma standard deviation of noise
 ##' @param D penalty matrix.
@@ -36,6 +38,41 @@ randomized_genlasso_pv <- function(y, sigma, shift, sigma.add, D, v, orig.poly,
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
+    pvlist = .filternull(pvlist)
+    if(length(pvlist)==0) return(NULL)
+
+    ## Calculate p-value and return
+    pvs = sapply(pvlist, function(nd)nd[["pv"]])
+    denoms = sapply(pvlist, function(nd)nd[["weight"]])
+    rtg.pv = sum(pvs*denoms)/sum(denoms)
+
+    return(rtg.pv)
+}
+
+##' Wrapper
+##' @param pathobj An object from genlassoinf::dualPathSvd2(), of the class
+##'     "path".
+##' @param sigma.add Standard deviation of noise, for additive noise.
+##' @param v contrast vector
+##' @param orig.poly original polyhedron to shift.
+randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
+                                numSteps=NULL, numIntervals, numIS,bits=NULL){
+
+    ## Helper to generate an interval and return /weighted/ inner tg p-value
+    get_one <- function(bits=bits){
+
+        n = length(y)
+        new.noise = rnorm(n,0,sigma.add)
+        tg = partition_TG(y=y, poly= polyhedra(obj=orig.poly$gamma,
+                                               u=orig.poly$u - orig.poly$gamma%*%new.noise),
+                          v=v, sigma=sqrt(sigma^2))
+        pv.new = tg$pv
+        weight.new = tg$denom
+        return(list(pv=pv.new, weight=weight.new))
+    }
+
+    ## Collect weighted p-values and their weights
+    pvlist = plyr::rlply(numIS, get_one(bit=bits))
     pvlist = .filternull(pvlist)
     if(length(pvlist)==0) return(NULL)
 
@@ -154,35 +191,4 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
     info = data.frame(pv=pv,weight=weight)
     return(info)
 }
-
-
-
-
-##Iteratively obtain the denominator of the TG statistic
-## get_weight <- function(){
-
-##     get_ith_denom <- function(istep, intervals){
-
-##         ## At the i'th step, two things will happen: (1) The i'th win will occur
-##         ## in all the eligible intervals at that step, and that the i'th winner
-##         ## will have to be smaller than the (i-1)'th winner.
-
-##         ## Get the polyhedra from the (i+1)'th selection
-##         ## New intervals added onto old winning intervals
-##         winning_se = rbind(winning.wbs$results[,c("max.s", "max.e")])
-##         colnames(winning_se) = c("s", "e")
-##         intervals.new = intervals(numIntervals=numIntervals-numSteps, n=n, existing=winning_se)
-##         intervals.new = add2(intervals=intervals.new,
-##                              winning.wbs=g.orig)
-##         g.new = wbs(y=winning.wbs$y,
-##                     numSteps= numSteps,
-##                     intervals= intervals.new,
-##                     mimic=TRUE,
-##                     wbs.obj=g.orig)
-##         poly.new = polyhedra(obj=g.new$rows, u=g.new$u)
-##         pv = partition_TG(y=y.orig, poly.new, v=v, sigma=sigma)$pv
-##     }
-##     }
-
-## }
 
