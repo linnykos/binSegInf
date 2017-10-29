@@ -125,7 +125,7 @@ qqunif <- function(pp, main=NULL,plot.it=TRUE,cols=NULL,...){
 
     ## Internal helper
     myplotter <- function(xy,main,...){
-            graphics::plot(xy, axes=FALSE, ylim=c(0,1), xlim=c(0,1),...)
+            graphics::plot(xy, axes=FALSE, ylim=c(0,1), xlim=c(0,1),xlab="expected",ylab="observed",...)
             graphics::axis(2); graphics::axis(1)
             graphics::abline(0,1)
             if(!is.null(main)) graphics::title(main=main)
@@ -334,7 +334,7 @@ make_all_segment_contrasts <- function(obj){
     ## Basic checks
     if(length(obj$cp)==0) stop("No detected changepoints!")
     if(all(is.na(obj$cp)))stop("No detected changepoints!")
-    assert_that(!is.null(obj$y), msg="in make_all_segment_contrasts(), you need an object that contains the data vector.")
+    assert_that(!is.null(obj$y))#, msg="in make_all_segment_contrasts(), you need an object that contains the data vector.")
 
     return(make_all_segment_contrasts_from_cp(obj$cp, obj$cp.sign, length(obj$y)))
 }

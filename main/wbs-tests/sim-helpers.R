@@ -1,5 +1,5 @@
 ##' Helper to get p-values
-onejumpsim = function(lev, n, nsim, numSteps, numIS=NULL, randomized){
+dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -11,7 +11,8 @@ onejumpsim = function(lev, n, nsim, numSteps, numIS=NULL, randomized){
         printprogress(isim, nsim)
 
         ## Generate some data
-        mn = c(rep(0,n/2), rep(lev,n/2))
+        ## mn = c(rep(0,n/2), rep(lev,n/2))
+        mn = meanfun(lev,n)
         y = mn + rnorm(n, 0, sigma)
 
         ## Fit WBS
@@ -34,10 +35,16 @@ onejumpsim = function(lev, n, nsim, numSteps, numIS=NULL, randomized){
         })
 
         return(list(pvs=pvs, null.true=null.true))
-    },mc.cores=4)
+    },mc.cores=mc.cores)
     cat(fill=TRUE)
 
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
     truths = unlist(lapply(results, function(a)a[["null.true"]]))
     return(list(pvs=pvs, truths=truths))
 }
+
+
+## Generates one/two-jumped means
+onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
+fourjump <- function(lev,n){c(rep(0,n/5), rep(lev,n/5), rep(0,n/5), rep(-2*lev, n/5), rep(0,n/5) )}
