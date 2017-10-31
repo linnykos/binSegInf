@@ -136,7 +136,7 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 }
 
 ##' Synopsis: randomization wrapper for WBS.
-randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE, inference.type=c("rows", "pre-multiply"), cusum.y=NULL,cusum.v=NULL){
+randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE, inference.type=c("rows", "pre-multiply"), cumsum.y=NULL,cumsum.v=NULL){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
