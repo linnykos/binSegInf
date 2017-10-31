@@ -1,5 +1,6 @@
 ##' Helper to get p-values
-dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4){
+dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
+                  inference.type = "rows"){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -14,15 +15,19 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         ## mn = c(rep(0,n/2), rep(lev,n/2))
         mn = meanfun(lev,n)
         y = mn + rnorm(n, 0, sigma)
+        cumsum.y=cumsum(y)
 
         ## Fit WBS
-        numIntervals = n
+        ## numIntervals = n
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
         poly = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
         pvs = sapply(vlist, function(v){
             if(randomized){
-                return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma, numIS=numIS)))
+                cumsum.v = cumsum(v)
+                return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
+                                                        numIS=numIS, inference.type=inference.type,
+                                                        cumsum.y=cumsum.y,cumsum.v=cumsum.v)))
             } else {
                 return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
