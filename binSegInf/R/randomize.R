@@ -147,7 +147,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
     if(comprehensive) numIS=1
 
     parts = sapply(1:numIS, function(isim){
-        printprogress(isim,numIS)
         rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                   numIntervals=numIntervals,
                   numSteps=winning.wbs.obj$numSteps,
