@@ -136,7 +136,7 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 }
 
 ##' Synopsis: randomization wrapper for WBS.
-randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE){
+randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE, inference.type=c("rows", "pre-multiply"), cusum.y=NULL,cusum.v=NULL){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -147,17 +147,22 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
     if(comprehensive) numIS=1
 
     parts = sapply(1:numIS, function(isim){
+        printprogress(isim,numIS)
         rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                   numIntervals=numIntervals,
                   numSteps=winning.wbs.obj$numSteps,
-                  sigma=sigma)
+                  sigma=sigma,
+                  ## Added temporarily
+                  inference.type=inference.type,
+                  cumsum.y=cumsum.y,
+                  cumsum.v=cumsum.v)
     })
     pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
 
     return(pv)
 }
 
-##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, single
+##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, singl
 ##' set of denom and numers from a new TG statistic, which is calculated from
 ##' the /single/ new set of halfspaces that characterize the maximization of the
 ##' original |winning.wbs.obj| but among /different/ set of
@@ -167,7 +172,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
 ##'     intervals.
 ##' @param v test contrast
 ##' @return A data frame (single row), with "pv" and "weight".
-rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
+rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y=NULL,cumsum.v=NULL, inference.type){
 
     ## Basic checks
     assert_that(is_valid.wbsFs(winning.wbs.obj))
@@ -181,16 +186,44 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
                          winning.wbs.obj=winning.wbs.obj)
 
     ## Create new halfspaces (through |mimic| option)
-    g.new = wildBinSeg_fixedSteps(y=winning.wbs.obj$y, numSteps= numSteps,
-                                  intervals= intervals.new, mimic=TRUE,
-                                  wbs.obj=winning.wbs.obj)
-    poly.new = polyhedra(obj=g.new$gamma, u=g.new$u)
+    if(inference.type=="rows"){
+        g.new = wildBinSeg_fixedSteps(y=winning.wbs.obj$y, numSteps= numSteps,
+                                      intervals= intervals.new, mimic=TRUE,
+                                      wbs.obj=winning.wbs.obj,
+                                      inference.type=inference.type)
+        poly.new = polyhedra(obj=g.new$gamma, u=g.new$u)
 
-    ## Partition TG to denom and numer
-    pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE)
-    pv = pvobj$pv
-    if(is.nan(pv)) pv=0 ## temporary fix
-    weight = pvobj$denom
+        ## Original way
+        ## Partition TG to denom and numer
+        pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE)
+        pv = pvobj$pv
+        if(is.nan(pv)) pv=0 ## temporary fix
+        weight = pvobj$denom
+
+        ## old way using new function
+        Gy = poly.new$gamma%*%y
+        Gv = poly.new$gamma%*%v
+        pvobj = poly_pval_from_inner_products(Gy,Gv, v,y,sigma,u=poly.new$u,bits=50)
+        pv = pvobj$pv
+        if(is.nan(pv)) pv=0 ## temporary fix
+        weight = pvobj$denom
+
+    } else {
+
+        ## new way using new function
+        g.new = wildBinSeg_fixedSteps(y=winning.wbs.obj$y, numSteps= numSteps,
+                                      intervals= intervals.new, mimic=TRUE,
+                                      wbs.obj=winning.wbs.obj,
+                                      cumsum.y=cumsum.y,
+                                      cumsum.v=cumsum.v,
+                                      ## inference.type=inference.type)
+                                      inference.type="pre-multiply")
+
+        pvobj = poly_pval_from_inner_products(g.new$Gy,g.new$Gv,v,y,sigma,u=g.new$u, bits=50)
+        pv = pvobj$pv
+        if(is.nan(pv)) pv=0 ## temporary fix
+        weight = pvobj$denom
+    }
 
     ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
     ## along the line trapped in the polyhedron, is zero.
@@ -200,3 +233,31 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma){
     return(info)
 }
 
+poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
+
+    ## Rounding ridiculously small numbers
+    Gv[which(abs(Gv)<1E-15)] = 0
+
+    vy = sum(v*y)
+    vv = sum(v^2)
+    sd = sigma*sqrt(vv)
+
+    rho = Gv / vv
+    vec = (u - Gy + rho*vy) / rho
+    vlo = suppressWarnings(max(vec[rho>0]))
+    vup = suppressWarnings(min(vec[rho<0]))
+    vy = max(min(vy, vup),vlo) ##This is the only difference. Should it be here? Yes
+
+    z = Rmpfr::mpfr(vy/sd, precBits=bits)
+    a = Rmpfr::mpfr(vlo/sd, precBits=bits)
+    b = Rmpfr::mpfr(vup/sd, precBits=bits)
+    if(!(a<=z &  z<=b)){
+        warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
+    }
+
+    numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
+    denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+    pv = as.numeric(numer/denom)
+
+    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vy=vy, vup=vup))
+}

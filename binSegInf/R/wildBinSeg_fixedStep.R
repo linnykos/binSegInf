@@ -6,7 +6,8 @@
 ##' @return List of useful algorithm results, including the |gamma| matrix and |u|.
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                   intervals=NULL, mimic=FALSE, wbs.obj=NULL,
-                                  comprehensive=FALSE){
+                                  comprehensive=FALSE, cumsum.y=NULL, cumsum.v=NULL,
+                                  inference.type =c("rows","pre-multiply")){
     ## Basic checks
     n = length(y)
     assert_that(!is.null(numIntervals) | !is.null(intervals),
@@ -29,7 +30,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
     qual.inds = 1:nrow(intervals$cusummat)
     scope = rbind(c(1,n))
     colnames(scope)  = c("s", "e")
-    new.rows = list()
+    new.rows = new.info = list()
 
     ## Iterate
     istep = 1
@@ -42,6 +43,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         } else {
             max.info = maximize.intervals(intervals=intervals, qual.inds=qual.inds)
         }
+        if(inference.type=="rows"){
+        ## Collect halfspaces for the model selection event
         new.rows[[istep]] = form_rows(intervals=intervals,
                                       max.s=max.info$max.s,
                                       max.b=max.info$max.b,
@@ -50,6 +53,18 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                       qual.inds=qual.inds,
                                       n=n,
                                       y=(if(!mimic) y else NULL))
+        } else {
+
+        ## New routine for new.rows, that collects Gy and Gv instead of actual rows
+        new.info[[istep]] = form_info(intervals=intervals,
+                                      max.s=max.info$max.s,
+                                      max.b=max.info$max.b,
+                                      max.e=max.info$max.e,
+                                      max.sign=max.info$max.sign,
+                                      qual.inds=qual.inds,
+                                      cumsum.y=cumsum.y,
+                                      cumsum.v=cumsum.v)
+        }
 
         ## Calculate the maximizing scope
         max.scope.irow = which(apply(scope, 1,function(myscope){
@@ -83,12 +98,27 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         istep = istep+1
     }
     stoptime = istep-1
+    if(stoptime != numSteps) print("Stopped early!")
     results = results[1:stoptime,,drop=FALSE]
-    gamma=do.call(rbind, new.rows)
-    names(new.rows) = paste0("step-",1:stoptime)
-    u = rep(0,nrow(gamma))
+
+    ## Aggregate things for inference
+    if(inference.type=="rows"){
+        gamma=do.call(rbind, new.rows)
+        names(new.rows) = paste0("step-",1:stoptime)
+        Gy=NULL
+        Gv=NULL
+        u = rep(0,nrow(gamma))
+    } else {
+        Gy=do.call(c,lapply(new.info, function(a)a[["Gy"]]))
+        Gv=do.call(c,lapply(new.info, function(a)a[["Gv"]]))
+        gamma=NULL
+        u=rep(0, length(Gy))
+    }
+
     return(structure(list(results=results, gamma=gamma, u=u,
+                          Gy=Gy, Gv=Gv,
                           rows.list = new.rows,
+                          info.list = new.info,
                           cp=results[,"max.b"], cp.sign=results[,"max.sign"],
                           numSteps=numSteps,
                           mimic=mimic,
@@ -96,7 +126,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                           numIntervals=numIntervals,
                           y=y), class="wbsFs"))
 }
-
 
 ##' Print function for convenience, of |wbs| class object.
 print.wbsFs <- function(obj){
@@ -108,7 +137,7 @@ print.wbsFs <- function(obj){
 is_valid.wbsFs <- function(obj){
     return(all(names(obj) %in% c("results", "gamma", "u", "cp", "cp.sign", "y",
                                  "numSteps", "mimic", "rows.list","intervals",
-                                 "numIntervals")))
+                                 "numIntervals", "Gy", "Gv", "info.list")))
 }
 
 .get_max_info <- function(wbs.obj,...){ UseMethod(".get_max_info")}

@@ -215,8 +215,9 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
         if(!reduce){
             G = poly$gamma
             u = poly$u
-
-            rho = G %*% v / vv
+            Gv = G %*% v
+            Gv[which(abs(Gv)<1E-15)] = 0
+            rho = Gv / vv
             vec = (u - G %*% y + rho*z) / rho
             vlo = suppressWarnings(max(vec[rho>0]))
             vup = suppressWarnings(min(vec[rho<0]))
@@ -224,7 +225,6 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
         } else {
             ## if(is.null(vlo) | is.null(vup))stop("provide vup&vlo!")
             ## pv = tnorm.surv(z,0,sd,poly$vlo,poly$vup,bits, correct.ends=correct.ends)
-            print('here')
             pv = tnorm.surv(z,0,sd,vlo,vup,bits, correct.ends=correct.ends)
         }
     }

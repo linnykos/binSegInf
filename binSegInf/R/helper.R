@@ -75,13 +75,10 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
 
     ## Basic checks
     stopifnot(length(v)==length(y))
-    ## stopifnot(is_valid.polyhedra(poly))
-
 
     vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
-
 
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
     ## This is because in order to partition the TG statistic, we need to form
@@ -204,21 +201,23 @@ getcusums <- function(s,e,y, unsigned=FALSE, simplereturn=FALSE){
 }
 
 ##' Newer, 10 times faster function for getcusum().
-getcusums2 <- function(s, e, cumsums){
+getcusums_fast <- function(s, e, cumsums){
     bvec = (s:(e-1))
     n = e-s+1
     cumsums.aug = c(0,cumsums)
     return(-sqrt((e-bvec)/(n*(bvec-s+1)))*(cumsums.aug[bvec+1]-cumsums.aug[s-1+1]) +
         sqrt((bvec-s+1)/(n*(e-bvec)))*(cumsums.aug[e+1]-cumsums.aug[bvec+1]))
 }
+getcusums2 = getcusums_fast
 
 ##' Newer, 10 times faster function for cusum().
-cusum2 <- function(s,e,b,cusums){
+cusum_fast <- function(s,e,b,cumsums){
     cumsums.aug = c(0,cumsums)
     n = e-s+1
     return(-sqrt((e-b)/(n*(b-s+1)))*(cumsums.aug[b+1]-cumsums.aug[s-1+1]) +
         sqrt((b-s+1)/(n*(e-b)))*(cumsums.aug[e+1]-cumsums.aug[b+1]))
 }
+cusum2 = cusum_fast
 
 ##' Does a little more than getcusums2().
 get_morethan_cusums2 <- function(s,e,cumsums){

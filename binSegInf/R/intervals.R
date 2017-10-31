@@ -123,6 +123,49 @@ form_rows.intervals <- function(intervals, max.s, max.b, max.e, max.sign, qual.i
     return(all.rows)
 }
 
+form_info <- function(intervals,...){ UseMethod("form_info")}
+form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
+                                qual.inds, cumsum.y, cumsum.v){
+
+    ## Form 2inning Gy and Gv
+    winning.Gy = cusum_fast(s=max.s, b=max.b, e=max.e, cumsums=cumsum.y)
+    winning.Gv = sign(winning.Gy) * cusum_fast(s=max.s, b=max.b, e=max.e,
+                                               cumsums=cumsum.v)
+    winning.Gy = abs(winning.Gy)
+
+    submat = intervals$cusummat[qual.inds,,drop=FALSE]
+
+    ## Form G %*% y entries by adding/subtracting losing from abs(winning.y)
+    Gy1 <- apply(submat, 1, function(myrow){
+        losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                               cumsums=cumsum.y)
+        return(c(winning.Gy - losing.Gy))
+    })
+    Gy2 <- apply(submat, 1, function(myrow){
+        losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                               cumsums=cumsum.y)
+        return(c(winning.Gy + losing.Gy))
+    })
+
+    Gy3 = winning.Gy
+    Gy = c(Gy1, Gy2, Gy3)
+
+    ## Form G %*% v entries in the /exact same way/
+    Gv1 <- apply(submat, 1, function(myrow){
+        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                          cumsums=cumsum.v)
+        return(c(winning.Gv - losing.Gv))
+    })
+    Gv2 <- apply(submat, 1, function(myrow){
+        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                          cumsums=cumsum.v)
+        return(c(winning.Gv + losing.Gv))
+    })
+    Gv3 = winning.Gv
+    Gv = c(Gv1, Gv2, Gv3)
+
+    return(list(Gy=Gy, Gv=Gv))
+}
 
 
 ##' Add a single interval to existing set of intervals
