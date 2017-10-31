@@ -200,13 +200,14 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom
 
-        ## old way using new function
-        Gy = poly.new$gamma%*%y
-        Gv = poly.new$gamma%*%v
-        pvobj = poly_pval_from_inner_products(Gy,Gv, v,y,sigma,u=poly.new$u,bits=50)
-        pv = pvobj$pv
-        if(is.nan(pv)) pv=0 ## temporary fix
-        weight = pvobj$denom
+        ## ## old way using new function
+        ## browser()
+        ## Gy = poly.new$gamma%*%g.new$y
+        ## Gv = poly.new$gamma%*%g.new$v
+        ## pvobj = poly_pval_from_inner_products(Gy, Gv, v, g.new$y, sigma, u=poly.new$u, bits=50)
+        ## pv = pvobj$pv
+        ## if(is.nan(pv)) pv = 0 ## temporary fix
+        ## weight = pvobj$denom
 
     } else {
 
@@ -219,7 +220,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y
                                       ## inference.type=inference.type)
                                       inference.type="pre-multiply")
 
-        pvobj = poly_pval_from_inner_products(g.new$Gy,g.new$Gv,v,y,sigma,u=g.new$u, bits=50)
+        pvobj = poly_pval_from_inner_products(g.new$Gy, g.new$Gv, v, g.new$y, sigma, u=g.new$u, bits=50)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom

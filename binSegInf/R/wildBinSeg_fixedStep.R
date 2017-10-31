@@ -8,6 +8,9 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                   intervals=NULL, mimic=FALSE, wbs.obj=NULL,
                                   comprehensive=FALSE, cumsum.y=NULL, cumsum.v=NULL,
                                   inference.type =c("rows","pre-multiply")){
+
+    inference.type = match.arg(inference.type)
+
     ## Basic checks
     n = length(y)
     assert_that(!is.null(numIntervals) | !is.null(intervals),
