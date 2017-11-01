@@ -127,42 +127,33 @@ form_info <- function(intervals,...){ UseMethod("form_info")}
 form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
                                 qual.inds, cumsum.y, cumsum.v){
 
-    ## Form 2inning Gy and Gv
-    winning.Gy = cusum_fast(s=max.s, b=max.b, e=max.e, cumsums=cumsum.y)
+    ## Form winning Gy and Gv
+    winning.Gy = cusum_fast(s=max.s, b=max.b, e=max.e, cumsums.aug=c(0,cumsum.y))
     winning.Gv = sign(winning.Gy) * cusum_fast(s=max.s, b=max.b, e=max.e,
-                                               cumsums=cumsum.v)
+                                               cumsums.aug=c(0,cumsum.v))
     winning.Gy = abs(winning.Gy)
 
     submat = intervals$cusummat[qual.inds,,drop=FALSE]
 
     ## Form G %*% y entries by adding/subtracting losing from abs(winning.y)
-    Gy1 <- apply(submat, 1, function(myrow){
+    gy = function(myrow){
         losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                               cumsums=cumsum.y)
-        return(c(winning.Gy - losing.Gy))
-    })
-    Gy2 <- apply(submat, 1, function(myrow){
-        losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                               cumsums=cumsum.y)
-        return(c(winning.Gy + losing.Gy))
-    })
+                               cumsums.aug=c(0,cumsum.y))
+        return( c(winning.Gy - losing.Gy, winning.Gy + losing.Gy))
+    }
 
-    Gy3 = winning.Gy
-    Gy = c(Gy1, Gy2, Gy3)
+    gv=function(myrow){
+        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                          cumsums.aug=c(0,cumsum.v))
+        return(c(winning.Gv - losing.Gv, winning.Gv + losing.Gv))
+    }
+
+    Gy1 <- apply(submat, 1, gy)
+    Gy = c(Gy1, winning.Gy)
 
     ## Form G %*% v entries in the /exact same way/
-    Gv1 <- apply(submat, 1, function(myrow){
-        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                          cumsums=cumsum.v)
-        return(c(winning.Gv - losing.Gv))
-    })
-    Gv2 <- apply(submat, 1, function(myrow){
-        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                          cumsums=cumsum.v)
-        return(c(winning.Gv + losing.Gv))
-    })
-    Gv3 = winning.Gv
-    Gv = c(Gv1, Gv2, Gv3)
+    Gv1 <- apply(submat, 1, gv)
+    Gv = c(Gv1, winning.Gv)
 
     return(list(Gy=Gy, Gv=Gv))
 }

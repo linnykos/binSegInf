@@ -219,7 +219,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y
                                       ## inference.type=inference.type)
                                       inference.type="pre-multiply")
 
-        pvobj = poly_pval_from_inner_products(g.new$Gy, g.new$Gv, v, g.new$y, sigma, u=g.new$u, bits=50)
+        pvobj = poly_pval_from_inner_products(g.new$Gy, g.new$Gv, v, g.new$y, sigma, u=g.new$u, bits=5)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom
@@ -251,10 +251,17 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
     z = Rmpfr::mpfr(vy/sd, precBits=bits)
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
+
+    ## z = vy/sd
+    ## a = vlo/sd
+    ## b = vup/sd
+
     if(!(a<=z &  z<=b)){
         warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
 
+    ## numer = as.numeric(pnorm(b)-pnorm(z))
+    ## denom = as.numeric(pnorm(b)-pnorm(a))
     numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
     denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
     pv = as.numeric(numer/denom)
