@@ -8,8 +8,8 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     cat("lev=", lev, fill=TRUE)
     sigma = 1
 
-    ## results = mclapply(1:nsim,function(isim){
-    results = lapply(1:nsim,function(isim){
+    results = mclapply(1:nsim,function(isim){
+    ## results = lapply(1:nsim,function(isim){
         printprogress(isim, nsim)
 
         ## Generate some data
@@ -26,10 +26,10 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
         ## retain only the guys we want
         retain = which((g$cp %in% locs))
-        ## print(g$cp)
+        print(g$cp)
         if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-        ## print("retaining:")
-        ## print(g$cp[retain])
+        print("retaining:")
+        print(g$cp[retain])
 
 
         ## Get the p-values
@@ -53,8 +53,8 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         ## null.true = null.true[get.rid]
 
         return(list(pvs=pvs, null.true=null.true))
-    ## },mc.cores=mc.cores)
-    })
+    },mc.cores=mc.cores)
+    ## })
     cat(fill=TRUE)
 
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
