@@ -26,10 +26,10 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
         ## retain only the guys we want
         retain = which((g$cp %in% locs))
-        print(g$cp)
+        ## print(g$cp)
         if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-        print("retaining:")
-        print(g$cp[retain])
+        ## print("retaining:")
+        ## print(g$cp[retain])
 
 
         ## Get the p-values
