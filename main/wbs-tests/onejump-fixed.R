@@ -3,7 +3,7 @@ source("../main/wbs-tests/plot-helpers.R")
 source("../main/wbs-tests/sim-helpers.R")
 outputdir = "../output"
 
-## One-jump simulations
+## One-jump, one-step simulations
 levs = c(0,1,2,3)
 n=60
 nsim=1000
@@ -16,7 +16,7 @@ filename = "fixed-wbs-onejump-one-step.Rdata"
 save(list=c("results","levs","n","nsim","numSteps"), file=file.path(outputdir,filename))
 
 
-## Three-jump simulations
+## One-jump, three-step simulations
 levs = c(0,1,2,3)
 n=60
 nsim=1000
