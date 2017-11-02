@@ -112,7 +112,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         Gv=NULL
         u = rep(0,nrow(gamma))
     } else {
-        Gy=do.call(c,lapply(new.info, function(a)a[["Gy"]]))
+        Gy=do.call(c,lapply(new.info, function(a)a[["Gy"]]))## unlist()
         Gv=do.call(c,lapply(new.info, function(a)a[["Gv"]]))
         gamma=NULL
         u=rep(0, length(Gy))

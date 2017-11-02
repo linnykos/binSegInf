@@ -210,14 +210,16 @@ getcusums_fast <- function(s, e, cumsums){
 }
 getcusums2 = getcusums_fast
 
+
 ##' Newer, 10 times faster function for cusum().
-cusum_fast <- function(s,e,b,cumsums){
-    cumsums.aug = c(0,cumsums)
+cusum_fast <- function(s,e,b,cumsums.aug,cumsums=NULL){
+    ## cumsums.aug = c(0,cumsums)
     n = e-s+1
-    return(-sqrt((e-b)/(n*(b-s+1)))*(cumsums.aug[b+1]-cumsums.aug[s-1+1]) +
+    return(-sqrt((e-b)/(n*(b-s+1)))*(cumsums.aug[b+1]-cumsums.aug[s]) +
         sqrt((b-s+1)/(n*(e-b)))*(cumsums.aug[e+1]-cumsums.aug[b+1]))
 }
 cusum2 = cusum_fast
+
 
 ##' Does a little more than getcusums2().
 get_morethan_cusums2 <- function(s,e,cumsums){
