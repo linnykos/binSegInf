@@ -159,6 +159,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
     pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
 
     return(pv)
+    return(parts)
 }
 
 ##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, singl
@@ -199,14 +200,6 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom
 
-        ## ## old way using new function
-        ## browser()
-        ## Gy = poly.new$gamma%*%g.new$y
-        ## Gv = poly.new$gamma%*%g.new$v
-        ## pvobj = poly_pval_from_inner_products(Gy, Gv, v, g.new$y, sigma, u=poly.new$u, bits=50)
-        ## pv = pvobj$pv
-        ## if(is.nan(pv)) pv = 0 ## temporary fix
-        ## weight = pvobj$denom
 
     } else {
 

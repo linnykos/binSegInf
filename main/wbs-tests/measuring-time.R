@@ -1,4 +1,101 @@
+## Synopsis: measure time for randomized WBS simulations.
 library(microbenchmark )
+
+## Computations by sample size
+ns = c(50, 100, 200, 300,  500)
+slow.times.by.n = list()
+for(ii in 1:length(ns)){
+    print(ii)
+    n = ns[ii]
+    numIntervals = n
+
+    ## Generate some data
+    lev=0
+    mn = onejump(lev,n)
+    set.seed(0)
+    y = mn + rnorm(n, 0, sigma)
+    cumsum.y = cumsum(y)
+    numsteps=1
+
+    g.orig = wildBinSeg_fixedSteps(y, numIntervals=numIntervals,
+                                   numSteps= numSteps,
+                                   inference.type="pre-multiply")
+    vlist <- make_all_segment_contrasts(g.orig)
+    numIS=100
+    v = vlist[[1]]
+    cumsum.v = cumsum(v)
+    slow.times.by.n[[ii]] = microbenchmark({
+        randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
+                        comprehensive=FALSE, inference.type="pre-multiply",
+                        cumsum.y=cumsum.y, cumsum.v=cumsum.v)
+    }, times=3)
+}
+
+
+myplot <- function(times.by.n, ns, ylim = c(0,20000), add=FALSE, col='black',...){
+    getmedtime <- function(mytime){(mytime$time[3])/1000000000}
+    medtimes= sapply(times.by.n, getmedtime)
+    ns.squared = ns^2
+    dat = data.frame(medtimes, ns, ns.squared)
+    g = lm(medtimes ~ ns + ns.squared, data=dat)
+    newdat = data.frame(ns = 1:2000, ns.squared = (1:2000)^2)
+    proj.times = predict(g, newdata=newdat)
+    if(add) myplotter = points
+    if(!add) myplotter = plot
+    myplotter(medtimes ~ ns, xlim=c(0,2000), ylim = ylim,col=col,...)
+    new.ns=  1:2000
+    lines(proj.times~new.ns,col=col)
+}
+
+pdf("~/Desktop/times-after-functionmagic.pdf", width=5, height=5)
+myplot(times.by.n, ns, pch=16, col='black',cex=1.5)
+myplot(slow.times.by.n, ns, add=TRUE, pch=16, col='red',cex=1.5)
+legend("topleft", legend = c("before change", "after change"), pch=c(16,16), col=c("black", "red"),cex=c(1.5,1.5))
+graphics.off()
+
+
+pdf("~/Desktop/times-after-functionmagic2.pdf", width=5, height=5)
+myplot(times.by.n, ns, pch=16, col='black',cex=1.5, ylim=c(0,600))
+graphics.off()
+
+
+
+## Is the p-value distribution any more/less stable in high $n$? I think it will
+## be more unstable, so we need to grow p-value; I'd be (pleasantly surprised)
+## if it weren't.
+
+
+
+ns = c(5,10,20)
+distr.by.n = list()
+for(ii in 1:length(ns)){
+    print(ii)
+    n = ns[ii]
+    numIntervals = n
+
+    ## Generate some data
+    lev=0
+    mn = onejump(lev,n)
+    set.seed(0)
+    y = mn + rnorm(n, 0, sigma)
+    cumsum.y = cumsum(y)
+    numsteps=1
+    g.orig = wildBinSeg_fixedSteps(y, numIntervals=numIntervals,
+                                   numSteps= numSteps,
+                                   inference.type="pre-multiply")
+    vlist <- make_all_segment_contrasts(g.orig)
+    numIS=50
+    v = vlist[[1]]
+    cumsum.v = cumsum(v)
+    nsim=100
+    distr.by.n[[ii]] = mclapply(1:nsim, function(isim){
+        printprogress(isim,nsim)
+        randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
+                        comprehensive=FALSE, inference.type="pre-multiply",
+                        cumsum.y=cumsum.y, cumsum.v=cumsum.v)
+    }, mc.cores=3)
+}
+
 ## Load
 n=60
 lev=0
@@ -23,124 +120,3 @@ poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv
 
 cumsum.y = cumsum(y)
 cumsum.v = cumsum(v)
-
-
-## Rprof of inference
-Rprof("~/Desktop/rand-wbs.out")
-set.seed(0)
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="pre-multiply",
-                cumsum.y=cumsum.y, cumsum.v=cumsum.v)
-Rprof(NULL)
-b1 = summaryRprof("~/Desktop/rand-wbs.out")
-
-Rprof("~/Desktop/rand-wbs-orig.out")
-set.seed(0)
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="rows",
-                cumsum.y=cumsum.y, cumsum.v=cumsum.v)
-Rprof(NULL)
-b2= summaryRprof("~/Desktop/rand-wbs-orig.out")
-
-
-
-## Microbenchmark of inference
-c1 = microbenchmark({
-    set.seed(0);
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="pre-multiply",
-                cusum.y=cusum.y,cusum.v=cusum.v)}, times=5)
-
-c2= microbenchmark({
-    set.seed(0);
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="rows",
-                cusum.y=cusum.y,cusum.v=cusum.v)}, times=5)
-
-
-## Does the cusum_fast() speed up things more than cusum()?
-n=60
-lev=0
-sigma = 1
-## Generate some data
-mn = onejump(lev,n)
-set.seed(0)
-y = mn + rnorm(n, 0, sigma)
-cumsum.y = cumsum(y)
-s=1
-e=10
-b=5
-microbenchmark({cusum_fast(s=s,b=b,e=e,cumsums=cumsum.y)})
-microbenchmark({cusum(s=s,b=b,e=e,y=y,contrast.vec=TRUE)})
-
-## Is it actually the case that we are happy with the speed?
-
-## Two-jump, four-step model
-source("../main/wbs-tests/sim-helpers.R")
-levs = c(0,1,2,3)
-n = 60
-nsim = 500
-numSteps = 4
-numIS=100
-sigma=1
-numIntervals=n
-meanfun = twojump
-numSteps=1
-randomized=TRUE
-nsim=1
-set.seed(0)
-numSteps=1
-after.speedup1 = microbenchmark({
-    dosim(lev=0, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE,
-          numIS=100, meanfun=twojump, mc.cores=1, numIntervals=60,
-          inference.type="pre-multiply")
-}, times=3)
-
-set.seed(0)
-numSteps=3
-after.speedup3 = microbenchmark({
-    dosim(lev=0, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE,
-          numIS=100, meanfun=twojump, mc.cores=1, numIntervals=60,
-          inference.type="pre-multiply")
-}, times=3)
-
-set.seed(0)
-numSteps=1
-before.speedup1 = microbenchmark({
-    dosim(lev=0, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE, numIS=100,
-          meanfun=twojump, mc.cores=1, numIntervals=60, inference.type="rows")
-},times=3)
-
-set.seed(0)
-numSteps=3
-before.speedup3 = microbenchmark({
-    dosim(lev=0, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE, numIS=100,
-          meanfun=twojump, mc.cores=1, numIntervals=60, inference.type="rows")
-},times=3)
-
-
-Rprof("~/rand-wbs-before.out")
-set.seed(0)
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="rows",
-                cumsum.y=cumsum.y, cumsum.v=cumsum.v)
-Rprof(NULL)
-b1= summaryRprof("~/rand-wbs-before.out")
-head(b1$by.total, 20)
-head(b1$by.self, 20)
-
-## Rprof of inference
-Rprof("~/rand-wbs-after.out")
-set.seed(0)
-randomize_wbsfs(v, winning.wbs.obj=g.orig, numIS = 100, sigma=sigma,
-                comprehensive=FALSE, inference.type="pre-multiply",
-                cumsum.y=cumsum.y, cumsum.v=cumsum.v)
-Rprof(NULL)
-b2 = summaryRprof("~/rand-wbs-after.out")
-head(b2$by.total, 20)
-head(b2$by.self, 20)
-
-
-head(b1$by.total, 20)
-head(b2$by.total, 20)
-

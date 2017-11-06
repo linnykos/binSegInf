@@ -123,6 +123,7 @@ form_rows.intervals <- function(intervals, max.s, max.b, max.e, max.sign, qual.i
     return(all.rows)
 }
 
+## Forms information
 form_info <- function(intervals,...){ UseMethod("form_info")}
 form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
                                 qual.inds, cumsum.y, cumsum.v){
@@ -133,30 +134,57 @@ form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
                                                cumsums.aug=c(0,cumsum.v))
     winning.Gy = abs(winning.Gy)
 
-    submat = intervals$cusummat[qual.inds,,drop=FALSE]
+    submat = submat.old = intervals$cusummat[qual.inds,1:3, drop=FALSE]
+    submat[,2:3] = submat[,2:3] + 1 ## for adding 1 each to b and e
 
-    ## Form G %*% y entries by adding/subtracting losing from abs(winning.y)
-    gy = function(myrow){
-        losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                               cumsums.aug=c(0,cumsum.y))
-        return( c(winning.Gy - losing.Gy, winning.Gy + losing.Gy))
-    }
+    ## ## Form G %*% y entries by adding/subtracting losing from abs(winning.y)
+    ## gy = function(myrow){
+    ##     losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+    ##                            cumsums.aug=c(0,cumsum.y))
+    ##     ## return( c( - losing.Gy, + losing.Gy))
+    ##     return(losing.Gy)
+    ## }
 
-    gv=function(myrow){
-        losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-                          cumsums.aug=c(0,cumsum.v))
-        return(c(winning.Gv - losing.Gv, winning.Gv + losing.Gv))
-    }
+    ## gv = function(myrow){
+    ##     losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+    ##                       cumsums.aug=c(0,cumsum.v))
+    ##     ## return(c(winning.Gv - losing.Gv, winning.Gv + losing.Gv))
+    ##     return(losing.Gv)
+    ## }
 
-    Gy1 <- apply(submat, 1, gy)
-    Gy = c(Gy1, winning.Gy)
+    ## Gy1 <- apply(submat, 1, gy)
+    K = nrow(submat)
+    CMy = c(0,cumsum.y)[submat]
+    Gy1 = -sqrt( (submat[,3] - submat[,2])/((submat[,3] - submat[,1])*(submat[,2] - submat[,1]) )) *
+        (CMy[(K+1):(2*K)] - CMy[(1:K)]) +
+        sqrt( (submat[,2] - submat[,1] )/( (submat[,3]-submat[,1])* (submat[,3] - submat[,2] ) )) *
+        (CMy[((2*K+1) :(3*K)) ] - CMy[ ( (K+1  ):(2*K) ) ]  )
+    Gy = c(winning.Gy - Gy1, winning.Gy + Gy1, winning.Gy)
+
+    ## Sanity check (erase when done)
+    ## Gy1.old <- apply(submat.old, 1, gy)
+    ## stopifnot(all.equal(Gy1,Gy1.old))
+    ## print(head(cbind(Gy1,Gy1.old)))
 
     ## Form G %*% v entries in the /exact same way/
-    Gv1 <- apply(submat, 1, gv)
-    Gv = c(Gv1, winning.Gv)
+    ## Gv1 <- apply(submat, 1, gv)
+    CMv = c(0,cumsum.v)[submat]
+    Gv1 = -sqrt( (submat[,3] - submat[,2])/((submat[,3] - submat[,1])*(submat[,2] - submat[,1]))) *
+        (CMv[(K+1):(2*K)] - CMv[(1:K)]) +
+        sqrt( (submat[,2] - submat[,1] )/( (submat[,3]-submat[,1])* (submat[,3] - submat[,2] ) )) *
+        (CMv[((2*K+1) :(3*K)) ] - CMv[ ( (K+1  ):(2*K) ) ]  )
+    Gv = c(winning.Gv - Gv1, winning.Gv + Gv1, winning.Gv)
+
+    ## Another sanity check (erase when done)
+    ## Gv1.old <- apply(submat.old, 1, gv)
+    ## stopifnot(all.equal(Gv1,Gv1.old))
+    ## print(head(cbind(Gv1,Gv1.old)))
 
     return(list(Gy=Gy, Gv=Gv))
 }
+
+
+
 
 
 ##' Add a single interval to existing set of intervals

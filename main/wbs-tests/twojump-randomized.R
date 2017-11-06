@@ -5,15 +5,18 @@ source("../main/wbs-tests/sim-helpers.R")
 ## Two-jump, four-step model (RANDOMIZED)
 levs = c(0,1,2,3)
 n = 60
-nsim = 1000
+nsims=c(3000,700,500,250)
 numSteps = 4
 mc.cores = 6
-results = lapply(levs, dosim, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE, numIS=100, meanfun=twojump, mc.cores=mc.cores)
+visc = c((n/3+((-1):1)), (2*n/3+((-1):1)))
+results = Map(function(lev,nsim) dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,randomized=TRUE,numIS=100, meanfun=twojump,mc.cores=mc.cores, locs=visc), levs, nsims)
 
 ## Save results
 outputdir = "../output"
 filename = "rand-wbs-twojump-four-step.Rdata"
 save(list=c("results","levs","n","nsim","numSteps"), file=file.path(outputdir,filename))
+
+
 
 
 ## Load and extract results
