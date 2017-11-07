@@ -19,22 +19,21 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         cumsum.y=cumsum(y)
 
         ## Fit WBS
-        ## numIntervals = n
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
         poly = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
 
         ## retain only the guys we want
         retain = which((g$cp %in% locs))
-        ## print(g$cp)
         if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-        ## print("retaining:")
-        ## print(g$cp[retain])
 
 
         ## Get the p-values
         vlist = vlist[retain] ## Added
-        pvs = sapply(vlist, function(v){
+        ## pvs = sapply(vlist, function(v){
+        pvs = sapply(iv, function(iv){
+            if(iv==2)browser()
+            v=vlist[[iv]]
             if(randomized){
                 cumsum.v = cumsum(v)
                 return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
