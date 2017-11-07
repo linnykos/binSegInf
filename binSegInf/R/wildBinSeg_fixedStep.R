@@ -3,11 +3,18 @@
 ##' new set of intervals.
 ##' @param intervals Optionally, add an |intervals| class object that contains
 ##'     intervals.
-##' @return List of useful algorithm results, including the |gamma| matrix and |u|.
+##' @param inference.type Specify whether you want to actually accumulate the
+##'     halfspaces, or just precalculate G*v and G*y for direct calculation of
+##'     p-values.
+##' @param stop.time Manually inputted stop time. You can obtain a data
+##'     dependent stop time using local IC rises, via \code{ic_wrapper()}.
+##' @return List of useful algorithm results, including the |gamma| matrix and
+##'     |u|.
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                   intervals=NULL, mimic=FALSE, wbs.obj=NULL,
                                   comprehensive=FALSE, cumsum.y=NULL, cumsum.v=NULL,
-                                  inference.type =c("rows","pre-multiply")){
+                                  inference.type =c("rows","pre-multiply"),
+                                  stop.time=numSteps){
 
     inference.type = match.arg(inference.type)
 
@@ -38,7 +45,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
     ## Iterate
     istep = 1
     time.to.stop = FALSE
-    while(istep <= numSteps & !time.to.stop){
+    while(istep <= min(numSteps,stop.time) & !time.to.stop){
 
         ## Do maximization in the respective intervals.
         if(mimic){
@@ -101,7 +108,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         istep = istep+1
     }
     stoptime = istep-1
-    if(stoptime != numSteps) print("Stopped early!")
+    ## if(stoptime != numSteps) print("Stopped early!")
     results = results[1:stoptime,,drop=FALSE]
 
     ## Aggregate things for inference
@@ -112,7 +119,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         Gv=NULL
         u = rep(0,nrow(gamma))
     } else {
-        browser()
         Gy=do.call(c,lapply(new.info, function(a)a[["Gy"]]))## unlist()
         Gv=do.call(c,lapply(new.info, function(a)a[["Gv"]]))
         gamma=NULL

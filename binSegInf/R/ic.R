@@ -17,18 +17,19 @@ ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
     if(type!="bic") stop("Only BIC is possible, for now.")
 
     ## Get ic information
-    tryCatch({
-        ic_obj = get_ic(obj$cp, obj$y, consec=2, sigma=sigma, type = type)
-    },
-    warning = function() return(NULL)
-    )
+    ## tryCatch({
+    ##     browser()
+        ic_obj = get_ic(obj$cp, obj$y, consec=consec, sigma=sigma, type=type)
+    ## },
+    ## warning = function() return(NULL)
+    ## )
     newpoly = ic_to_poly(ic_obj)
 
     ## Return
-    return(list(poly=newpoly, stoptime = ic_obj$stoptime+1))
+    return(list(poly=newpoly, stoptime = ic_obj$stoptime)) ## Why return +1? If the stoptime is zero
 }
 
-##' Takes IC vector and creates polyhedra.
+##' Takes an IC object and creates polyhedra.
 ##' @param resid list of residual vectors
 ##' @param obj object of class \code{ic} from \code{get_ic()}, which contains
 ##'     things needed for sequential information criteria (ic) comparison.
@@ -38,18 +39,20 @@ ic_to_poly <- function(obj){
 
     ## Basic checks
     stopifnot(is_valid.ic(obj))
+    if(obj$stoptime == 0) return(polyhedra(obj = null, u = trim(newu)))
 
     ## Get order of ICs
     seqdirs = c(.getorder(obj$ic))
 
     ## Make empty things
-    newrows = matrix(NA, nrow = 2*(obj$stoptime+obj$consec),
+    newrows = matrix(NA, nrow = 2*(obj$stoptime+obj$consec+1),
                      ncol = length(obj$y))
-    newu = rep(NA, 2*(obj$stoptime+obj$consec))
+    newu = rep(NA, 2*(obj$stoptime+obj$consec+1))
     irow = 0
 
     ## Collect halfspaces
     for(jj in 1:(obj$stoptime + obj$consec)){
+        print(jj)
 
         residual = obj$resid[[jj+1]]
         const    = obj$pen[jj+1] - obj$pen[jj]
@@ -183,7 +186,7 @@ is_valid.ic <- function(obj){
 
   direction = match.arg(direction)
   if(direction != "forward") stop("That direction IC selection is not coded yet.")
-  if(length(ic) < consec+1) stop("Not enough steps to do forward sequential BIC/AIC!")
+  if(length(ic) < consec+1){browser(); stop("Not enough steps to do forward sequential BIC/AIC!")}
 
   ind = 1
   done = FALSE

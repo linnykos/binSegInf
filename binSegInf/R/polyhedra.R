@@ -90,3 +90,11 @@ contained <- function(obj,...){UseMethod("contained")}
 contained.polyhedra <- function(obj, y){
     all(obj$gamma %*% y >= obj$u)
 }
+
+
+make_empty <- function(obj,...)
+contained <- function(obj,...){UseMethod("contained")}
+make_empty.polyhedra <- function(n){
+    emptyrow = rbind(rep(NA,n))[-1,,drop=FALSE]
+    return(polyhedra(obj=emptyrow, u=c()))
+}

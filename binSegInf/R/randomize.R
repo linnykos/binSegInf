@@ -135,7 +135,9 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 }
 
 ##' Synopsis: randomization wrapper for WBS.
-randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensive=FALSE, inference.type=c("rows", "pre-multiply"), cumsum.y=NULL,cumsum.v=NULL){
+randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
+                            comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
+                            cumsum.y=NULL,cumsum.v=NULL, stop.time=winning.wbs.obj$numSteps){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -150,10 +152,10 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
                   numIntervals=numIntervals,
                   numSteps=winning.wbs.obj$numSteps,
                   sigma=sigma,
-                  ## Added temporarily
                   inference.type=inference.type,
                   cumsum.y=cumsum.y,
-                  cumsum.v=cumsum.v)
+                  cumsum.v=cumsum.v,
+                  stop.time=stop.time)
     })
     pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
 
@@ -171,14 +173,15 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma, comprehensiv
 ##'     intervals.
 ##' @param v test contrast
 ##' @return A data frame (single row), with "pv" and "weight".
-rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y=NULL,cumsum.v=NULL, inference.type){
+rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
+                      cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps){
 
     ## Basic checks
     assert_that(is_valid.wbsFs(winning.wbs.obj))
 
     ## New intervals added onto old winning intervals
     n = length(v)
-    winning_se = rbind(winning.wbs.obj$results[,c("max.s", "max.e")])
+    winning_se = rbind(winning.wbs.obj$results[1:stop.time, c("max.s", "max.e")])
     colnames(winning_se) = c("s", "e")
     intervals.new = intervals(numIntervals=numIntervals-numSteps, n=n, existing=winning_se)
     intervals.new = add2(intervals=intervals.new,
@@ -209,7 +212,8 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,cumsum.y
                                       cumsum.y=cumsum.y,
                                       cumsum.v=cumsum.v,
                                       ## inference.type=inference.type)
-                                      inference.type="pre-multiply")
+                                      inference.type="pre-multiply",
+                                      stop.time=stop.time)
 
         pvobj = poly_pval_from_inner_products(g.new$Gy, g.new$Gv, v, g.new$y, sigma, u=g.new$u, bits=5)
         pv = pvobj$pv
