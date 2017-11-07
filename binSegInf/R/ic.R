@@ -7,17 +7,18 @@
 ##'     \code{"bic"}. Only BIC is possible for now.
 ##' @param consec Number of rises in IC before stop is to happen. Defaults to 2.
 ##' @return list containing two objects: ''poly'' and ''stoptime''.
-##' @example examples/ic_wrapper-example.R
 ##'
 ##' @export
 ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
-                       type = "bic"){## Basic checks
+                       type = "bic"){
+
+    ## Basic checks
     stopifnot(c("cp") %in% objects(obj))
     if(type!="bic") stop("Only BIC is possible, for now.")
 
     ## Get ic information
     tryCatch({
-        ic_obj = get_ic(obj$cp, y, consec=2, sigma=sigma, type = type)
+        ic_obj = get_ic(obj$cp, obj$y, consec=2, sigma=sigma, type = type)
     },
     warning = function() return(NULL)
     )
@@ -50,19 +51,18 @@ ic_to_poly <- function(obj){
     ## Collect halfspaces
     for(jj in 1:(obj$stoptime + obj$consec)){
 
-
         residual = obj$resid[[jj+1]]
         const    = obj$pen[jj+1] - obj$pen[jj]
 
         if(seqdirs[jj+1] > 0){
             ## Add one row \sqrt{C} < z_a \times a^Ty
-            newrows[irow+1,] = sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
+            newrows[irow+1,] = (sign(as.numeric(t(residual)%*%obj$y)) * residual)/sqrt(sum(residual^2))
             newu[irow+1] = sqrt(const)
             irow = irow + 1
         } else {
             ## Add two rows -\sqrt{C} < z_a \times a^Ty < \sqrt{C}
-            newrows[irow+1,] = sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
-            newrows[irow+2,] = -sign(t(residual)%*%obj$y) * residual/sqrt(sum(residual^2))
+            newrows[irow+1,] = (sign(as.numeric(t(residual)%*%obj$y)) * residual) / sqrt(sum(residual^2))
+            newrows[irow+2,] = (-sign(as.numeric(t(residual)%*%obj$y)) * residual)/sqrt(sum(residual^2))
             newu[irow+1] = -sqrt(const)
             newu[irow+2] = -sqrt(const)
             irow = irow + 2
@@ -98,8 +98,7 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
     ## Collect BIC at each step 0 ~ (maxsteps-1)
     for(ii in 1:pmin(maxsteps,length(cp))){
-        ## if(verbose)  cat('step', ii, '\n')
-         cat('step', ii, '\n')
+        if(verbose)  cat('step', ii, '\n')
 
         ## Form proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
         tD = cbind(t(D)[,-cp[1:ii]])

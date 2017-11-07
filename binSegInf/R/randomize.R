@@ -18,7 +18,6 @@
 ##'     be used, in polyhedra collecting functions for WBS.
 ##' @param v Contrast vector.
 ##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
-##' @example examples/randomized_wildBinSeg_pv-example.R
 ##' @export
 randomized_genlasso_pv <- function(y, sigma, shift, sigma.add, D, v, orig.poly,
                                    numSteps=NULL, numIntervals, nsim.is,

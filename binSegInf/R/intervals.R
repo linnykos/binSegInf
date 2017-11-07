@@ -127,6 +127,7 @@ form_rows.intervals <- function(intervals, max.s, max.b, max.e, max.sign, qual.i
 form_info <- function(intervals,...){ UseMethod("form_info")}
 form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
                                 qual.inds, cumsum.y, cumsum.v){
+    if(is.null(cumsum.y)|is.null(cumsum.v)) stop("cumsum.v and cumsum.y need to be provided!")
 
     ## Form winning Gy and Gv
     winning.Gy = cusum_fast(s=max.s, b=max.b, e=max.e, cumsums.aug=c(0,cumsum.y))

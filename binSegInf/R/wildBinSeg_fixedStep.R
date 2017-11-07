@@ -112,6 +112,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         Gv=NULL
         u = rep(0,nrow(gamma))
     } else {
+        browser()
         Gy=do.call(c,lapply(new.info, function(a)a[["Gy"]]))## unlist()
         Gv=do.call(c,lapply(new.info, function(a)a[["Gv"]]))
         gamma=NULL
@@ -129,6 +130,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                           numIntervals=numIntervals,
                           y=y), class="wbsFs"))
 }
+
+
 
 ##' Print function for convenience, of |wbs| class object.
 print.wbsFs <- function(obj){
