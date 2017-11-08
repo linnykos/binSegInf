@@ -137,7 +137,9 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
 ##' Synopsis: randomization wrapper for WBS.
 randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
-                            cumsum.y=NULL,cumsum.v=NULL, stop.time=winning.wbs.obj$numSteps){
+                            cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
+                                                                       length(winning.wbs.obj$cp)),
+                            ic.poly=NULL){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -155,12 +157,12 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                   inference.type=inference.type,
                   cumsum.y=cumsum.y,
                   cumsum.v=cumsum.v,
-                  stop.time=stop.time)
+                  stop.time=stop.time,
+                  ic.poly=ic.poly)
     })
-    pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
 
+    pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
     return(pv)
-    return(parts)
 }
 
 ##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, singl
@@ -174,7 +176,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 ##' @param v test contrast
 ##' @return A data frame (single row), with "pv" and "weight".
 rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
-                      cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps){
+                      cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps,
+                      ic.poly=NULL){
 
     ## Basic checks
     assert_that(is_valid.wbsFs(winning.wbs.obj))
@@ -183,9 +186,10 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
     n = length(v)
     winning_se = rbind(winning.wbs.obj$results[1:stop.time, c("max.s", "max.e")])
     colnames(winning_se) = c("s", "e")
-    intervals.new = intervals(numIntervals=numIntervals-numSteps, n=n, existing=winning_se)
+    intervals.new = intervals(numIntervals=numIntervals-stop.time, n=n, existing=winning_se)
     intervals.new = add2(intervals=intervals.new,
-                         winning.wbs.obj=winning.wbs.obj)
+                         winning.wbs.obj=winning.wbs.obj,
+                         stop.time=stop.time)
 
     ## Create new halfspaces (through |mimic| option)
     if(inference.type=="rows"){
@@ -195,7 +199,6 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
                                       inference.type=inference.type)
         poly.new = polyhedra(obj=g.new$gamma, u=g.new$u)
 
-        ## Original way
         ## Partition TG to denom and numer
         pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE)
         pv = pvobj$pv
@@ -211,11 +214,14 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
                                       wbs.obj=winning.wbs.obj,
                                       cumsum.y=cumsum.y,
                                       cumsum.v=cumsum.v,
-                                      ## inference.type=inference.type)
                                       inference.type="pre-multiply",
-                                      stop.time=stop.time)
+                                      stop.time=stop.time,
+                                      ic.poly=ic.poly,
+                                      v=v)
 
-        pvobj = poly_pval_from_inner_products(g.new$Gy, g.new$Gv, v, g.new$y, sigma, u=g.new$u, bits=5)
+        ## Calculate TG denom and numer directly
+        pvobj = poly_pval_from_inner_products(Gy=g.new$Gy, Gv=g.new$Gv, v=v, y=g.new$y,
+                                              sigma=sigma, u=g.new$u, bits=5)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom

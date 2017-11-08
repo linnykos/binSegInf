@@ -1,4 +1,3 @@
-##' Helper to get p-values
 dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
                                 inference.type = "rows", locs=1:n, consec=2){
 
@@ -9,70 +8,97 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
     sigma = 1
 
     results = mclapply(1:nsim,function(isim){
-        set.seed(isim)
-    ## results = lapply(1:nsim,function(isim){
+
         printprogress(isim, nsim)
+        isim=10
+        set.seed(isim)
 
         ## Generate some data
         ## mn = c(rep(0,n/2), rep(lev,n/2))
         mn = meanfun(lev,n)
+        set.seed(0)
         y = mn + rnorm(n, 0, sigma)
-        cumsum.y=cumsum(y)
+        cumsum.y = cumsum(y)
 
         ## Fit initial WBS for a generous number of steps
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps,
                                   inference.type='rows')
 
-        ## Get ic-infused polyhedron
-        icobj = ic_wrapper(g, sigma=sigma, consec=consec)
-        print('stoptime is')
-        print(icobj$stoptime)
-        if(icobj$stoptime==0) return(NULL) ## If stop time is zero, don't do anything.
-        stopped.gamma = do.call(rbind, g$rows.list[1:(icobj$stoptime+consec)])
-        stopped.u = rep(0, nrow(stopped.gamma))
-        poly = polyhedra(obj=rbind(stopped.gamma, icobj$poly$gamma),
-                         u=c(stopped.u, icobj$gamma$u))
+        ## Collect the IC information and polyhedron
+        if(icstop){
+            ## Get ic-stopping polyhedron
+            ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
+            ic_poly = ic_to_poly(ic_obj)
+
+            ## Check for flag
+            if(ic_obj$flag=="normal" ){
+
+                if(!randomized){
+                    ## Get ic-stopped model selection polyhedron
+                    stopped.gamma = do.call(rbind, g$rows.list[1:(ic_obj$stoptime+consec)])
+                    stopped.u = rep(0, nrow(stopped.gamma))
+                    poly = polyhedra(obj=rbind(stopped.gamma, ic_obj$poly$gamma),
+                                     u=c(stopped.u, ic_obj$gamma$u))
+                }
+            } else {
+                return(ic_obj$flag)
+            }
+        } else {
+            poly = polyhedra(obj=g$gamma, u=g$u)
+        }
+
+        ## Decide on the stoptime
+        if(icstop){ stoptime = ic_obj$stoptime } else { stoptime = numSteps }
 
         ## Extract changepoints from stopped model and form contrasts
-        cp = g$cp[1:icobj$stoptime]
-        cp.sign = g$cp.sign[1:icobj$stoptime]
+        cp = g$cp[1:stoptime]
+        cp.sign = g$cp.sign[1:stoptime]
         vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
 
-        ## Retain only the guys we want
+        ## Retain only the changepoints we want results from:
         retain = which((cp %in% locs))
         if(length(retain)==0) return(list(pvs=c(), null.true=c()))
 
-
         ## Calculate the p-values
-        vlist = vlist[retain] ## Added
-        ## pvs = sapply(vlist, function(v){
+        vlist = vlist[retain]
         pvs = sapply(vlist, function(v){
             if(randomized){
                 cumsum.v = cumsum(v)
-                return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
-                                                        numIS=numIS, inference.type=inference.type,
-                                                        cumsum.y=cumsum.y,cumsum.v=cumsum.v,
-                                                        stop.time=icobj$stoptime)))
+                return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
+                                                        sigma=sigma,
+                                                        numIS=numIS,
+                                                        inference.type=inference.type,
+                                                        cumsum.y=cumsum.y,
+                                                        cumsum.v=cumsum.v,
+                                                        stop.time=stoptime+consec,
+                                                        ic.poly=ic_poly)))
             } else {
                 return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
         })
         names(pvs) = (cp*cp.sign)[retain]
 
-        ## Also store other information
+        ## Also store truth
         null.true = sapply(vlist, function(v){
             return(v%*%mn == 0)
         })
-        ## null.true = null.true[get.rid]
 
         return(list(pvs=pvs, null.true=null.true))
     },mc.cores=mc.cores)
-    ## })
     cat(fill=TRUE)
 
+    ## Classify results
+    zero.stop = sum(unlist(sapply(results, function(a)a=="zero.stop")))
+    didnt.stop = sum(unlist(sapply(results, function(a)a=="didnt.stop")))
+    normal.stop = nsim - didnt.stop - zero.stop
+    stop.type = list(zero.stop=zero.stop,didnt.stop=didnt.stop, normal.stop=normal.stop)
+
+    ## Filter for normal results then calculate p-values
+    results = results[sapply(results,function(a)length(a)==2)]
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
     truths = unlist(lapply(results, function(a)a[["null.true"]]))
-    return(list(pvs=pvs, truths=truths))
+
+    return(list(pvs=pvs, truths=truths, stop.type=stop.type))
 }
 
 

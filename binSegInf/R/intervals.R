@@ -123,10 +123,10 @@ form_rows.intervals <- function(intervals, max.s, max.b, max.e, max.sign, qual.i
     return(all.rows)
 }
 
-## Forms information
+## Forms information (Gy, Gv, and u) based on each winning event.
 form_info <- function(intervals,...){ UseMethod("form_info")}
 form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
-                                qual.inds, cumsum.y, cumsum.v){
+                                qual.inds, cumsum.y, cumsum.v, Gy.ic, Gv.ic, u.ic){
     if(is.null(cumsum.y)|is.null(cumsum.v)) stop("cumsum.v and cumsum.y need to be provided!")
 
     ## Form winning Gy and Gv
@@ -138,22 +138,7 @@ form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
     submat = submat.old = intervals$cusummat[qual.inds,1:3, drop=FALSE]
     submat[,2:3] = submat[,2:3] + 1 ## for adding 1 each to b and e
 
-    ## ## Form G %*% y entries by adding/subtracting losing from abs(winning.y)
-    ## gy = function(myrow){
-    ##     losing.Gy = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-    ##                            cumsums.aug=c(0,cumsum.y))
-    ##     ## return( c( - losing.Gy, + losing.Gy))
-    ##     return(losing.Gy)
-    ## }
-
-    ## gv = function(myrow){
-    ##     losing.Gv = cusum_fast(s=myrow["s"], b=myrow["b"], e=myrow["e"],
-    ##                       cumsums.aug=c(0,cumsum.v))
-    ##     ## return(c(winning.Gv - losing.Gv, winning.Gv + losing.Gv))
-    ##     return(losing.Gv)
-    ## }
-
-    ## Gy1 <- apply(submat, 1, gy)
+    ## Form G %*% y entries
     K = nrow(submat)
     CMy = c(0,cumsum.y)[submat]
     Gy1 = -sqrt( (submat[,3] - submat[,2])/((submat[,3] - submat[,1])*(submat[,2] - submat[,1]) )) *
@@ -161,11 +146,6 @@ form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
         sqrt( (submat[,2] - submat[,1] )/( (submat[,3]-submat[,1])* (submat[,3] - submat[,2] ) )) *
         (CMy[((2*K+1) :(3*K)) ] - CMy[ ( (K+1  ):(2*K) ) ]  )
     Gy = c(winning.Gy - Gy1, winning.Gy + Gy1, winning.Gy)
-
-    ## Sanity check (erase when done)
-    ## Gy1.old <- apply(submat.old, 1, gy)
-    ## stopifnot(all.equal(Gy1,Gy1.old))
-    ## print(head(cbind(Gy1,Gy1.old)))
 
     ## Form G %*% v entries in the /exact same way/
     ## Gv1 <- apply(submat, 1, gv)
@@ -176,12 +156,13 @@ form_info.intervals <- function(intervals, max.s, max.b, max.e, max.sign,
         (CMv[((2*K+1) :(3*K)) ] - CMv[ ( (K+1  ):(2*K) ) ]  )
     Gv = c(winning.Gv - Gv1, winning.Gv + Gv1, winning.Gv)
 
-    ## Another sanity check (erase when done)
-    ## Gv1.old <- apply(submat.old, 1, gv)
-    ## stopifnot(all.equal(Gv1,Gv1.old))
-    ## print(head(cbind(Gv1,Gv1.old)))
+    ## Also add things about IC if applicable.
+    u = c(rep(0, length(Gv)), u.ic)
+    Gy = c(Gy, Gy.ic)
+    Gv = c(Gv, Gv.ic)
+    stopifnot(length(Gy)==length(Gv) & length(Gy) == length(u))
 
-    return(list(Gy=Gy, Gv=Gv))
+    return(list(Gy=Gy, Gv=Gv, u=u))
 }
 
 
@@ -211,12 +192,17 @@ add.intervals <- function(intervals, new.s, new.e){
 add2 <- function(intervals,...){ UseMethod("add2")}
 
 ##' Add winning intervals from the original object, to the |intervals| object.
-add2.intervals <- function(intervals, winning.wbs.obj){
-    intervals$starts = c(intervals$starts, winning.wbs.obj$results[,"max.s"])
-    intervals$ends = c(intervals$ends, winning.wbs.obj$results[,"max.e"])
-    intervals$numIntervals = intervals$numIntervals + nrow(winning.wbs.obj$results)
-    return(intervals)
+add2.intervals <- function(intervals, winning.wbs.obj, stop.time=NULL){
 
+    ## Make ic-stopped results table
+    if(is.null(stop.time)) stop.time = nrow(winning.wbs.obj$results)
+    winning.results = winning.wbs.obj$results[1:stop.time,,drop=FALSE]
+
+    ## Form new intervals
+    intervals$starts = c(intervals$starts, winning.results[1:stop.time,"max.s"])
+    intervals$ends = c(intervals$ends, winning.results[1:stop.time,"max.e"])
+    intervals$numIntervals = intervals$numIntervals + stop.time
+    return(intervals)
 }
 
 

@@ -17,12 +17,10 @@ ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
     if(type!="bic") stop("Only BIC is possible, for now.")
 
     ## Get ic information
-    ## tryCatch({
-    ##     browser()
-        ic_obj = get_ic(obj$cp, obj$y, consec=consec, sigma=sigma, type=type)
-    ## },
-    ## warning = function() return(NULL)
-    ## )
+    ic_obj = get_ic(obj$cp, obj$y, consec=consec, sigma=sigma, type=type)
+
+    ## Collect flag for abnormal stoppage
+    ## if(ic_obj$stoptime ==0){ return()}
     newpoly = ic_to_poly(ic_obj)
 
     ## Return
@@ -34,12 +32,13 @@ ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
 ##' @param obj object of class \code{ic} from \code{get_ic()}, which contains
 ##'     things needed for sequential information criteria (ic) comparison.
 ##'
-##' @return Object of class \code{polyhedra}, for sequential IC comparisons.
+##' @return Object of class \code{polyhedra}, for sequential IC comparisons. If
+##'     stoptime is zero, then returns an empty polyhedron.
 ic_to_poly <- function(obj){
 
     ## Basic checks
     stopifnot(is_valid.ic(obj))
-    if(obj$stoptime == 0) return(polyhedra(obj = null, u = trim(newu)))
+    if(obj$flag != "normal") return(make_empty.polyhedra(n))
 
     ## Get order of ICs
     seqdirs = c(.getorder(obj$ic))
@@ -52,7 +51,6 @@ ic_to_poly <- function(obj){
 
     ## Collect halfspaces
     for(jj in 1:(obj$stoptime + obj$consec)){
-        print(jj)
 
         residual = obj$resid[[jj+1]]
         const    = obj$pen[jj+1] - obj$pen[jj]
@@ -100,11 +98,16 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
     resid = list()
 
     ## Collect BIC at each step 0 ~ (maxsteps-1)
-    for(ii in 1:pmin(maxsteps,length(cp))){
+    allsteps = 0:(pmin(maxsteps,length(cp)) )
+    for(ii in allsteps ){
         if(verbose)  cat('step', ii, '\n')
 
         ## Form proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
-        tD = cbind(t(D)[,-cp[1:ii]])
+        if(ii==0){
+            tD = t(D)
+        } else {
+            tD = cbind(t(D)[,-cp[1:ii]])
+        }
         rr = rankMatrix(tD)
         tDb = svd(tD)$u[,1:rr]
         curr.proj = .proj(tDb)
@@ -113,11 +116,11 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
         ## Obtain RSS and penalty
         myRSS = sum( (y - y.fitted)^2 )
         mydf  = n-rr
-        if(ii==1) prev.df = mydf
+        if(ii==0) prev.df = mydf
         mypen = (sigma^2) * mydf * log(n)
 
         ## Obtain (2norm-scaled) residual projection vectors
-        if(ii==1){
+        if(ii==0){
             myresid = rep(NA,n)
         } else {
             myresid = svd(curr.proj - prev.proj)$u[,1]
@@ -125,28 +128,71 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
         }
 
         ## Store BIC and resid proj vector
-        ic[ii] <- myRSS + mypen
-        pen[ii] <- mypen
-        RSS[ii] <- myRSS
-        resid[[ii]] <- myresid
+        ic[ii+1] <- myRSS + mypen
+        pen[ii+1] <- mypen
+        RSS[ii+1] <- myRSS
+        resid[[ii+1]] <- myresid
 
         ## Update things for next step.
         prev.proj = curr.proj
     }
+    names(ic) = names(pen) = names(RSS) = names(resid) = allsteps
 
-    ## Obtain stoptime
-    stoptime = .whichrise(ic,consec) - 1
-    stoptime = pmin(stoptime, length(y)-consec-1)
 
-    ## Return NULL if path hasn't stopped
-    if(!(stoptime+consec < maxsteps)){
-        warning(paste('IC rule using', consec, 'rises hasnt stopped!'))
+
+    ## Flag the result
+    flag = ic_flag(ic, consec, cp, maxsteps)
+
+    ## Assign appropriate stop time
+    if(flag == "zero.stop"){
+        stoptime = 0
+    } else if (flag == "not.enough.steps") {
+        stoptime = NA
+    } else if (flag == "didnt.stop") {
+        stoptime = NA
+    } else if(flag == "normal"){
+        stoptime = .whichrise(ic,consec) - 1
+        stoptime = pmin(stoptime, length(y)-consec-1)
     }
-    if(stoptime==0) warning('Stoptime is zero!')
 
-    obj = structure(list(ic=ic, consec=consec, resid=resid, pen=pen, RSS=RSS,
-                         stoptime=stoptime,y=y, type=type), class="ic")
-    return(obj)
+    return(structure(list(ic=ic, consec=consec, resid=resid, pen=pen, RSS=RSS,
+                          stoptime=stoptime,y=y, type=type, flag=flag), class="ic"))
+}
+
+ic_flag <- function(ic, consec=2, cp, maxsteps){
+
+    ## Flag the result, case by case.
+    if(length(ic) < consec+1){
+        ##  warning("Not enough steps to do forward sequential BIC/AIC!")
+        return("not.enough.steps")
+    } else if (.whichrise(ic,consec) + consec - 1 > pmin(maxsteps, length(cp))){
+        ##  warning("Didn't stop!")
+        return("didnt.stop")
+    } else if (.whichrise(ic,consec) - 1 == 0){
+        return("zero.stop")
+    } else {
+        return("normal")
+    }
+}
+
+
+
+##' Does two things: Flags the result of the IC path, and locates first point of
+##' \code{consec} rises in IC path
+##' @param ic numeric vector containing information criteria.
+##' @return First point at which ic rises.
+##' @export
+.whichrise <- function(ic, consec = 2){
+
+    ind = 1
+    done = FALSE
+    while(ind < (length(ic)-consec+1) ){
+        ictol = 1E-10
+        if( all(ic[(ind+1):(ind+consec)] > ic[(ind):(ind+consec-1)] + ictol )) break
+        ind = ind+1
+    }
+    first.point.of.rise = pmin(pmax(ind,1),length(ic))
+    return(first.point.of.rise=first.point.of.rise)
 }
 
 
@@ -154,7 +200,7 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 ##' @return TRUE if valid
 is_valid.ic <- function(obj){
     if(!(all(names(obj)%in% c("ic","consec","resid","pen","type","stoptime","RSS",
-                              "y") ))){
+                              "y", "flag") ))){
         stop("obj needs to be produced from get_ic()")
     }
     TRUE
@@ -174,26 +220,3 @@ is_valid.ic <- function(obj){
   return(c(NA,sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)])))
 }
 
-
-
-
-## Locates first point of \code{consec} rises in IC path
-## @param ic numeric vector containing information criteria.
-##
-## @return First point at which ic rises.
-## @export
-.whichrise = function(ic, consec = 2, direction=c("forward","backward")){
-
-  direction = match.arg(direction)
-  if(direction != "forward") stop("That direction IC selection is not coded yet.")
-  if(length(ic) < consec+1){browser(); stop("Not enough steps to do forward sequential BIC/AIC!")}
-
-  ind = 1
-  done = FALSE
-  while(ind < (length(ic)-consec+1) ){
-    ictol = 1E-10
-    if( all(ic[(ind+1):(ind+consec)] > ic[(ind):(ind+consec-1)] + ictol )) break
-    ind = ind+1
-  }
-  return(pmin(pmax(ind,1),length(ic)))
-}
