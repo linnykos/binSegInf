@@ -1,6 +1,6 @@
 ##' Helper to get p-values
 dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
-                  inference.type = "rows", locs=1:n, better.segment=FALSE){
+                  inference.type = "rows", locs=1:n, better.segment=FALSE, improve.nomass.problem=FALSE){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -8,9 +8,8 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     cat("lev=", lev, fill=TRUE)
     sigma = 1
 
-    results = mclapply(60:nsim,function(isim){
+    results = mclapply(1:nsim,function(isim){
     ## results = lapply(1:nsim,function(isim){
-        ## if(isim==63)browser()
         set.seed(isim)
         printprogress(isim, nsim)
 
@@ -41,7 +40,9 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
                 cumsum.v = cumsum(v)
                 return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
                                                         numIS=numIS, inference.type=inference.type,
-                                                        cumsum.y=cumsum.y,cumsum.v=cumsum.v)))
+                                                        cumsum.y=cumsum.y,cumsum.v=cumsum.v,
+                                                        improve.nomass.problem=
+                                                            improve.nomass.problem)))
             } else {
                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }

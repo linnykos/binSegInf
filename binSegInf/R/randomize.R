@@ -139,7 +139,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
-                            ic.poly=NULL, bits=50){
+                            ic.poly=NULL, bits=50, numIS.max=2000,
+                            improve.nomass.problem=FALSE){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -149,19 +150,31 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
     if(comprehensive) numIS=1
 
-    parts = sapply(1:numIS, function(isim){
-        rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
-                  numIntervals=numIntervals,
-                  numSteps=winning.wbs.obj$numSteps,
-                  sigma=sigma,
-                  inference.type=inference.type,
-                  cumsum.y=cumsum.y,
-                  cumsum.v=cumsum.v,
-                  stop.time=stop.time,
-                  ic.poly=ic.poly)
-    })
+    problematic=TRUE
+    while(problematic){
+        parts = sapply(1:numIS, function(isim){
+            rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
+                      numIntervals=numIntervals,
+                      numSteps=winning.wbs.obj$numSteps,
+                      sigma=sigma,
+                      inference.type=inference.type,
+                      cumsum.y=cumsum.y,
+                      cumsum.v=cumsum.v,
+                      stop.time=stop.time,
+                      ic.poly=ic.poly)
+        })
 
-    pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
+        pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
+
+        ## Handling the problem of p-value being NaN/0/1
+        if(!improve.nomass.problem) problematic=FALSE
+        if(pv!=1 & pv!=0 & !is.nan(pv)) {
+            problematic = FALSE
+        } else {
+            numIS = numIS*1.5
+            if(numIS > numIS.max) return(NaN)
+        }
+    }
     return(pv)
 }
 
@@ -228,7 +241,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
     }
 
     ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
-    ## along the line trapped in the polyhedron, is zero.
+    ## along the line trapped in the polyhedron, is manually assigned zero.
     if(weight<0 | weight>1) weight = 0
 
     info = data.frame(pv=pv,weight=weight)
