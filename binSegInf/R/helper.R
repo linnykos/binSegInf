@@ -376,6 +376,39 @@ make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n, scaletype = c("se
     return(dlist)
 }
 
+##' Makes segment contrasts with endpoints as the winning intervals' start/ends
+make_all_segment_contrasts_from_wbs <- function(wbs_obj, scaletype = c("segmentmean", "unitnorm")){
+
+    n = length(wbs_obj$y)
+    cp = wbs_obj$cp
+    cp.sign = wbs_obj$cp.sign
+    winning.intervals = lapply(1:nrow(wbs_obj$results), function(myrow)wbs_obj$results[myrow, c("max.s", "max.e")])
+
+    scaletype = match.arg(scaletype)
+
+    ## Make each contrast
+    dlist = list()
+    for(ii in 1:length(cp)){
+        d = rep(0,n)
+        ind1 = (winning.intervals[[ii]]["max.s"]+1):cp[ii]
+        ind2 = (cp[ii]+1):winning.intervals[[ii]]["max.e"]
+        d[ind1] = -1/length(ind1)
+        d[ind2] = 1/length(ind2)
+        dlist[[ii]] = d * cp.sign[ii]
+
+        if(scaletype == "unitnorm"){
+            d = d/sqrt(sum(d*d))
+        } else if (scaletype == "segmentmean"){
+            ## Do nothing
+        } else {
+            stop("scaletype not written yet!")
+        }
+        if(length(d)!=n) browser()
+    }
+    names(dlist) = (cp * cp.sign)
+    return(dlist)
+}
+
 
 ## filters NULL elements out of a list.
 .filternull <- function(mylist){
