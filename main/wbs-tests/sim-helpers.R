@@ -105,7 +105,8 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
         }
 
         ## Decide on the stoptime
-        if(icstop){ stoptime = ic_obj$stoptime } else { stoptime = numSteps }
+        ## if(icstop){ stoptime = ic_obj$stoptime } else { stoptime = numSteps }
+        stoptime  = ic_obj$stoptime
 
         ## Extract changepoints from stopped model and form contrasts
         cp = g$cp[1:stoptime]
