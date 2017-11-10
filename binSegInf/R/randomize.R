@@ -172,7 +172,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
             problematic = FALSE
         } else {
             numIS = numIS*1.5
-            if(numIS > numIS.max) return(NaN)
+            if(numIS > numIS.max) return(pv)
         }
     }
     return(pv)
