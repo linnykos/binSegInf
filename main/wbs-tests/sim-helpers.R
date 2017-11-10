@@ -1,6 +1,6 @@
 ##' Helper to get p-values
 dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
-                  inference.type = "rows", locs=1:n){
+                  inference.type = "rows", locs=1:n, better.segment=FALSE){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -8,8 +8,10 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     cat("lev=", lev, fill=TRUE)
     sigma = 1
 
-    results = mclapply(1:nsim,function(isim){
+    results = mclapply(60:nsim,function(isim){
     ## results = lapply(1:nsim,function(isim){
+        ## if(isim==63)browser()
+        set.seed(isim)
         printprogress(isim, nsim)
 
         ## Generate some data
@@ -20,11 +22,17 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         ## Fit WBS
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
         poly = polyhedra(obj=g$gamma, u=g$u)
-        vlist <- make_all_segment_contrasts(g)
+        if(better.segment){
+            vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g)
+        } else {
+            vlist <- make_all_segment_contrasts_from_cp(cp=g$cp, cp.sign=g$cp.sign, n=n)
+        }
 
         ## retain only the guys we want
         retain = which((g$cp %in% locs))
-        if(length(retain)==0) return(list(pvs=c(), null.true=c()))
+        if(length(retain)==0){
+            return(list(pvs=c(), null.true=c()))
+        }
 
         ## Get the p-values
         vlist = vlist[retain] ## Added
@@ -35,7 +43,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
                                                         numIS=numIS, inference.type=inference.type,
                                                         cumsum.y=cumsum.y,cumsum.v=cumsum.v)))
             } else {
-                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
+               return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
         })
         names(pvs) = (g$cp*g$cp.sign)[retain]
@@ -51,6 +59,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     ## })
     cat(fill=TRUE)
 
+    ## results = results[sapply(results,function(a)length(a)==2)]
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
     truths = unlist(lapply(results, function(a)a[["null.true"]]))
     return(list(pvs=pvs, truths=truths))
@@ -64,7 +73,7 @@ fourjump <- function(lev,n){c(rep(0,n/5), rep(lev,n/5), rep(0,n/5), rep(-2*lev, 
 
 
 dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
-                                inference.type = "rows", locs=1:n, consec=2){
+                                inference.type = "rows", locs=1:n, consec=2, better.segment=FALSE){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -111,7 +120,11 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
         ## Extract changepoints from stopped model and form contrasts
         cp = g$cp[1:stoptime]
         cp.sign = g$cp.sign[1:stoptime]
-        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        if(better.segment){
+            vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g)
+        } else {
+            vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        }
 
         ## Retain only the changepoints we want results from:
         retain = which((cp %in% locs))

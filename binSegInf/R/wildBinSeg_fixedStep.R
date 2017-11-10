@@ -58,7 +58,9 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
     ## Iterate
     istep = 1
     time.to.stop = FALSE
-    while(istep <= min(numSteps,stop.time) & !time.to.stop){
+    if(mimic) stopstep = (min(c(numSteps,stop.time, nrow(wbs.obj$results))))
+    if(!mimic) stopstep = min(c(numSteps,stop.time))
+    while(istep <= stopstep & !time.to.stop){
 
         ## Do maximization in the respective intervals.
         if(mimic){
