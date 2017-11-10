@@ -139,7 +139,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
-                            ic.poly=NULL){
+                            ic.poly=NULL, bits=50){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -221,7 +221,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
 
         ## Calculate TG denom and numer directly
         pvobj = poly_pval_from_inner_products(Gy=g.new$Gy, Gv=g.new$Gv, v=v, y=g.new$y,
-                                              sigma=sigma, u=g.new$u, bits=5)
+                                              sigma=sigma, u=g.new$u, bits=bits)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom
@@ -236,6 +236,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
 }
 
 poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
+    bits=20
 
     ## Rounding ridiculously small numbers
     Gv[which(abs(Gv)<1E-15)] = 0

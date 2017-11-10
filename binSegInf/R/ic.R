@@ -138,12 +138,10 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
     }
     names(ic) = names(pen) = names(RSS) = names(resid) = allsteps
 
-
-
     ## Flag the result
     flag = ic_flag(ic, consec, cp, maxsteps)
 
-    ## Assign appropriate stop time
+    ## Assign appropriate stop time, based on the flag
     if(flag == "zero.stop"){
         stoptime = 0
     } else if (flag == "not.enough.steps") {
@@ -155,8 +153,48 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
         stoptime = pmin(stoptime, length(y)-consec-1)
     }
 
+    ## Get directions
+    seqdirs = c(.getorder(ic))
+    names(seqdirs) = allsteps
+
+    if(flag=="normal"){
+        ## Get order of ICs
+
+        ## Make empty things before collecting halfspaces
+        newrows = matrix(NA, nrow = 2*(stoptime+consec+1),
+                         ncol = length(y))
+        newu = rep(NA, 2*(stoptime+consec+1))
+        irow = 0
+
+        ## Collect halfspaces
+        all.relevant.steps = (1:(stoptime + consec))-1
+        for(ii in all.relevant.steps){
+
+            residual = resid[[toString(ii+1)]]
+            const    = pen[toString(ii+1)] - pen[toString(ii)]
+
+            if(seqdirs[toString(ii+1)] < 0){
+                ## Add one row \sqrt{C} < z_a \times a^Ty
+                newrows[irow+1,] = (sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
+                newu[irow+1] = sqrt(const)
+                irow = irow + 1
+            } else {
+                ## Add two rows -\sqrt{C} < z_a \times a^Ty < \sqrt{C}
+                newrows[irow+1,] = (sign(as.numeric(t(residual)%*%y)) * residual) / sqrt(sum(residual^2))
+                newrows[irow+2,] = (-sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
+                newu[irow+1] = -sqrt(const)
+                newu[irow+2] = -sqrt(const)
+                irow = irow + 2
+            }
+        }
+        ## Form polyhedra
+        poly = polyhedra(obj = trim(newrows), u = trim(newu))
+    } else {
+        poly = make_empty.polyhedra()
+    }
+
     return(structure(list(ic=ic, consec=consec, resid=resid, pen=pen, RSS=RSS,
-                          stoptime=stoptime,y=y, type=type, flag=flag), class="ic"))
+                          stoptime=stoptime,y=y, type=type, flag=flag, poly=poly, seqdirs=seqdirs), class="ic"))
 }
 
 ic_flag <- function(ic, consec=2, cp, maxsteps){
