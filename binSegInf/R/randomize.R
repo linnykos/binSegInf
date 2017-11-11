@@ -148,7 +148,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     ##' New PV information based on newly drawn |numIntervals| - |numSteps|
     ##' intervals
     if(comprehensive) numIS=1
-    print('here')
 
     done=FALSE
     while(!done){
@@ -165,11 +164,17 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         })
 
         ## Handling the problem of p-value being NaN/0/1
-        enough.things = sum(parts["weight",]>0) > 30
-        if(!improve.nomass.problem | !enough.things){
+        things = sum(parts["weight",]>0)
+        enough.things = (things > 30)
+        if(!improve.nomass.problem){
+            done=TRUE
+        }
+        if(!enough.things){
             done=FALSE
         }
         pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
+        print(numIS)
+        print(things)
         numIS = numIS*1.5
         if(numIS > numIS.max) done=TRUE
     }

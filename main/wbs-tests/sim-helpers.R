@@ -41,6 +41,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
                                                         cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                         improve.nomass.problem=
                                                             improve.nomass.problem)))
+
             } else {
                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
