@@ -147,10 +147,10 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
     ##' New PV information based on newly drawn |numIntervals| - |numSteps|
     ##' intervals
-
     if(comprehensive) numIS=1
+    print('here')
 
-    done=TRUE
+    done=FALSE
     while(!done){
         parts = sapply(1:numIS, function(isim){
             rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
@@ -163,7 +163,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       stop.time=stop.time,
                       ic.poly=ic.poly)
         })
-
 
         ## Handling the problem of p-value being NaN/0/1
         enough.things = sum(parts["weight",]>0) > 30
