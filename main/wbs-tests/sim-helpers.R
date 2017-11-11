@@ -9,8 +9,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     sigma = 1
 
     results = mclapply(1:nsim,function(isim){
-    ## results = lapply(1:nsim,function(isim){
-        set.seed(isim)
         printprogress(isim, nsim)
 
         ## Generate some data
@@ -57,7 +55,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
         return(list(pvs=pvs, null.true=null.true))
     },mc.cores=mc.cores)
-    ## })
     cat(fill=TRUE)
 
     ## results = results[sapply(results,function(a)length(a)==2)]

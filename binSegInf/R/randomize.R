@@ -139,7 +139,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
-                            ic.poly=NULL, bits=50, numIS.max=2000,
+                            ic.poly=NULL, bits=50, numIS.max=5000,
                             improve.nomass.problem=FALSE){
 
     numIntervals = winning.wbs.obj$numIntervals
@@ -150,7 +150,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
     if(comprehensive) numIS=1
 
-    problematic=TRUE
+    done=TRUE
     while(problematic){
         parts = sapply(1:numIS, function(isim){
             rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
@@ -164,16 +164,15 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       ic.poly=ic.poly)
         })
 
-        pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
 
         ## Handling the problem of p-value being NaN/0/1
-        if(!improve.nomass.problem) problematic=FALSE
-        if(pv!=1 & pv!=0 & !is.nan(pv)) {
-            problematic = FALSE
-        } else {
-            numIS = numIS*1.5
-            if(numIS > numIS.max) return(pv)
+        enough.things = sum(parts["weight",]>0) > 30
+        if(!improve.nomass.problem | !enough.things){
+            done=FALSE
         }
+        pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
+        numIS = numIS*1.5
+        if(numIS > numIS.max) done=TRUE
     }
     return(pv)
 }
