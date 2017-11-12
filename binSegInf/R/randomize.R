@@ -64,16 +64,17 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
 
         new.noise = rnorm(length(pathobj$y),0,sigma.add)
         tg = partition_TG(y=pathobj$y, poly= polyhedra(obj=orig.poly$gamma,
-                                               u=orig.poly$u - orig.poly$gamma%*%new.noise),
-                          v=v, sigma=sqrt(sigma^2))
+                                                       u=orig.poly$u - orig.poly$gamma%*%new.noise),
+                          v=v, sigma=sigma)
         pv.new = tg$pv
         weight.new = tg$denom
 
+        ## Special handling?
         if(is.nan(pv.new)) pv.new=0 ## temporary fix for pv being nan..
         ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
         ## along the line trapped in the polyhedron, is zero.
-
         if(weight.new<0 | weight.new>1) weight.new = 0
+
         return(list(pv=pv.new, weight=weight.new))
     }
 
@@ -165,12 +166,13 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts["weight",]>0)
+        print(things)
         enough.things = (things > 30)
         if(!improve.nomass.problem){
             done=TRUE
         }
-        if(!enough.things){
-            done=FALSE
+        if(enough.things){
+            done=TRUE
         }
         pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
         numIS = numIS*1.5
