@@ -207,11 +207,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
             done=TRUE
         }
         pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
-        print("numIS is")
-        print(numIS)
-        print("things is")
-        print(things)
-        numIS = numIS*2
+        numIS = numIS*1.5
         if(numIS > numIS.max) done=TRUE
     }
     return(pv)
