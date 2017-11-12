@@ -71,7 +71,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE, shift=NULL){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -79,6 +79,12 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     vy = sum(v*y)
     vv = sum(v^2)
     sd = sigma*sqrt(vv)
+
+    ## Shift polyhedron by a constant \R^n shift if needed
+    if(!is.null(shift)){
+        stopifnot(length(shift)==length(y))
+        poly$u = poly$u - poly$gamma%*%shift
+    }
 
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
     ## This is because in order to partition the TG statistic, we need to form

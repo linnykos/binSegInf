@@ -69,18 +69,23 @@ randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
         pv.new = tg$pv
         weight.new = tg$denom
 
-        ## Special handling?
-        if(is.nan(pv.new)) pv.new=0 ## temporary fix for pv being nan..
-        ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
-        ## along the line trapped in the polyhedron, is zero.
-        if(weight.new<0 | weight.new>1) weight.new = 0
-
+        ## ## Special handling?
+        if(is.nan(pv.new)){
+            pv.new=0 ## temporary fix for pv being nan..
+            print("here")
+        }
+        ## ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
+        ## ## along the line trapped in the polyhedron, is zero.
+        if(weight.new<0 | weight.new>1){
+            weight.new = 0
+            print("here")
+        }
         return(list(pv=pv.new, weight=weight.new))
     }
 
     ## Collect weighted p-values and their weights
     pvlist = plyr::rlply(numIS, get_one(bit=bits))
-    pvlist = .filternull(pvlist)
+    vlist = .filternull(pvlist)
     if(length(pvlist)==0) return(NULL)
 
     ## Calculate p-value and return
@@ -134,6 +139,31 @@ polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=F
         return(combined.poly)
     }
 }
+
+##' Synopsis: noise-added saturated inference, for fused lasso or binary
+##' segmentation (really, any method that creates a valid polyhedron and has $cp
+##' and $cp.sign)
+randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
+                               numSteps=NULL, numIntervals, numIS,bits=NULL){
+
+    ## New: Get many fudged TG statistics.
+    inner.tgs = sapply(1:numIS, function(isim){
+        new.noise = rnorm(length(y),0,sigma.add)
+        obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
+                               v=v, sigma=sqrt(sigma^2))
+        pv.new = obj.new$pv
+        weight.new = obj.new$denom
+        return(c(pv.new, weight.new))
+    })
+    rownames(inner.tgs) = c("pv", "denom")
+    pvs = inner.tgs["pv",]
+    denoms = inner.tgs["denom",]
+
+    ## Calculate randomized TG statistic
+    pv = sum(pvs*denoms)/sum(denoms)
+    return(pv)
+}
+
 
 ##' Synopsis: randomization wrapper for WBS.
 randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,

@@ -172,3 +172,105 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 }
 
 
+
+
+
+## Compare p-values from three methods
+dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand","sbs.nonrand"),
+                          n, lev, numIntervals=n, sigma.add=0.2){
+
+    type = match.arg(type)
+    numSteps=1
+    sigma=1
+    mn = c(rep(0,n/2), rep(lev,n/2))
+    y = mn + rnorm(n, 0, sigma)
+    cumsum.y = cumsum(y)
+    numIS = 100
+    inference.type = "pre-multiply"
+    improve.nomass.problem = TRUE
+
+
+    if(type=="wbs"){
+        ## Fit WBS, test first jump
+        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+        poly.wbs = polyhedra(obj=g$gamma, u=g$u)
+        vlist <- make_all_segment_contrasts(g)
+        v.wbs = vlist[[1]]
+        cumsum.v = cumsum(v.wbs)
+
+        return(data.frame(
+            ## pv.wbs.rand =  suppressWarnings(randomize_wbsfs(v=v.wbs, winning.wbs.obj=g, sigma=sigma, numIS=numIS)),
+            pv.wbs.rand = suppressWarnings(randomize_wbsfs(v=v.wbs, winning.wbs.obj=g, sigma=sigma,
+                                                           numIS=numIS, inference.type=inference.type,
+                                                           cumsum.y=cumsum.y,cumsum.v=cumsum.v,
+                                                           improve.nomass.problem =improve.nomass.problem
+                                                           )),
+            pv.wbs.nonrand = poly.pval2(y=y, poly=poly.wbs, v=v.wbs, sigma=sigma)$pv,
+            loc.wbs = g$cp * g$cp.sign))
+    }
+
+    if(type=="fl.rand"){
+        ## Draw new noise
+        new.noise = rnorm(n,0,sigma.add)
+
+        ## Fit binseg on fudged data
+        D = genlassoinf::makeDmat(n,type='tf',ord=0)
+        f.fudged = genlassoinf::dualpathSvd2(y+new.noise, D=D, maxsteps=1, approx=T)
+        Gobj.fudged = genlassoinf::getGammat.naive(obj=f.fudged, y=y, condition.step=1)
+        poly.fudged = polyhedra(obj=Gobj.fudged$G, u=Gobj.fudged$u)
+
+        ## Get randomized p-value
+        v <- make_all_segment_contrasts(f.fudged)[[1]]
+        pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
+
+        return(data.frame(pv=pv,
+                          loc.wbs = f.fudged$cp * f.fudged$cp.sign))
+    }
+
+    if(type=="fl.nonrand"){
+
+        ## Get nonrandomized p-value
+        D = genlassoinf::makeDmat(n,type='tf',ord=0)
+        f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
+        Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
+        v <- make_all_segment_contrasts(f.nonfudged)[[1]]
+        poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
+        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+
+        return(data.frame(pv=pv,
+                          loc.wbs = f.nonfudged$cp * f.nonfudged$cp.sign))
+    }
+
+    if(type=="sbs.rand"){
+
+        ## Draw new noise
+        new.noise = rnorm(n,0,sigma.add)
+
+        ## Get fudged sbs model
+        h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+        poly.fudged = polyhedra(h.fudged)
+
+        ## Get randomized p-value
+        v <- make_all_segment_contrasts(h.fudged)[[1]]
+        pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
+
+        return(data.frame(pv=pv,
+                          loc.wbs = h.fudged$cp * h.fudged$cp.sign))
+    }
+
+    if(type=="sbs.nonrand"){
+
+        ## Fit binseg on nonfudged data
+        h.nonfudged = binSeg_fixedSteps(y, numSteps=numSteps)
+        poly.nonfudged = polyhedra(h.nonfudged)
+
+        ## Get randomized p-value
+        v <- make_all_segment_contrasts(h.nonfudged)[[1]]
+        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+
+        return(data.frame(pv=pv,
+                          loc.wbs = h.nonfudged$cp * h.nonfudged$cp.sign))
+    }
+}
