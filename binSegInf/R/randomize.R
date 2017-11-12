@@ -181,6 +181,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     if(comprehensive) numIS=1
 
     done=FALSE
+    parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
+    rownames(parts.so.far) = c("pv", "weight")
     while(!done){
         parts = sapply(1:numIS, function(isim){
             rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
@@ -194,8 +196,9 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       ic.poly=ic.poly)
         })
 
+        parts.so.far = cbind(parts.so.far, parts)
         ## Handling the problem of p-value being NaN/0/1
-        things = sum(parts["weight",]>0)
+        things = sum(parts.so.far["weight",]>0)
         enough.things = (things > 30)
         if(!improve.nomass.problem){
             done=TRUE
@@ -203,8 +206,12 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         if(enough.things){
             done=TRUE
         }
-        pv = sum(unlist(Map('*', parts["pv",], parts["weight",])))/sum(unlist(parts["weight",]))
-        numIS = numIS*1.5
+        pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
+        print("numIS is")
+        print(numIS)
+        print("things is")
+        print(things)
+        numIS = numIS*2
         if(numIS > numIS.max) done=TRUE
     }
     return(pv)
