@@ -166,7 +166,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts["weight",]>0)
-        print(things)
         enough.things = (things > 30)
         if(!improve.nomass.problem){
             done=TRUE
