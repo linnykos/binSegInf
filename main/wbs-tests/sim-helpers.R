@@ -10,6 +10,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
     results = mclapply(1:nsim,function(isim){
         printprogress(isim, nsim)
+        set.seed(isim)
 
         ## Generate some data
         mn = meanfun(lev,n)
@@ -72,7 +73,7 @@ fourjump <- function(lev,n){c(rep(0,n/5), rep(lev,n/5), rep(0,n/5), rep(-2*lev, 
 
 
 dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
-                                inference.type = "rows", locs=1:n, consec=2, better.segment=FALSE){
+                                inference.type = "rows", locs=1:n, consec=2, better.segment=FALSE, improve.nomass.problem=TRUE){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -141,7 +142,9 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
                                                         cumsum.y=cumsum.y,
                                                         cumsum.v=cumsum.v,
                                                         stop.time=stoptime+consec,
-                                                        ic.poly=ic_poly)))
+                                                        ic.poly=ic_poly,
+                                                        improve.nomass.problem=improve.nomass.problem)
+                                                        ))
             } else {
                 return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
@@ -179,15 +182,15 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
                                  "cbs.rand", "cbs.nonrand"),
-                          n, lev, numIntervals=n, sigma.add=0.2){
+                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100){
 
     type = match.arg(type)
-    numSteps=1
-    sigma=1
+    numSteps = 1
+    sigma = 1
     mn = c(rep(0,n/2), rep(lev,n/2))
     y = mn + rnorm(n, 0, sigma)
     cumsum.y = cumsum(y)
-    numIS = 100
+    ## numIS = 100
     inference.type = "pre-multiply"
     improve.nomass.problem = TRUE
 
@@ -332,4 +335,34 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         return(data.frame(pvs=pvs,
                           loc.wbs = h.nonfudged$cp * h.nonfudged$cp.sign))
     }
+}
+
+
+##' Helper to examine recovery properties of wbs.
+dosim_recovery <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
+                  inference.type = "rows", locs=1:n, better.segment=FALSE, improve.nomass.problem=FALSE){
+
+    ## Basic checks
+    if(randomized)assert_that(!is.null(numIS))
+
+    cat("lev=", lev, fill=TRUE)
+    results = mclapply(1:nsim,function(isim){
+        printprogress(isim, nsim)
+        set.seed(isim)
+
+        ## Generate some data
+        mn = meanfun(lev,n)
+        y = mn + rnorm(n, 0, sigma)
+
+        ## Fit WBS
+        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
+
+        ## Calculate proportion
+        ## return(g$cp * g$cp.sign)
+        return(sum(g$cp %in% locs)/length(g$cp))
+    })
+    return(mean(unlist(results)))
+    ## return(unlist(results))
+    ## return(unlist(results))
+
 }

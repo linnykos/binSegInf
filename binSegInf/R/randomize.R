@@ -170,7 +170,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
-                            ic.poly=NULL, bits=50, numIS.max=5000,
+                            ic.poly=NULL, bits=50, numIS.max=1000,
                             improve.nomass.problem=FALSE){
 
     numIntervals = winning.wbs.obj$numIntervals
