@@ -351,7 +351,8 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         new.noise = rnorm(n,0,sigma.add)
 
         ## Get fudged sbs model
-        h.fudged = circularBinSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+        stopifnot(numSteps%%2==0)
+        h.fudged = circularBinSeg_fixedSteps(y + new.noise, numSteps=numSteps/2)
         poly.fudged = polyhedra(h.fudged)
 
         ## Get randomized p-value
@@ -377,7 +378,8 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
     if(type=="cbs.nonrand"){
         ## Fit cbinseg on nonfudged data
-        h.nonfudged = circularBinSeg_fixedSteps(y, numSteps=numSteps)
+        stopifnot(numSteps%%2==0)
+        h.nonfudged = circularBinSeg_fixedSteps(y, numSteps=numSteps/2)
         poly.nonfudged = polyhedra(h.nonfudged)
 
         ## Get randomized p-value
