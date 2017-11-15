@@ -259,7 +259,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((f.fudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
@@ -282,7 +282,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((f.nonfudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
@@ -309,7 +309,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((h.fudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
@@ -333,7 +333,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((h.nonfudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
@@ -360,14 +360,15 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((h.fudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
+                                max.numIS=20000)
         })
 
         return(data.frame(pvs=pvs,
@@ -384,7 +385,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         if(!is.null(visc)){
             retain = which((h.nonfudged$cp %in% visc))
             if(length(retain)==0){
-                return(data.frame(pvs=NA, loc=NA))
+                return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
