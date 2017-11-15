@@ -221,7 +221,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                                   ))
         })
         return(data.frame(pvs=pvs,
-                          locs = g$cp * g$cp.sign))
+                          locs = (g$cp * g$cp.sign)[retain]))
     }
     if(type == "wbs.nonrand"){
 
@@ -241,7 +241,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma)$pv
         })
         return(data.frame(pvs=pvs,
-                          locs = g$cp * g$cp.sign))
+                          locs = (g$cp * g$cp.sign)[retain]))
     }
 
     if(type=="fl.rand"){
@@ -269,7 +269,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         })
 
         return(data.frame(pvs=pvs,
-                          locs = f.fudged$cp * f.fudged$cp.sign))
+                          locs = (f.fudged$cp * f.fudged$cp.sign)[retain] ))
     }
 
     if(type=="fl.nonrand"){
@@ -292,7 +292,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         })
 
         return(data.frame(pvs=pvs,
-                          locs = f.nonfudged$cp * f.nonfudged$cp.sign))
+                          locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]  ))
     }
 
     if(type=="sbs.rand"){
@@ -319,7 +319,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         })
 
         return(data.frame(pvs=pvs,
-                          locs = h.fudged$cp * h.fudged$cp.sign))
+                          locs = (h.fudged$cp * h.fudged$cp.sign)[retain] ))
     }
 
     if(type=="sbs.nonrand"){
@@ -342,7 +342,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         })
 
         return(data.frame(pvs=pvs,
-                          locs = h.nonfudged$cp * h.nonfudged$cp.sign))
+                          locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain] ))
     }
 
     if(type=="cbs.rand"){
@@ -371,9 +371,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
                                 max.numIS=20000)
         })
+        print('before')
+        print(h.fudged$cp)
+        print('after')
+        print(h.fudged$cp[retain])
 
         return(data.frame(pvs=pvs,
-                          locs = h.fudged$cp * h.fudged$cp.sign))
+                          locs = (h.fudged$cp * h.fudged$cp.sign)[retain] ))
     }
 
     if(type=="cbs.nonrand"){
@@ -396,7 +400,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         })
 
         return(data.frame(pvs=pvs,
-                          locs = h.nonfudged$cp * h.nonfudged$cp.sign))
+                          locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]))
     }
 }
 

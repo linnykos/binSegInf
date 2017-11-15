@@ -130,7 +130,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
 ##' @param main label to plot as main title.
 ##' @param cols colors if |pp| is a list of numeric vectors.
 ##' @export
-qqunif <- function(pp, main=NULL,plot.it=TRUE,cols=NULL,...){
+qqunif <- function(pp, main=NULL, plot.it=TRUE, cols=NULL,...){
 
     ## Internal helper
     myplotter <- function(xy,main,...){
@@ -165,6 +165,35 @@ qqunif <- function(pp, main=NULL,plot.it=TRUE,cols=NULL,...){
         return(invisible(allpoints))
     }
 }
+
+qqunif_line <- function(pp, main=NULL, cols=NULL,ltys=NULL,lwds=NULL,...){
+
+    ## Internal helper
+    myplotter <- function(xy,main,...){
+            graphics::plot(xy, axes=FALSE, ylim=c(0,1), xlim=c(0,1),xlab="expected",ylab="observed",...)
+            graphics::axis(2); graphics::axis(1)
+            graphics::abline(0,1)
+            if(!is.null(main)) graphics::title(main=main)
+    }
+
+    ## Plot the list of things
+    assert_that(!is.null(cols))
+    if(is.null(ltys))ltys=rep(1,length(pp))
+    if(is.null(lwds))lwds=rep(1,length(pp))
+    allpoints = lapply(pp, function(pvs){qqunif(pvs, plot.it=FALSE)})
+    ## lwds=rep(2,length(pp))
+    myplotter(allpoints[[1]], main, col=cols[1], lty=ltys[1], lwd=lwds[1], type='l')
+    if(length(allpoints)>1){
+        for(ii in 2:length(allpoints)){
+            lines(allpoints[[ii]], col = cols[ii], lty=ltys[ii], lwd=lwds[ii])
+        }
+    }
+    if(length(names(allpoints))>0){
+        legend("bottomright",legend=names(pp),col=cols,lty=ltys, lwd=lwds)
+    }
+    return(invisible(allpoints))
+}
+
 
 
 ##' Function to /add/ qq plot points of p-values
