@@ -182,9 +182,10 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
                                  "cbs.rand", "cbs.nonrand"),
-                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100){
+                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL){
 
     type = match.arg(type)
+    if(is.null(visc))visc=1:n
     numSteps = 1
     sigma = 1
     mn = c(rep(0,n/2), rep(lev,n/2))
@@ -201,8 +202,17 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
         poly.wbs = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
+
+        if(!is.null(visc)){
+            retain = which((g$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, locs=NA))
+            }
+            vlist = vlist[retain]
+        }
+
+        ## Get the p-values
         pvs = sapply(vlist, function(v){
-            ## v = vlist[[1]]
             cumsum.v = cumsum(v)
             pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
                                                   numIS=numIS, inference.type=inference.type,
@@ -211,7 +221,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                                   ))
         })
         return(data.frame(pvs=pvs,
-                          loc.wbs = g$cp * g$cp.sign))
+                          locs = g$cp * g$cp.sign))
     }
     if(type == "wbs.nonrand"){
 
@@ -220,12 +230,18 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         poly.wbs = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
         pvs = sapply(vlist, function(v){
-        ## v = vlist[[1]]
+        if(!is.null(visc)){
+            retain = which((g$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, locs=NA))
+            }
+            vlist = vlist[retain]
+        }
         cumsum.v = cumsum(v)
         pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma)$pv
         })
         return(data.frame(pvs=pvs,
-                          loc.wbs = g$cp * g$cp.sign))
+                          locs = g$cp * g$cp.sign))
     }
 
     if(type=="fl.rand"){
@@ -240,13 +256,20 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(f.fudged)
+        if(!is.null(visc)){
+            retain = which((f.fudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = f.fudged$cp * f.fudged$cp.sign))
+                          locs = f.fudged$cp * f.fudged$cp.sign))
     }
 
     if(type=="fl.nonrand"){
@@ -256,13 +279,20 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
         Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
         vlist <- make_all_segment_contrasts(f.nonfudged)
+        if(!is.null(visc)){
+            retain = which((f.nonfudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
         pvs = sapply(vlist, function(v){
         poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
         pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = f.nonfudged$cp * f.nonfudged$cp.sign))
+                          locs = f.nonfudged$cp * f.nonfudged$cp.sign))
     }
 
     if(type=="sbs.rand"){
@@ -276,13 +306,20 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.fudged)
+        if(!is.null(visc)){
+            retain = which((h.fudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = h.fudged$cp * h.fudged$cp.sign))
+                          locs = h.fudged$cp * h.fudged$cp.sign))
     }
 
     if(type=="sbs.nonrand"){
@@ -293,12 +330,19 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.nonfudged)
+        if(!is.null(visc)){
+            retain = which((h.nonfudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
         pvs = sapply(vlist, function(v){
         pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = h.nonfudged$cp * h.nonfudged$cp.sign))
+                          locs = h.nonfudged$cp * h.nonfudged$cp.sign))
     }
 
     if(type=="cbs.rand"){
@@ -312,13 +356,22 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.fudged)
+
+        if(!is.null(visc)){
+            retain = which((h.fudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
+
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = h.fudged$cp * h.fudged$cp.sign))
+                          locs = h.fudged$cp * h.fudged$cp.sign))
     }
 
     if(type=="cbs.nonrand"){
@@ -328,12 +381,19 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.nonfudged)
+        if(!is.null(visc)){
+            retain = which((h.nonfudged$cp %in% visc))
+            if(length(retain)==0){
+                return(data.frame(pvs=NA, loc=NA))
+            }
+            vlist = vlist[retain]
+        }
         pvs = sapply(vlist, function(v){
         pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          loc.wbs = h.nonfudged$cp * h.nonfudged$cp.sign))
+                          locs = h.nonfudged$cp * h.nonfudged$cp.sign))
     }
 }
 
