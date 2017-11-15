@@ -2,28 +2,45 @@
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
-                               numSteps=NULL, numIntervals, numIS,bits=NULL,stopped.poly=NULL){
+                               numSteps=NULL, numIntervals, numIS,bits=NULL,stopped.poly=NULL, maxnumIS = 2000){
 
     ## New: Get many fudged TG statistics.
-    inner.tgs = sapply(1:numIS, function(isim){
-        new.noise = rnorm(length(y),0,sigma.add)
-        obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
-                               v=v, sigma=sqrt(sigma^2))
-        ## Handle boundary cases
-        pv.new = obj.new$pv
-        weight.new = obj.new$denom
+    done=FALSE
+    pvs = c()
+    denoms = c()
 
-        ## Handle boundary cases
-        if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
-        if(pv.new>1|pv.new<0)  browser() ## Not sure why this would happen, but anyway!
-        if(weight.new<0 | weight.new>1) weight.new=0 ## Nomass problem is to be caught here.
-        return(c(pv.new, weight.new))
-    })
+    ## Do importance sampling until you have some number of variation..
+    while(!done){
+        inner.tgs = sapply(1:numIS, function(isim){
+            new.noise =
+                rnorm(length(y),0,sigma.add)
+            obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
+                                   v=v, sigma=sqrt(sigma^2))
+            ## Handle boundary cases
+            pv.new = obj.new$pv
+            weight.new = obj.new$denom
 
-    rownames(inner.tgs) = c("pv", "denom")
-    pvs = inner.tgs["pv",]
-    denoms = inner.tgs["denom",]
+            ## Handle boundary cases
+            if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
+            if(pv.new>1|pv.new<0)  browser() ## Not sure why this would happen, but anyway!
+            if(weight.new<0 | weight.new>1) weight.new=0 ## Nomass problem is to be caught here.
+            return(c(pv.new, weight.new))
+        })
 
+        rownames(inner.tgs) = c("pv", "denom")
+        new.pvs = inner.tgs["pv",]
+        new.denoms = inner.tgs["denom",]
+        pvs = c(pvs,new.pvs)
+        denoms = c(denoms,new.denoms)
+
+        ## increase numIS
+        numIS = round(numIS*1.5)
+
+        ## Check if all pvalues are the same, then sample more.
+        enough.things = any(pvs!=pvs[1])
+        reached.limit = numIS > maxnumIS
+        if(reached.limit | enough.things){ done = TRUE }
+    }
 
     ## Calculate randomized TG statistic
     pv = sum(pvs*denoms)/sum(denoms)
