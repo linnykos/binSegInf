@@ -1,163 +1,29 @@
-##' Function for doing many noise-added fused lassos and computing randomized
-##' p-value, from the beginning. It is more desirable to use the wrapper
-##' randomized_genlasso(); this function will probably be retired not far from
-##' now.
-##' @param y data vector
-##' @param sigma standard deviation of noise
-##' @param D penalty matrix.
-##' @param v Fixed contrast, formed /only/ with the knowledge of the selection
-##'     event on \code{y} with some fixed interval, and not from any more
-##'     information about \code{y}.
-##' @param numIntervals number of WBS intervals you want /each time/. This
-##'     should match what you used when applying wild binary segmentation on
-##'     your observed dataset.
-##' @param numSteps number of steps to take.
-##' @param nsim.is Number of importance sampling samples you'd like to
-##'     calculate.
-##' @param reduce \code{TRUE} if reduced version of polyhedron collecting is to
-##'     be used, in polyhedra collecting functions for WBS.
-##' @param v Contrast vector.
-##' @param augment \code{TRUE} if WBS-FS should be run in augment mode.
-##' @export
-randomized_genlasso_pv <- function(y, sigma, shift, sigma.add, D, v, orig.poly,
-                                   numSteps=NULL, numIntervals, nsim.is,
-                                   bits=NULL, reduce=FALSE, augment=TRUE){
-
-    ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(bits=bits){
-
-        n = length(y)
-        new.noise = rnorm(n,0,sigma.add)
-        tg = tg_inf(y=y, G=orig.poly$gamma, u=orig.poly$u, shift=new.noise, v=v, sigma=sqrt(sigma^2))
-        pv.new = tg$pv
-        weight.new = tg$denom
-
-        return
-    }
-
-    ## Collect weighted p-values and their weights
-    pvlist = plyr::rlply(nsim.is, get_one(bit=bits))
-    pvlist = .filternull(pvlist)
-    if(length(pvlist)==0) return(NULL)
-
-    ## Calculate p-value and return
-    pvs = sapply(pvlist, function(nd)nd[["pv"]])
-    denoms = sapply(pvlist, function(nd)nd[["weight"]])
-
-
-    rtg.pv = sum(pvs*denoms)/sum(denoms)
-
-    return(rtg.pv)
-}
-
-##' Wrapper
-##' @param pathobj An object from genlassoinf::dualPathSvd2(), of the class
-##'     "path".
-##' @param sigma.add Standard deviation of noise, for additive noise.
-##' @param v contrast vector
-##' @param orig.poly original polyhedron to shift.
-randomize_genlasso <- function(pathobj, sigma, sigma.add, v, orig.poly,
-                                numSteps=NULL, numIntervals, numIS,bits=NULL){
-
-    ## Helper to generate an interval and return /weighted/ inner tg p-value
-    get_one <- function(bits=bits){
-
-        new.noise = rnorm(length(pathobj$y),0,sigma.add)
-        tg = partition_TG(y=pathobj$y, poly= polyhedra(obj=orig.poly$gamma,
-                                                       u=orig.poly$u - orig.poly$gamma%*%new.noise),
-                          v=v, sigma=sigma)
-        pv.new = tg$pv
-        weight.new = tg$denom
-
-        ## ## Special handling?
-        if(is.nan(pv.new)){
-            pv.new=0 ## temporary fix for pv being nan..
-            print("here")
-        }
-        ## ## Special handling so that, if Vup<Vlo, then the weight, which is the prob
-        ## ## along the line trapped in the polyhedron, is zero.
-        if(weight.new<0 | weight.new>1){
-            weight.new = 0
-            print("here")
-        }
-        return(list(pv=pv.new, weight=weight.new))
-    }
-
-    ## Collect weighted p-values and their weights
-    pvlist = plyr::rlply(numIS, get_one(bit=bits))
-    vlist = .filternull(pvlist)
-    if(length(pvlist)==0) return(NULL)
-
-    ## Calculate p-value and return
-    pvs = sapply(pvlist, function(nd)nd[["pv"]])
-    denoms = sapply(pvlist, function(nd)nd[["weight"]])
-    if(any(is.nan(pvs))) browser()
-    rtg.pv = sum(pvs*denoms)/sum(denoms)
-
-    return(rtg.pv)
-}
-
-
-##' Function to generate |polyhedra| object from fused lasso path output, from a
-##' |path| class object generated from the genlassoinf package.
-##' @param obj Output from fused lasso
-##' @param reduce If TRUE, then does a Vup/Vlo comparison to see if you should
-##'     add (chunks) of rows instead of /all/ of them.
-##' @param v a contrast vector, if you want to use smart addition of polyhedra.
-##' @param sigma noise level.
-##' @param verbose load or not.
-##' @return An object of class polyhedra
-##' @export
-polyhedra_fusedlasso <- function(obj, v=NULL, reduce=FALSE, sigma=NULL,verbose=FALSE,...){
-
-    ## Basic checks
-    stopifnot(is_valid.wbsFs(obj))
-    if(is.null(v) & reduce) stop("Provide v!")
-    if(!is.null(v) & is.null(sigma)) stop("Provide sigma!")
-
-    ## Get all polyhedra
-    actual.num.steps = (length(obj$B)-1)
-
-    ## Smartly add rows, if the problem size is big
-    if(reduce){
-        vup = Inf
-        vlo = -Inf
-        for(mystep in 1:actual.num.steps){
-            newpoly = poly_from_snapshot(obj, mystep, reduce, vup= vup, vlo=vlo,
-                                         v=v, sigma=sigma, verbose=verbose)
-            vup = newpoly$vup
-            vlo = newpoly$vlo
-        }
-        return(list(v=v,reduce=reduce,obj=obj,vup=vup,vlo=vlo, poly=NULL))
-
-    ## Otherwise, just rbind and add all rows!
-    } else {
-        all.steps.polys <- lapply(1:actual.num.steps,
-                                  function(mystep){
-            poly_from_snapshot(obj, mystep, reduce, verbose=verbose)$poly})
-        combined.poly = do.call(combine.polyhedra, all.steps.polys)
-        return(combined.poly)
-    }
-}
-
 ##' Synopsis: noise-added saturated inference, for fused lasso or binary
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
-                               numSteps=NULL, numIntervals, numIS,bits=NULL){
+                               numSteps=NULL, numIntervals, numIS,bits=NULL,stopped.poly=NULL){
 
     ## New: Get many fudged TG statistics.
     inner.tgs = sapply(1:numIS, function(isim){
         new.noise = rnorm(length(y),0,sigma.add)
         obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
                                v=v, sigma=sqrt(sigma^2))
+        ## Handle boundary cases
         pv.new = obj.new$pv
         weight.new = obj.new$denom
+
+        ## Handle boundary cases
+        if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
+        if(pv.new>1|pv.new<0)  browser() ## Not sure why this would happen, but anyway!
+        if(weight.new<0 | weight.new>1) weight.new=0 ## Nomass problem is to be caught here.
         return(c(pv.new, weight.new))
     })
+
     rownames(inner.tgs) = c("pv", "denom")
     pvs = inner.tgs["pv",]
     denoms = inner.tgs["denom",]
+
 
     ## Calculate randomized TG statistic
     pv = sum(pvs*denoms)/sum(denoms)

@@ -71,7 +71,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE, shift=NULL){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE, shift=NULL, ic.poly=NULL){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -84,6 +84,12 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     if(!is.null(shift)){
         stopifnot(length(shift)==length(y))
         poly$u = poly$u - poly$gamma%*%shift
+    }
+
+    ## Add stopping component to the polyhedron at this point, if needed
+    if(!is.null(ic.poly)){
+        poly$gamma = rbind(poly$gamma, ic.poly$gamma)
+        poly$u = c(poly$u, ic.poly$u)
     }
 
     ## Just in case |poly| doesn't contain |vup| and |vlo|, we manually form it.
@@ -420,4 +426,63 @@ make_all_segment_contrasts_from_wbs <- function(wbs_obj, scaletype = c("segmentm
 .filternull <- function(mylist){
     emptyguys = unlist(lapply(mylist, function(myobj) return(length(myobj)==0)))
     return(mylist[which(!emptyguys)])
+}
+
+
+##' Helper function to take all neighboring-to-each-other clusters,
+##' And declutter them by removing all but (rounded up) centroids
+##' @export
+declutter = function(coords, how.close = 1, sort=T, indexonly = F){#closeby.same.direction.are.disallowed=F
+
+    ## n
+    unsorted.coords=coords
+    coords = sort(coords)
+
+    ## error checking
+    if(length(coords)<=1){
+      if(length(coords)==0) cat('\n',"attempting to declutter", length(coords), "coordinates",'\n')
+      return(coords)
+    }
+
+    ## get the clique memberships
+    adjacent.diffs = abs(coords[1:(length(coords)-1)] - coords[2:length(coords)])
+
+    cliq.num=1
+    cliq.vec=rep(NA,length(coords))
+    for(ii in 1:length(adjacent.diffs)){
+      if(adjacent.diffs[ii] <= how.close){  ## used to be ==1
+        cliq.vec[ii] = cliq.vec[ii+1] = cliq.num
+      } else {
+        cliq.num = cliq.num+1
+      }
+    }
+
+    ## determine who will leave
+    leavelist = c()
+    for(cliq.num in unique(cliq.vec[!is.na(cliq.vec)])){
+        members = which(cliq.vec == cliq.num)
+        stay = round(mean(members))
+        leave = members[members!=stay]
+        leavelist = c(leavelist,leave)
+    }
+    if(length(leavelist)>=1){
+      processed.coords = coords[-leavelist]
+      ## processed.signs = signs[-leavelist]
+    } else {
+      processed.coords = coords
+      ## processed.signs = signs
+    }
+
+    ## Also determine the sign, based on majority vote
+
+
+    if(indexonly){
+      return(which(unsorted.coords %in% processed.coords))
+    } else {
+        if(sort){
+        return(processed.coords)
+      } else {
+        return(unsorted.coords[unsorted.coords %in% processed.coords])
+      }
+    }
 }
