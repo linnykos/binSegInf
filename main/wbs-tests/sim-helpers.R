@@ -182,11 +182,11 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
                                  "cbs.rand", "cbs.nonrand"),
-                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL){
+                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL, numSteps=1){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
-    numSteps = 1
+    ## numSteps = 1
     sigma = 1
     mn = c(rep(0,n/2), rep(lev,n/2))
     y = mn + rnorm(n, 0, sigma)
