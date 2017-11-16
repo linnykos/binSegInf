@@ -188,12 +188,14 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
     if(is.null(visc))visc=1:n
     ## numSteps = 1
     sigma = 1
-    mn = c(rep(0,n/2), rep(lev,n/2))
+    ## mn = c(rep(0,n/2), rep(lev,n/2))
+    mn = meanfun(lev=lev,n=n)
     y = mn + rnorm(n, 0, sigma)
     cumsum.y = cumsum(y)
     ## numIS = 100
     inference.type = "pre-multiply"
     improve.nomass.problem = TRUE
+    retain=1:n
 
 
     if(type == "wbs.rand"){
@@ -210,6 +212,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (g$cp * g$cp.sign)[retain]
 
         ## Get the p-values
         pvs = sapply(vlist, function(v){
@@ -221,7 +224,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                                   ))
         })
         return(data.frame(pvs=pvs,
-                          locs = (g$cp * g$cp.sign)[retain]))
+                          locs=locs))
     }
     if(type == "wbs.nonrand"){
 
@@ -229,7 +232,6 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
         poly.wbs = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
-        pvs = sapply(vlist, function(v){
         if(!is.null(visc)){
             retain = which((g$cp %in% visc))
             if(length(retain)==0){
@@ -237,11 +239,15 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
-        cumsum.v = cumsum(v)
-        pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma)$pv
+        locs = (g$cp * g$cp.sign)[retain]
+        print(locs)
+
+        pvs = sapply(vlist, function(v){
+            cumsum.v = cumsum(v)
+            pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma)$pv
         })
         return(data.frame(pvs=pvs,
-                          locs = (g$cp * g$cp.sign)[retain]))
+                          locs=locs))
     }
 
     if(type=="fl.rand"){
@@ -263,13 +269,15 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (f.fudged$cp * f.fudged$cp.sign)[retain]
+
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
         })
 
         return(data.frame(pvs=pvs,
-                          locs = (f.fudged$cp * f.fudged$cp.sign)[retain] ))
+                          locs=locs))
     }
 
     if(type=="fl.nonrand"){
@@ -278,6 +286,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
         f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
         Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
+        poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
         vlist <- make_all_segment_contrasts(f.nonfudged)
         if(!is.null(visc)){
             retain = which((f.nonfudged$cp %in% visc))
@@ -286,13 +295,14 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]
+
         pvs = sapply(vlist, function(v){
-        poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
-        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]  ))
+                          locs=locs))
     }
 
     if(type=="sbs.rand"){
@@ -313,13 +323,14 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (h.fudged$cp * h.fudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
-        pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+            pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
         })
 
         return(data.frame(pvs=pvs,
-                          locs = (h.fudged$cp * h.fudged$cp.sign)[retain] ))
+                          locs=locs))
     }
 
     if(type=="sbs.nonrand"){
@@ -337,12 +348,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
-        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain] ))
+                          locs=locs))
     }
 
     if(type=="cbs.rand"){
@@ -365,19 +377,16 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (h.fudged$cp * h.fudged$cp.sign)[retain]
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
                                 max.numIS=20000)
         })
-        print('before')
-        print(h.fudged$cp)
-        print('after')
-        print(h.fudged$cp[retain])
 
         return(data.frame(pvs=pvs,
-                          locs = (h.fudged$cp * h.fudged$cp.sign)[retain] ))
+                          locs=locs))
     }
 
     if(type=="cbs.nonrand"){
@@ -395,12 +404,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             }
             vlist = vlist[retain]
         }
+        locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
         pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
         })
 
         return(data.frame(pvs=pvs,
-                          locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]))
+                          locs=locs))
     }
 }
 
