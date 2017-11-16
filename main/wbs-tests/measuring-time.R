@@ -1,8 +1,10 @@
 ## Synopsis: measure time for randomized WBS simulations.
-library(microbenchmark )
+library(microbenchmark)
 
 ## Computations by sample size
 ns = c(50, 100, 200, 300,  500)
+sigma=1
+numSteps=1
 slow.times.by.n = list()
 for(ii in 1:length(ns)){
     print(ii)
@@ -19,7 +21,7 @@ for(ii in 1:length(ns)){
 
     g.orig = wildBinSeg_fixedSteps(y, numIntervals=numIntervals,
                                    numSteps= numSteps,
-                                   inference.type="pre-multiply")
+                                   inference.type="rows")
     vlist <- make_all_segment_contrasts(g.orig)
     numIS=100
     v = vlist[[1]]

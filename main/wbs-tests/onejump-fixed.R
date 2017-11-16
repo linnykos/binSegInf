@@ -6,12 +6,14 @@ outputdir = "../output"
 ## One-jump, one-step simulations
 levs = c(0,1,2,3)
 n=60
-nsim=1000
+nsim=10000
 numSteps=1
-results = lapply(levs, dosim, n=n, nsim=nsim, numSteps=numSteps, randomized=FALSE, numIS=100, meanfun=onejump)
+visc = (n/2+((-1):1))
+nsims=c(10000,4000,2000,1000)*10
+mc.cores=4
+results = Map(function(lev,nsim)dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,randomized=FALSE,numIS=100,meanfun=onejump,mc.cores=mc.cores, locs=visc), levs, nsims)
 
 ## Save results
-outputdir = "../output"
 filename = "fixed-wbs-onejump-one-step.Rdata"
 save(list=c("results","levs","n","nsim","numSteps"), file=file.path(outputdir,filename))
 
@@ -19,9 +21,15 @@ save(list=c("results","levs","n","nsim","numSteps"), file=file.path(outputdir,fi
 ## One-jump, three-step simulations
 levs = c(0,1,2,3)
 n=60
-nsim=1000
 numSteps=3
-results = lapply(levs, dosim, n=n, nsim=nsim, numSteps=numSteps, randomized=FALSE, numIS=100, meanfun=onejump)
+## results = lapply(levs, dosim, n=n, nsim=nsim, numSteps=numSteps, randomized=FALSE, numIS=100, meanfun=onejump)
+nsims=c(10000,4000,2000,1000)*10
+visc = (n/2+((-1):1))
+mc.cores=1
+results = Map(function(lev, nsim)dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,
+                                       randomized=FALSE,numIS=100,
+                                       meanfun=onejump,mc.cores=mc.cores,
+                                       locs=visc), levs, nsims)
 
 ## Save results
 filename = "fixed-wbs-onejump-three-step.Rdata"

@@ -9,8 +9,10 @@ nsims=c(3000,700,500,250)
 numSteps = 6
 mc.cores = 8
 visc = sapply(1:5, function(ii)ii*n/5+(-1):1)
-results = Map(function(lev,nsim) dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,randomized=TRUE,numIS=100,
-                                       meanfun=fourjump,mc.cores=mc.cores, locs=visc), levs, nsims)
+results = Map(function(lev,nsim)dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,
+                                      randomized=TRUE,numIS=numIS,meanfun=twojump,
+                                      mc.cores=mc.cores, locs=visc, improve.nomass.problem=FALSE,
+                                      inference.type="pre-multiply"), levs, nsims)
 
 ## Save results
 outputdir = "../output"
