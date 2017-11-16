@@ -30,8 +30,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         if(length(retain)==0){
             return(list(pvs=c(), null.true=c()))
         }
-        print(g$cp)
-        print(g$cp[retain])
 
         ## Get the p-values
         vlist = vlist[retain] ## Added
