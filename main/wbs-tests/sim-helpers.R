@@ -240,7 +240,6 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             vlist = vlist[retain]
         }
         locs = (g$cp * g$cp.sign)[retain]
-        print(locs)
 
         pvs = sapply(vlist, function(v){
             cumsum.v = cumsum(v)
@@ -422,6 +421,7 @@ dosim_recovery <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomiz
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
 
+    sigma=1
     cat("lev=", lev, fill=TRUE)
     results = mclapply(1:nsim,function(isim){
         printprogress(isim, nsim)
