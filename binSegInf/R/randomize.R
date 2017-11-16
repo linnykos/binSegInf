@@ -54,7 +54,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
                             ic.poly=NULL, bits=50, numIS.max=1000,
-                            improve.nomass.problem=FALSE){
+                            improve.nomass.problem=FALSE, min.num.things=30){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -82,7 +82,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         parts.so.far = cbind(parts.so.far, parts)
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts.so.far["weight",]>0)
-        enough.things = (things > 30)
+        enough.things = (things > min.num.things)
         if(!improve.nomass.problem){
             done=TRUE
         }
