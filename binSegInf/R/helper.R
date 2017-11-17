@@ -111,15 +111,14 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     }
 
     ## Separately store and return num&denom of TG
-    numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
-    denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+    numer = as.numeric(Rmpfr::pnorm(b)-Rmpfr::pnorm(z))
+    denom = as.numeric(Rmpfr::pnorm(b)-Rmpfr::pnorm(a))
 
     ## Form p-value as well.
-    pv = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
-                    (Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+    pv = as.numeric(numer/denom)
     ## if(!(0 <= pv & pv <= 1)) print("pv was not between 0 and 1, in partition_TG()!")
 
-    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vy=vy, vup=vup))
+    return(list(denom=denom, numer=numer, pv=pv, vlo=vlo, vy=vy, vup=vup))
 }
 
 

@@ -2,7 +2,7 @@
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
-                               numSteps=NULL, numIntervals, numIS,bits=NULL,stopped.poly=NULL, max.numIS = 2000){
+                               numSteps=NULL, numIntervals, numIS,bits=50,stopped.poly=NULL, max.numIS = 2000){
 
     ## New: Get many fudged TG statistics.
     done=FALSE
@@ -12,10 +12,9 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
     ## Do importance sampling until you have some number of variation..
     while(!done){
         inner.tgs = sapply(1:numIS, function(isim){
-            new.noise =
-                rnorm(length(y),0,sigma.add)
+            new.noise = rnorm(length(y),0,sigma.add)
             obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
-                                   v=v, sigma=sqrt(sigma^2))
+                                   v=v, sigma=sqrt(sigma^2), bits=bits)
             ## Handle boundary cases
             pv.new = obj.new$pv
             weight.new = obj.new$denom
@@ -36,7 +35,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
         ## increase numIS
         numIS = round(numIS*1.5)
 
-        ## Check if all pvalues are the same, then sample more.
+        ## Check if all pvalues are the same, and if so sample more.
         enough.things = any(pvs!=pvs[1])
         reached.limit = numIS > max.numIS
         if(reached.limit | enough.things){ done = TRUE }

@@ -182,7 +182,7 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
                                  "cbs.rand", "cbs.nonrand"),
-                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL, numSteps=1){
+                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL, numSteps=1, bits=50){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
@@ -221,6 +221,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                   improve.nomass.problem =improve.nomass.problem
+                                                  bits=bits
                                                   ))
         })
         return(data.frame(pvs=pvs,
@@ -243,7 +244,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         pvs = sapply(vlist, function(v){
             cumsum.v = cumsum(v)
-            pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma)$pv
+            pv = poly.pval2(y=y, poly=poly.wbs, v=v, sigma=sigma,bits=bits)$pv
         })
         return(data.frame(pvs=pvs,
                           locs=locs))
@@ -272,7 +273,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
         })
 
         return(data.frame(pvs=pvs,
@@ -297,7 +298,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]
 
         pvs = sapply(vlist, function(v){
-            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
         })
 
         return(data.frame(pvs=pvs,
@@ -325,7 +326,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         locs = (h.fudged$cp * h.fudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged)
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
         })
 
         return(data.frame(pvs=pvs,
@@ -349,7 +350,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         }
         locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
-            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma,bits=bits)$pv
         })
 
         return(data.frame(pvs=pvs,
@@ -381,7 +382,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
-                                max.numIS=20000)
+                                bits=bits)
         })
 
         return(data.frame(pvs=pvs,
@@ -405,7 +406,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         }
         locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
         pvs = sapply(vlist, function(v){
-        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma)$pv
+        pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
         })
 
         return(data.frame(pvs=pvs,

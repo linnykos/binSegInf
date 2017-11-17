@@ -2,76 +2,58 @@
 library(genlassoinf)
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-onecompare <- function(lev=0, filename, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=bits){
+onecompare <- function(lev=0, filename, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1){
 
     result.fl.rand = result.fl.nonrand = result.sbs.rand =
     result.sbs.nonrand = result.wbs.rand = result.wbs.nonrand =
     result.cbs.rand = result.cbs.nonrand = NA
 
     print("fl.rand")
-
-    allnames <- c("a", "b", "c")
-    results <- vector("list", length(allnames))
-    names(results) <- allnames
-
-    results = list()
-    results[]
-    result.fl.rand = result.fl.nonrand = result.sbs.rand =
-    result.sbs.nonrand = result.wbs.rand = result.wbs.nonrand =
-    result.cbs.rand = result.cbs.nonrand = NA
-    for(myname in allnames){
-       myresult =  mclapply(1:nsim, function(isim) {
-           printprogress(isim,nsim);
-           dosim_compare(type=myname n=60, lev=lev, numIS= 200, meanfun= meanfun, visc=visc, numSteps=numSteps, bits=bits)
-       }, mc.cores=mc.cores)
-    }
-
-
     result.fl.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="fl.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="fl.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("fl.nonrand")
     result.fl.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="fl.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="fl.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("sbs.rand")
     result.sbs.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="sbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="sbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("sbs.nonrand")
     result.sbs.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="sbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="sbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("wbs.nonrand")
     result.wbs.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="wbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("wbs.rand")
     result.wbs.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("cbs.rand")
     result.cbs.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="cbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="cbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     print("cbs.nonrand")
     result.cbs.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="cbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        dosim_compare(type="cbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
     }, mc.cores=mc.cores)
 
     save(list=c("result.fl.rand", "result.fl.nonrand", "result.sbs.rand",

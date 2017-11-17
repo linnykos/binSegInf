@@ -40,7 +40,7 @@ nsim=1000
 results = dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps, randomized=randomized,
                 numIS=100, meanfun=meanfun, mc.cores=mc.cores, locs=visc,
                 better.segment=TRUE, improve.nomass.problem = TRUE, min.num.things=20)
-results.orig = dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps, randomized=randomize,numIS=100,
+results.orig = dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps, randomized=randomized,numIS=100,
                      meanfun=meanfun, mc.cores=mc.cores, locs=visc, better.segment=FALSE,
                      improve.nomass.problem = TRUE, min.num.things=20)
 
