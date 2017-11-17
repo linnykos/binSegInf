@@ -220,7 +220,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
             pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
-                                                  improve.nomass.problem =improve.nomass.problem
+                                                  improve.nomass.problem =improve.nomass.problem,
                                                   bits=bits
                                                   ))
         })
@@ -256,7 +256,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Fit binseg on fudged data
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
-        f.fudged = genlassoinf::dualpathSvd2(y+new.noise, D=D, maxsteps=1, approx=T)
+        f.fudged = genlassoinf::dualpathSvd2(y+new.noise, D=D, maxsteps=numSteps, approx=T)
         Gobj.fudged = genlassoinf::getGammat.naive(obj=f.fudged, y=y, condition.step=1)
         poly.fudged = polyhedra(obj=Gobj.fudged$G, u=Gobj.fudged$u)
 

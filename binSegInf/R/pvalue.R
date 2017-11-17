@@ -139,7 +139,6 @@ mpfr.tnorm.surv <- function(z, mean=0, sd=1, a, b, bits=NULL) {
     z = Rmpfr::mpfr((z-mean)/sd, precBits=bits)
     a = Rmpfr::mpfr((a-mean)/sd, precBits=bits)
     b = Rmpfr::mpfr((b-mean)/sd, precBits=bits)
-    browser()
     return(as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z))/
                       (Rmpfr::pnorm(b)-Rmpfr::pnorm(a))))
   }

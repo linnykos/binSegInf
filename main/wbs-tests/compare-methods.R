@@ -2,117 +2,36 @@
 library(genlassoinf)
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-onecompare <- function(lev=0, filename, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=bits){
+onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=50, n=60, numIS=200){
 
-    result.fl.rand = result.fl.nonrand = result.sbs.rand =
-    result.sbs.nonrand = result.wbs.rand = result.wbs.nonrand =
-    result.cbs.rand = result.cbs.nonrand = NA
+    all.names = c("fl.rand", "fl.nonrand", "sbs.rand",
+                 "sbs.nonrand", "wbs.rand", "wbs.nonrand",
+                 "cbs.rand", "cbs.nonrand")
 
-    print("fl.rand")
-
-    allnames <- c("a", "b", "c")
-    results <- vector("list", length(allnames))
-    names(results) <- allnames
-
-    results = list()
-    results[]
-    result.fl.rand = result.fl.nonrand = result.sbs.rand =
-    result.sbs.nonrand = result.wbs.rand = result.wbs.nonrand =
-    result.cbs.rand = result.cbs.nonrand = NA
-    for(myname in allnames){
-       myresult =  mclapply(1:nsim, function(isim) {
-           printprogress(isim,nsim);
-           dosim_compare(type=myname n=60, lev=lev, numIS= 200, meanfun= meanfun, visc=visc, numSteps=numSteps, bits=bits)
-       }, mc.cores=mc.cores)
-    }
-
-
-    result.fl.rand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="fl.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("fl.nonrand")
-    result.fl.nonrand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="fl.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("sbs.rand")
-    result.sbs.rand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="sbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("sbs.nonrand")
-    result.sbs.nonrand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="sbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("wbs.nonrand")
-    result.wbs.nonrand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="wbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("wbs.rand")
-    result.wbs.rand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("cbs.rand")
-    result.cbs.rand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="cbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    print("cbs.nonrand")
-    result.cbs.nonrand =  mclapply(1:nsim, function(isim) {
-        printprogress(isim,nsim);
-        dosim_compare(type="cbs.nonrand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-    }, mc.cores=mc.cores)
-
-    save(list=c("result.fl.rand", "result.fl.nonrand", "result.sbs.rand",
-                "result.sbs.nonrand", "result.wbs.rand", "result.wbs.nonrand",
-                "result.cbs.rand", "result.cbs.nonrand"),
-         file=filename)
+    all.results = lapply(all.names, function(myname){
+        print(myname)
+        mclapply(1:nsim, function(isim) {
+            printprogress(isim,nsim);
+            dosim_compare(type=myname, n=n, lev=lev, numIS=numIS, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+        }, mc.cores=mc.cores)
+    })
+    names(all.results) = all.names
+    return(all.results)
 }
 
-## onecompare(lev=1, filename=file.path(outputdir,'compare-methods-lev1-onejump-with-cbs-halve-fix.Rdata'),
-##            nsim=10000, meanfun=onejump, visc=c(28:32), numSteps=1)
-visc.fourjump = unlist(lapply(c(1:4)*60/5, function(ii) ii+c(-1,0,1)))
-onecompare(lev=0, filename=file.path(outputdir,'compare-methods-lev0-fourjump.Rdata'), nsim=5000, meanfun=fourjump, visc=visc.fourjump, numSteps=4)
-onecompare(lev=1, filename=file.path(outputdir,'compare-methods-lev1-fourjump.Rdata'), nsim=5000, meanfun=fourjump, visc=visc.fourjump, numSteps=4)
-onecompare(lev=2, filename=file.path(outputdir,'compare-methods-lev2-fourjump.Rdata'), nsim=5000, meanfun=fourjump, visc=visc.fourjump, numSteps=4)
-onecompare(lev=3, filename=file.path(outputdir,'compare-methods-lev3-fourjump.Rdata'), nsim=5000, meanfun=fourjump, visc=visc.fourjump, numSteps=4)
-graphics.off()
+levs = c(0, 0.5, 1, 1.5, 2)
+results.by.lev = list()
+for(ilev in 1:length(levs)){
+    mylev = levs[ilev]
+    print(mylev)
+    results.by.lev[[ilev]] = onecompare(lev=mylev,
+                                        nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
+                                        numSteps=4, bits=1000, mc.cores=mc.cores, n=200, numIS=200)
+    save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump.Rdata")
+}
 
-
-
-## Run the nonnull simulation
-onecompare(lev=3, filename=file.path(outputdir,'compare-methods-lev3.Rdata'))
-
-## Load and plot
-## load(file=file.path(outputdir, 'compare-methods-lev0.Rdata'))
-load(file=file.path(outputdir, 'compare-methods-lev1.Rdata'))
-load(file=file.path(outputdir, 'compare-methods-lev1-fourjump.Rdata'))
-## load(file=file.path(outputdir, 'compare-methods-lev2.Rdata')) #
 ## load(file=file.path(outputdir, 'compare-methods-lev3.Rdata'))
-## pdf(file=file.path(outputdir,"compare-methods-lev0.pdf"), width=5, height=5)
-## pdf(file=file.path(outputdir,"compare-methods-lev1.pdf"), width=5, height=5)
-pdf(file=file.path(outputdir,"compare-methods-lev1-fourjump.pdf"), width=5, height=5)
-## pdf(file=file.path(outputdir,"compare-methods-lev2.pdf"), width=5, height=5)
 ## pdf(file=file.path(outputdir,"compare-methods-lev3.pdf"), width=5, height=5)
-
-all.results = list(result.fl.nonrand, result.fl.rand, result.sbs.nonrand,
-                   result.sbs.rand, result.wbs.nonrand, result.wbs.rand,
-                   result.cbs.nonrand, result.cbs.rand)[c(3,4,5,6,7,8)]
-
-all.names = c("fl.nonrand", "fl.rand", "sbs.nonrand",
-                "sbs.rand", "wbs.nonrand", "wbs.rand",
-                "cbs.nonrand", "cbs.rand")[c(3,4,5,6,7,8)]
 
 pvs.list = Map( function(myresult){
     myresult = lapply(myresult, function(a){colnames(a) = c("pvs", "locs");a})

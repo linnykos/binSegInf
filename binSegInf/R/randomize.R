@@ -75,7 +75,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       cumsum.y=cumsum.y,
                       cumsum.v=cumsum.v,
                       stop.time=stop.time,
-                      ic.poly=ic.poly)
+                      ic.poly=ic.poly,
+                      bits=bits)
         })
 
         parts.so.far = cbind(parts.so.far, parts)
@@ -90,6 +91,11 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         }
         pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
         numIS = numIS*1.5
+
+        ## cat(fill=TRUE)
+        ## printf("things is %d", things)
+        ## printf("numIS is %f", numIS)
+
         if(numIS > numIS.max) done=TRUE
     }
     return(pv)
@@ -107,7 +113,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 ##' @return A data frame (single row), with "pv" and "weight".
 rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
                       cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps,
-                      ic.poly=NULL){
+                      ic.poly=NULL, bits=50){
 
     ## Basic checks
     assert_that(is_valid.wbsFs(winning.wbs.obj))
@@ -166,7 +172,6 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
 }
 
 poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
-    bits=20
 
     ## Rounding ridiculously small numbers
     Gv[which(abs(Gv)<1E-15)] = 0
@@ -185,12 +190,9 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
 
-    ## z = vy/sd
-    ## a = vlo/sd
-    ## b = vup/sd
-
     if(!(a<=z &  z<=b)){
         warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
+        ## print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
 
     ## numer = as.numeric(pnorm(b)-pnorm(z))
