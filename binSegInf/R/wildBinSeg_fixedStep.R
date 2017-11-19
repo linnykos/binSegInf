@@ -15,7 +15,7 @@
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                   intervals=NULL, mimic=FALSE, wbs.obj=NULL,
                                   comprehensive=FALSE, cumsum.y=NULL, cumsum.v=NULL,
-                                  inference.type =c("rows","pre-multiply"),
+                                  inference.type =c("rows","pre-multiply", "none"),
                                   stop.time=numSteps,
                                   ic.poly = NULL,
                                   v=NULL){
@@ -61,6 +61,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
     if(mimic) stopstep = (min(c(numSteps,stop.time, nrow(wbs.obj$results))))
     if(!mimic) stopstep = min(c(numSteps,stop.time))
     while(istep <= stopstep & !time.to.stop){
+        print(istep)
+        print(Sys.time())
 
         ## Do maximization in the respective intervals.
         if(mimic){
@@ -77,7 +79,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                           max.sign=max.info$max.sign,
                                           qual.inds=qual.inds, n=n,
                                           y=(if(!mimic) y else NULL))
-        } else {
+        } else if (inference.type=="pre-multiply"){
 
             ## New routine for new.rows, that collects Gy and Gv instead of
             ## actual rows
@@ -89,6 +91,8 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                           qual.inds=qual.inds,
                                           cumsum.y=cumsum.y, cumsum.v=cumsum.v,
                                           Gy.ic=Gy.ic, Gv.ic=Gv.ic, u.ic)
+        } else {
+            new.info = c()
         }
 
         ## Calculate the maximizing scope
@@ -133,12 +137,14 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
         Gy=NULL
         Gv=NULL
         u = rep(0,nrow(gamma))
-    } else {
+    } else if (inference.type == "pre-multiply"){
         Gy = do.call(c,lapply(new.info, function(a)a[["Gy"]]))## unlist()
         Gv = do.call(c,lapply(new.info, function(a)a[["Gv"]]))
         u = do.call(c,lapply(new.info, function(a)a[["u"]]))
         gamma = NULL
         ## u = rep(0, length(Gy))
+    } else {
+        Gy=Gv=u=gamma=NULL
     }
 
     return(structure(list(results=results, gamma=gamma, u=u,
@@ -150,6 +156,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                           mimic=mimic,
                           intervals=intervals,
                           numIntervals=numIntervals,
+                          inference.type=inference.type,
                           y=y), class="wbsFs"))
 }
 
