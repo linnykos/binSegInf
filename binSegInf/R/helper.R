@@ -417,7 +417,8 @@ make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n, scaletype = c("se
 }
 
 ##' Makes segment contrasts with endpoints as the winning intervals' start/ends
-make_all_segment_contrasts_from_wbs <- function(wbs_obj, scaletype = c("segmentmean", "unitnorm")){
+##' @param cps if not null, these are the only ones we actually want.
+make_all_segment_contrasts_from_wbs <- function(wbs_obj, cps=NULL, scaletype = c("segmentmean", "unitnorm")){
 
     n = length(wbs_obj$y)
     cp = wbs_obj$cp
@@ -446,6 +447,11 @@ make_all_segment_contrasts_from_wbs <- function(wbs_obj, scaletype = c("segmentm
         if(length(d)!=n) browser()
     }
     names(dlist) = (cp * cp.sign)
+
+    ## Only return the requested ones
+    if(!is.null(cps)){
+        dlist = dlist[which(abs(as.numeric(names(dlist))) %in% cps)]
+    }
     return(dlist)
 }
 
@@ -460,7 +466,7 @@ make_all_segment_contrasts_from_wbs <- function(wbs_obj, scaletype = c("segmentm
 ##' Helper function to take all neighboring-to-each-other clusters,
 ##' And declutter them by removing all but (rounded up) centroids
 ##' @export
-declutter = function(coords, how.close = 1, sort=T, indexonly = F){#closeby.same.direction.are.disallowed=F
+declutter <- function(coords, how.close = 1, sort=T, indexonly = F){#closeby.same.direction.are.disallowed=F
 
     ## n
     unsorted.coords=coords

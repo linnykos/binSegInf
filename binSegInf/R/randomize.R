@@ -1,8 +1,10 @@
 ##' Synopsis: noise-added saturated inference, for fused lasso or binary
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
-randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
-                               numSteps=NULL, numIntervals, numIS,bits=50,stopped.poly=NULL, max.numIS = 2000){
+randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
+                               numSteps=NULL, numIntervals, numIS, bits=50,
+                               orig.fudged.obj = NULL, ic.poly=NULL,
+                               max.numIS = 2000){
 
     ## New: Get many fudged TG statistics.
     done=FALSE
@@ -13,8 +15,35 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
     while(!done){
         inner.tgs = sapply(1:numIS, function(isim){
             new.noise = rnorm(length(y),0,sigma.add)
-            obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
-                                   v=v, sigma=sqrt(sigma^2), bits=bits)
+
+            ## If original fudged polyhedron is small enough to be passed.
+            if(!is.null(orig.fudged.poly)){
+                obj.new = partition_TG(y=y, poly=orig.fudged.poly, shift=new.noise,
+                                       v=v, sigma=sqrt(sigma^2), bits=bits)
+            } else {
+                ## Just fit the model all over again.
+                ## orig.fudged.object=h.fudged
+                premult = polyhedra.bsFs(orig.fudged.obj, inference.type="pre-multiply", new.noise=new.noise,
+                                         v=v, numSteps = numSteps)
+                ## Append IC stopping Gy, Gv, Gw
+                ic.Gy = as.numeric(ic.poly$gamma%*%y)
+                ic.Gv = as.numeric(ic.poly$gamma%*%v)
+                ic.Gw = as.numeric(ic.poly$gamma%*%new.noise)
+                premult$Gy = c(premult$Gy, ic.Gy)
+                premult$Gv = c(premult$Gv, ic.Gv)
+                premult$Gw = c(premult$Gw, ic.Gw)
+                premult$u = c(premult$u, ic.poly$u)
+
+                obj.new = poly_pval_from_inner_products(Gy=premult$Gy,
+                                                        Gv=premult$Gv, v=v, y=y,
+                                                        sigma=sigma,
+                                                        u=premult$u - premult$Gw,
+                                                        bits=bits)
+                pv = obj.new$pv
+                print(obj.new)
+                if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix
+
+            }
             ## Handle boundary cases
             pv.new = obj.new$pv
             weight.new = obj.new$denom
@@ -34,10 +63,11 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly,
 
         ## increase numIS
         numIS = round(numIS*1.5)
+        print(numIS)
 
         ## Check if all pvalues are the same, and if so sample more.
         enough.things = any(pvs!=pvs[1])
-        reached.limit = numIS > max.numIS
+        reached.limit = (numIS > max.numIS)
         if(reached.limit | enough.things){ done = TRUE }
     }
 

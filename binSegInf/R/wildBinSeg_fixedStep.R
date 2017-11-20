@@ -61,8 +61,6 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
     if(mimic) stopstep = (min(c(numSteps,stop.time, nrow(wbs.obj$results))))
     if(!mimic) stopstep = min(c(numSteps,stop.time))
     while(istep <= stopstep & !time.to.stop){
-        print(istep)
-        print(Sys.time())
 
         ## Do maximization in the respective intervals.
         if(mimic){
@@ -172,7 +170,7 @@ print.wbsFs <- function(obj){
 is_valid.wbsFs <- function(obj){
     return(all(names(obj) %in% c("results", "gamma", "u", "cp", "cp.sign", "y",
                                  "numSteps", "mimic", "rows.list","intervals",
-                                 "numIntervals", "Gy", "Gv", "info.list")))
+                                 "numIntervals", "Gy", "Gv", "info.list","inference.type")))
 }
 
 .get_max_info <- function(wbs.obj,...){ UseMethod(".get_max_info")}

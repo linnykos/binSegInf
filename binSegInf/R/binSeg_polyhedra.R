@@ -3,45 +3,96 @@
 #' Forms both Gamma matrix and u vector
 #'
 #' @param obj bsFs object
+#' @param inference.type type of return -- either the actual polyhedron, or the
+#'     pre-multiplied quantities Gv, Gy and Gw.
 #' @param ... not used
 #'
 #' @return An object of class polyhedra
 #' @export
-polyhedra.bsFs <- function(obj, numSteps = NA, ...){
-  is_valid(obj)
-  n <- .get_startEnd(obj$tree$name)[2] 
-  if(is.na(numSteps)) numSteps <- obj$numSteps
-  comp.lis <- .list_comparison(obj)
-  sign.vec <- sign(jump_cusum(obj))
-  gamma.row.lis <- vector("list", numSteps)
+polyhedra.bsFs <- function(obj, numSteps = NA,
+                           inference.type=c('rows','pre-multiply'),
+                           new.noise=NULL, v=NULL,icpoly=NULL,...){
 
-  for(i in 1:numSteps){
-    losing.mat <- comp.lis[[i]]$losing
+    ## Basic checks
+    inference.type = match.arg(inference.type)
+    is_valid(obj)
 
-    gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
-      losing.mat, sign.vec[i], n)
-  }
+    ## Collect halfspaces or pre-multiplied quantities
+    n <- .get_startEnd(obj$tree$name)[2]
+    if(is.na(numSteps)) numSteps <- obj$numSteps
+    comp.lis <- .list_comparison(obj)
+    sign.vec <- sign(jump_cusum(obj))
+    gamma.row.lis <- vector("list", numSteps)
+    premultiply.lis <- vector("list", numSteps)
 
-  mat <- do.call(rbind, gamma.row.lis)
-  polyhedra(obj = mat, u = rep(0, nrow(mat)))
+    ## Accumulate either rows or premultiplied quantities
+    for(i in 1:numSteps){
+        losing.mat <- comp.lis[[i]]$losing
+        if(inference.type=="rows"){
+            gamma.row.lis[[i]] <- .gammaRows_from_comparisons(comp.lis[[i]]$winning,
+                                                              losing.mat, sign.vec[i], n,
+                                                              inference.type="rows")
+        } else {
+            premultiply.lis[[i]] = .gammaRows_from_comparisons(comp.lis[[i]]$winning,
+                                                               losing.mat,
+                                                               sign.vec[i], n,
+                                                               inference.type=
+                                                                   "pre-multiply",
+                                                               w=new.noise, v=v, y=y)
+        }
+    }
+    if(inference.type=="rows"){
+        ## Combine the rows and optionally add the ic-poly rows
+        mat <- do.call(rbind, gamma.row.lis)
+        if(!is.null(icpoly)){
+            return(polyhedra(obj = rbind(mat,icpoly$gamma),
+                             u = c(rep(0, nrow(mat)), icpoly$u)))
+        } else {
+            return(polyhedra(obj = mat, u = rep(0, nrow(mat))))
+        }
+    } else {
+        Gy = do.call(c,lapply(premultiply.lis, function(el) el[["new.Gy"]]))
+        Gv = do.call(c,lapply(premultiply.lis, function(el) el[["new.Gv"]]))
+        Gw = do.call(c,lapply(premultiply.lis, function(el) el[["new.Gw"]]))
+
+        ## If applicable, also obtain IC poly's premultiplication
+        if(!is.null(icpoly)){
+            Gy = c(Gy, icpoly$gamma%*%y)
+            Gv = c(Gv, icpoly$gamma%*%v)
+            Gw = c(Gw, icpoly$gamma%*%new.noise)
+        }
+
+        return(list(Gv=Gv, Gy=Gy, Gw=Gw, u=rep(0, length(Gv)))) }
 }
 
-.gammaRows_from_comparisons <- function(vec, mat, sign.win, n){
-  stopifnot(length(vec) == 3, ncol(mat) == 3)
+.gammaRows_from_comparisons <- function(vec, mat, sign.win, n, y=NULL, v=NULL,
+                                        w=NULL,
+                                        inference.type=c('rows', "pre-multiply")){
+    inference.type = match.arg(inference.type)
+    stopifnot(length(vec) == 3, ncol(mat) == 3)
 
-  win.contrast <- .cusum_contrast_full(vec[1], vec[2], vec[3], n)
-  lose.contrast <- t(apply(mat, 1, function(x){
-    .cusum_contrast_full(x[1], x[2], x[3], n)
-  }))
+    win.contrast <- .cusum_contrast_full(vec[1], vec[2], vec[3], n)
+    lose.contrast <- t(apply(mat, 1, function(x){
+        .cusum_contrast_full(x[1], x[2], x[3], n)
+    }))
 
   # add inequalities to compare winning split to all other splits
   res <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win,
     rep(1, nrow(lose.contrast)))
   res2 <- .vector_matrix_signedDiff(win.contrast, lose.contrast, sign.win,
-    -rep(1, nrow(lose.contrast)))
+                                    -rep(1, nrow(lose.contrast)))
+  newrows = rbind(res, res2)
 
-  # add inequalities to compare splits to 0 (ensure correct sign)
-  rbind(res, res2)
+  if(inference.type=='rows'){
+      ## add inequalities to compare splits to 0 (ensure correct sign)
+      return(newrows)
+  } else {
+      ## Collect Gv, Gy and Gw instead
+      new.Gv = newrows%*%v
+      new.Gy = newrows%*%y
+      new.Gw = newrows%*%w
+      return(list(new.Gv=new.Gv, new.Gy=new.Gy, new.Gw=new.Gw))
+  }
 }
 
 .vector_matrix_signedDiff <- function(vec, mat, sign.vec, sign.mat){

@@ -19,16 +19,30 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(all.results)
 }
 
-levs = c(0, 0.5, 1, 1.5, 2)
+levs = c(0, 0.5, 1, 1.5, 2)[4:5]
 results.by.lev = list()
+mc.cores=8
+nsim=3000
+nsims=seq(from=3000,to=1000,length=5)[4:5]
+n=200
+visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 for(ilev in 1:length(levs)){
     mylev = levs[ilev]
+    nsim = nsims[ilev]
     print(mylev)
     results.by.lev[[ilev]] = onecompare(lev=mylev,
                                         nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
                                         numSteps=4, bits=1000, mc.cores=mc.cores, n=200, numIS=200)
-    save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump.Rdata")
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump-45.Rdata")
+    save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump-123.Rdata")
 }
+
+
+
+
+
+
+
 
 ## load(file=file.path(outputdir, 'compare-methods-lev3.Rdata'))
 ## pdf(file=file.path(outputdir,"compare-methods-lev3.pdf"), width=5, height=5)

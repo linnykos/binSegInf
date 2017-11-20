@@ -129,6 +129,7 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
         ## Store BIC and resid proj vector
         ic[ii+1] <- myRSS + mypen
+        ## print(ic[ii+1])
         pen[ii+1] <- mypen
         RSS[ii+1] <- myRSS
         resid[[ii+1]] <- myresid

@@ -1,3 +1,7 @@
+## Synopsis: prepare artificial mean for Coriell Cell lines 05296 and 13330.
+## Both are used in the original CBS paper, available from DNACopy R package,
+## and have known truths.
+
 library(DNAcopy)
 library(genlasso)
 library(genlassoinf)
@@ -7,18 +11,15 @@ data(coriell)
 CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
                   coriell$Chromosome,coriell$Position,
                   data.type="logratio",sampleid=c("c05296","c13330"))
+names(coriell)
+y.orig = (coriell[,"Coriell.05296"])
 
-
-## y.orig = (coriell[,"Coriell.05296"])
-## y.orig2 = (coriell[,"Coriell.13330"])
-plot(y.orig2)
-y.orig = y.orig[!is.na(y.orig)]
-
-## Plot the data once
+## Plot the data once.
 plot(y.orig)
-inds = cumsum(sapply(1:23, function(ii)sum(coriell[,"Chromosome"]==ii)))
-abline(v=inds)
-
+boundary.inds = c(0,cumsum(sapply(1:23, function(ii)sum(coriell[,"Chromosome"]==ii))))
+xt = sapply(1:(length(boundary.inds)-1), function(ii)mean(boundary.inds[c(ii,ii+1)] ))
+abline(v=boundary.inds)
+text(x=xt,y=rep(1,23), label=1:23)
 
 ## plot(y.orig)
 ## y.orig = (coriell[,"Coriell.13330"])
@@ -28,6 +29,8 @@ abline(v=inds)
 ## qqnorm(dat)
 ## abline(0,1)
 
+## Fused lasso
+y.orig = y.orig[!is.na(y.orig)]
 a = fusedlasso1d(y.orig)
 cv = cv.trendfilter(a)
 
@@ -57,18 +60,16 @@ std = sd(y.orig-cleanmn)
 newmn = rep(NA,length(y.orig))
 segment.means[c(1,3,5)] = 0
 lapply(1:length(segments), function(ii){newmn[segments[[ii]]] <<- segment.means[ii]})
-## newmn.short = newmn[1101:1300]
-## newmn.shorter = newmn.short[seq(from=1,to=200,length=100)]
+resid.cleanmn <- y.orig - cleanmn
 
 ## Save it
-resid.cleanmn <- y.orig - cleanmn
-filename = "../data/coriell.Rdata"
+filename = "../data/coriell05296.Rdata"
+## filename = "../data/coriell13330.Rdata"
 save(y.orig,
      segment.means,
      segments,
      cleanmn,
      resid.cleanmn,
      newmn,
-     newmn.short,
      std,
      file = filename)
