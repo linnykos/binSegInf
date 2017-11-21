@@ -103,6 +103,7 @@ poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
 
 ##' Temporarily added from selectiveInference package.
 tnorm.surv <- function(z, mean, sd, a, b, bits=NULL, correct.ends=TRUE) {
+
     if(correct.ends) z = max(min(z,b),a)
 
   # Check silly boundary cases
@@ -114,6 +115,7 @@ tnorm.surv <- function(z, mean, sd, a, b, bits=NULL, correct.ends=TRUE) {
   o = is.finite(mean)
   mm = mean[o]
   pp = mpfr.tnorm.surv(z,mm,sd,a,b,bits)
+
   # If there are any NAs, then settle for an approximation
   oo = is.na(pp)
   ## if(any(oo))browser()

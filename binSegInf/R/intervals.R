@@ -1,0 +1,175 @@
+##' Constructor for intervals object.
+##' @param nrow Number of rows in the empty matrix
+##' @param existing A 2-row numeric matrix containing start and end points.
+##'     Column names should be names "s" and "e" respectively.
+##' @return creates an all-NA matrix of dimension nrow x 3. The first two
+##'     columns must be the numeric (no check yet), but the last column can be
+##'     of any type you want. Initializes to numeric.
+##' @export
+intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL) {
+
+    ## Basic checks
+    if(!is.null(existing)){
+        assert_that(all(colnames(existing) %in% c("s", "e")),
+                   msg = "|existing| must be a 2-column matrix with columns names s and e.")
+    }
+
+
+    ## Make start-end candidates
+    starts = ends = c()
+    all.se = t(combn(n,2))
+    if(!is.null(existing)){
+        to.exclude = apply(existing,1, function(myrow){
+            which((all.se[,1] == myrow["s"]) & (all.se[,2] == myrow["e"]))
+        })
+        all.se = all.se[-to.exclude,,drop=FALSE]
+    }
+
+    ## If |comprehensive| == TRUE, draw /all/ possible intervals.
+    if(comprehensive){
+        numIntervals = nrow(all.se)
+        random.i = 1:numIntervals
+    } else {
+        ## Otherwise, draw random intervals, then store the starts and ends.
+        random.i = sample(nrow(all.se), numIntervals, replace=FALSE)
+    }
+
+    structure(list(starts=all.se[random.i, 1],
+                        ends=all.se[random.i, 2],
+                        cusummat=NA,
+                        numIntervals=numIntervals
+                        ), class="intervals")
+}
+
+##' Method to check if object is a valid object of the |interval| class.
+is_valid.intervals <- function(obj){
+    return(all(names(intervals) %in% c("starts", "ends", "cusummat", "numIntervals")))
+}
+
+addcusum <- function(intervals,...){ UseMethod("addcusum")}
+
+##' Calculates all cusums
+addcusum.intervals <- function(intervals, y){
+
+    cumsums = cumsum(y)
+    cusummat = matrix(NA, nrow=length(y)*intervals$numIntervals, ncol=4)
+    colnames(cusummat) = c("s","b", "e", "cusum")
+    tracker.i = 0
+    for(ii in 1:intervals$numIntervals){
+        s = intervals$starts[ii]
+        e = intervals$ends[ii]
+        cusums = getcusums2(s=s, e=e, cumsums)
+        ncusum = length(cusums)
+        irow = tracker.i + (1:ncusum)
+        cusummat[irow, "cusum"] = cusums
+        cusummat[irow, "s"] = rep(s, ncusum)
+        cusummat[irow, "e"] = rep(e, ncusum)
+        cusummat[irow, "b"] = c(s:(e-1))
+        tracker.i = tracker.i + ncusum
+    }
+    intervals$cusummat = cusummat[1:tracker.i,]
+    return(intervals)
+}
+
+restrict <- function(intervals,...){ UseMethod("restrict")}
+
+##' Sees which guys in object correspond to cusums calculated between |s| and
+##' |e|. In other words, returns which guys are /qualified/.
+restrict.intervals <- function(intervals, s=1, e=n){
+    match.i = (intervals$cusummat[,c("s")] >= s) & (intervals$cusummat[,c("e")] <= e)
+    if(length(match.i) == 0) stop("No start and end points correspond to")
+    return(which(match.i))
+}
+
+
+maximize <- function(intervals,...){ UseMethod("maximize")}
+##' Get the cusum maximizer, among qualifying guys.
+maximize.intervals <- function(intervals, qual.inds){
+    max.i = qual.inds[which.max(abs(intervals$cusummat[qual.inds,"cusum"]))]
+    max.sign = sign(intervals$cusummat[max.i,"cusum"])
+    return(list(max.i=max.i,
+                max.sign=max.sign,
+                max.s=intervals$cusummat[max.i,"s"],
+                max.b=intervals$cusummat[max.i,"b"],
+                max.e=intervals$cusummat[max.i,"e"]))}
+
+
+form_rows <- function(intervals,...){ UseMethod("form_rows")}
+##' Forms polyhedron's rows, given a maximizing b and all the qualifying indices
+##' @param y Defaults to NULL, but you can input y to assert that your contrasts
+##'     should be correct.
+form_rows.intervals <- function(intervals, max.s, max.b, max.e, max.sign, qual.inds, n, y=NULL){
+
+    winning.contrast <- cusum(s=max.s, b=max.b, e=max.e, unsigned=TRUE, n=n, sign.of.vy=max.sign,
+                              contrast.vec=TRUE)
+    submat = intervals$cusummat[qual.inds,,drop=FALSE]
+
+    rows1 <- t(apply(submat, 1, function(myrow){
+        winning.contrast - cusum(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+              contrast.vec=TRUE, unsigned=FALSE, n=n)
+    }))
+
+    rows2 <- t(apply(submat, 1, function(myrow){
+        winning.contrast + cusum(s=myrow["s"], b=myrow["b"], e=myrow["e"],
+                                 contrast.vec=TRUE, unsigned=FALSE, n=n)
+    }))
+
+    rows3 = rbind(winning.contrast)
+
+    all.rows = rbind(rows1, rows2, rows3)
+
+    ## Optionally, assert that all halfspaces should actually contain y
+    if(!is.null(y)) assert_that(all(all.rows%*%y>=0))
+    return(all.rows)
+}
+
+
+
+##' Add a single interval to existing set of intervals
+##' @param old.intervals an object of class |intervals|
+##' @param new.s new start point
+##' @param new.e new end point
+##' @export
+add.intervals <- function(intervals, new.s, new.e){
+    ## Basic checks
+    stopifnot(new.s < new.e)
+
+    ## Append new interval information
+    new.starts = c(intervals$starts, new.s)
+    new.ends = c(intervals$ends, new.e)
+
+    ## Return as |intervals| class object
+    structure(list(starts=new.starts,
+                   ends=new.ends),
+              class="intervals")
+}
+
+
+add2 <- function(intervals,...){ UseMethod("add2")}
+
+##' Add winning intervals from the original object, to the |intervals| object.
+add2.intervals <- function(intervals, winning.wbs.obj){
+    intervals$starts = c(intervals$starts, winning.wbs.obj$results[,"max.s"])
+    intervals$ends = c(intervals$ends, winning.wbs.obj$results[,"max.e"])
+    intervals$numIntervals = intervals$numIntervals + nrow(winning.wbs.obj$results)
+    return(intervals)
+
+}
+
+
+##' After making intervals, you can attempt to plot them.
+##' @export
+plot.intervals <- function(obj){
+
+    ## Basic checks
+    stopifnot(is_valid.intervals(obj))
+
+    graphics::plot(NA,
+                ylim = c(0, obj$numIntervals),
+                xlim = c(0,max(obj$ends)),
+                xlab = "intervals",
+                ylab = "")
+    for(ii in 1:numIntervals){
+        graphics::lines(x=c(obj$starts[ii], obj$ends[ii]), y = c(ii,ii))
+    }
+}

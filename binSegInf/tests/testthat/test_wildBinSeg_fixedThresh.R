@@ -165,11 +165,11 @@ test_that("combine.polyhedra() combines simple polyhedra as expected.", {
 test_that("Single polyhedron is correct",{
 
     ## Test settings 1
-    n=6
-    lev=1
-    sigma=1
-    thresh=1
-    numInterval=10
+    n = 6
+    lev = 1
+    sigma = 1
+    thresh = 1
+    numInterval = 10
     mn <- rep(c(0,lev), each=n/2)
     set.seed(0)
     y <- mn + rnorm(n, 0, sigma)
@@ -263,115 +263,34 @@ test_that("get_vup_vlo() produces numerator and denominator consistent with exte
 
 
 
-test_that("Fixed Step Polyhedron contains y (a really basic check)",{
+## TODO: add back after reduction is written into wbsFt functionality.
+## test_that("Reduced WBS p-values still returns the same p-values.",{
 
-    ## one test
-    one_rep <- function(seed){
-        numIntervals=10
-        n = 10
-        lev = 0
-        sigma = 1
-        mn <- rep(c(0,lev), each=n/2)
-        set.seed(seed)
-        thresh = 0
-        y0 <- mn + rnorm(n, 0, sigma)
-        numSteps = 3
+##     ## Simulation settings
+##     set.seed(0)
+##     mn <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+##     lev = 0
+##     sigma = 1
+##     n = 20
+##     y <- mn(lev,n) + rnorm(n,0,sigma)
+##     nsim.is = 1
+##     numSteps = 2
+##     numIntervals = 30
+##     n.levs = 1
 
-        ## Run method on original data |y0|, collect things.
-        intervals = generate_intervals(n,numIntervals,seed=seed+100)
-        obj = wildBinSeg_fixedSteps(y0,
-                                    numSteps=numSteps,
-                                    intervals=intervals,
-                                    verbose=TRUE,
-                                    augment=TRUE)
-        poly <- polyhedra.wbsFs(obj)
+##     ## Fit WBS-FS and form contrast
+##     method <- wildBinSeg_fixedSteps
+##     set.seed(1)
+##     intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
+##     obj <- method(y, numSteps=numSteps, intervals=intervals)
+##     v <- make_all_segment_contrasts(obj)[[1]]
 
-        ## Check that the polyhedron is in it.
-        expect_true(all(poly$gamma %*% cbind(y0) >= poly$u))
+##     ## New test
+##     poly1 <- polyhedra(obj, reduce=TRUE,v=v,sigma=sigma)
+##     poly2 <- polyhedra(obj, reduce=FALSE)
 
-        ## Calculate p-values
-        contrast <- make_all_segment_contrasts(obj)
-        pvs = sapply(contrast, function(v)poly.pval(y0,poly$gamma,poly$u,v,sigma,bits=100)$pv)
-        return(pvs)
-    }
-
-    ## Try many times
-    pvs.total = do.call(c, lapply(1:50, one_rep))
-
-    ## Also check uniformity, if needed
-    ## qqunif(pvs.total)
-
-})
-
-test_that("Fixed Step WBS Polyhedron is exactly correct",{
-
-    numIntervals=10
-    n = 10 ## 4
-    lev = 0
-    sigma = 1
-    mn <- rep(c(0,lev), each=n/2)
-    seed = 48
-    set.seed(seed)
-    thresh = 0
-    y0 <- mn + rnorm(n, 0, sigma)
-    ## numSteps = 5
-    numSteps = 2
-
-    ## Run method on original data |y0|, collect things.
-    intervals = generate_intervals(n,numIntervals,seed)
-    obj = wildBinSeg_fixedSteps(y0,
-                                numSteps=numSteps,
-                                intervals=intervals,
-                                verbose=TRUE,
-                                augment=TRUE)
-
-    poly <- polyhedra.wbsFs(obj)
-
-    ## Check that the polyhedron is in it.
-    stopifnot(all(poly$gamma %*% cbind(y0) >= poly$u))
-
-    ## Generate many new datasets from your polyhedron, see if they /all/ give
-    ## you the same fit. No need to do Gaussian generation of ynew.
-    for(jj in 100000:99000){
-        set.seed(jj)
-        ynew = y0 + rnorm(n,0,0.5)
-        if(all(poly$gamma%*% (ynew) >= poly$u)){
-            objnew =  wildBinSeg_fixedSteps(y=ynew,numSteps=numSteps ,intervals=intervals,verbose=FALSE,augment=TRUE)
-            expect_true(all((objnew$cp * objnew$cp.sign) %in% (obj$cp * obj$cp.sign)))
-        }
-    }
-
-})
-
-
-
-test_that("Reduced WBS p-values still returns the same p-values.",{
-
-    ## Simulation settings
-    set.seed(0)
-    mn <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
-    lev = 0
-    sigma = 1
-    n = 20
-    y <- mn(lev,n) + rnorm(n,0,sigma)
-    nsim.is = 1
-    numSteps = 2
-    numIntervals = 30
-    n.levs = 1
-
-    ## Fit WBS-FS and form contrast
-    method <- wildBinSeg_fixedSteps
-    set.seed(1)
-    intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
-    obj <- method(y, numSteps=numSteps, intervals=intervals)
-    v <- make_all_segment_contrasts(obj)[[1]]
-
-    ## New test
-    poly1 <- polyhedra(obj, reduce=TRUE,v=v,sigma=sigma)
-    poly2 <- polyhedra(obj, reduce=FALSE)
-
-    expect_equal(poly.pval2(y=y,vup=poly1$vup, vlo=poly1$vlo, sigma=sigma, v=v),
-                 poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma, bits=100))
-})
+##     expect_equal(poly.pval2(y=y,vup=poly1$vup, vlo=poly1$vlo, sigma=sigma, v=v),
+##                  poly.pval(y=y, G=poly2$gamma, u=poly2$u, v=v, sigma=sigma, bits=100))
+## })
 
 

@@ -65,7 +65,6 @@ combine.polyhedra <- function(...){
 }
 
 
-print <- function(obj, ...) {UseMethod("print")}
 
 ## Prints polyhedra
 print.polyhedra <- function(mypoly){
@@ -85,3 +84,9 @@ print.polyhedra <- function(mypoly){
 ## #' @param obj object
 ## smartadd <- function(obj, ...) {UseMethod("smartadd")}
 
+
+
+contained <- function(obj,...){UseMethod("contained")}
+contained.polyhedra <- function(obj, y){
+    all(obj$gamma %*% y >= obj$u)
+}

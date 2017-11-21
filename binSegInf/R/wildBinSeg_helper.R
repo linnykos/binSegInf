@@ -1,3 +1,5 @@
+##TODO: Most of these are obsolete. Get rid of the ones that are not used.
+
 ##' Adds a matrix containing information about wbs selection even, as a last
 ##' element to an existing list of such matrices. the name of this new element
 ##' is of the form "j,k". this is in lieu of |cplist| which was used to store
@@ -42,14 +44,8 @@ adddd = function(newsigns,M,env){
 }
 
 
-## filter filternullNULLs out of a pvlist.
-.filternull <- function(pvlist){
-    emptyguys = unlist(lapply(pvlist, function(pvobj) return(length(pvobj)==0)))
-    return(pvlist[which(!emptyguys)])
-}
-
 ##' Helper function for a /single/ start and end.
-maximize = function(s, e, y, getb=TRUE){
+.maximize <- function(s, e, y, getb=TRUE){
 
     ## collect all cusums and signs
     all.bs = (s:(e-1))
@@ -75,7 +71,7 @@ maximize = function(s, e, y, getb=TRUE){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-make_semat = function(m, s, e, intervals, y, thresh){
+.make_semat = function(m, s, e, intervals, y, thresh){
 
     ## Make bare matrix
     mymat = matrix(NA, ncol=7, nrow = length(m), dimnames=NULL)
@@ -97,7 +93,7 @@ make_semat = function(m, s, e, intervals, y, thresh){
     mymat[,"s"] = sapply(se.for.each.m, function(vec)vec[1])
     mymat[,"b"] = sapply(se.for.each.m,
                        function(se){
-                           maximize(se[1], se[2], y, TRUE) })
+                           .maximize(se[1], se[2], y, TRUE) })
     mymat[,"e"] = sapply(se.for.each.m, function(vec)vec[2])
     mymat[,"maxcusum"] = sapply(se.for.each.m,
                        function(se){ maximize(se[1], se[2], y, FALSE) })
@@ -123,7 +119,7 @@ make_semat = function(m, s, e, intervals, y, thresh){
 ##' @param s start location of the current binseg call.
 ##' @param e end location of the current binseg call.
 ##' @param intervals set of random intervals, drawn between 1 and 60
-make_signs = function(m, s, e, intervals, y, thresh){
+.make_signs <- function(m, s, e, intervals, y, thresh){
 
     ## Basic checks
     stopifnot(length(m)==1)
@@ -222,24 +218,10 @@ generate_intervals <- function(n, numIntervals, seed=NULL, start.end.list = NULL
     ends = sapply(intervals,function(se)se[length(se)])
 
     ## return
-    return(list(starts = starts,
-                ends = ends,
-                intervals = intervals,
-                se = Map(c,starts,ends)))
-}
-
-## After making intervals, you can attempt to plot them.
-plot_intervals <- function(intervals){
-    numIntervals = length(intervals$se)
-    graphics::plot(NA,
-                ylim = c(0,numIntervals),
-                xlim = c(0,max(intervals$e)),
-                xlab = "intervals",
-                ylab = "")
-    for(ii in 1:numIntervals){
-        se = intervals$se[[ii]]
-        graphics::lines(x=se, y = c(ii,ii))
-    }
+    return(structure(list(starts = starts,
+                          ends = ends,
+                          intervals = intervals,
+                          se = Map(c,starts,ends)),class="intervals"))
 }
 
 
@@ -304,7 +286,7 @@ unsigned_contrast <- function(s,b,e,n=NULL,y){
 ##' @examples
 ##' make_contrast(20,c(1,40),+1,60)
 ##' @export
-make_contrast = function(test.bp, adj.bps, sn, n){
+make_contrast <- function(test.bp, adj.bps, sn, n){
 
     ## Basic checks
     stopifnot(all(c(test.bp, adj.bps) %in% 0:n))
@@ -320,36 +302,6 @@ make_contrast = function(test.bp, adj.bps, sn, n){
     return(sn*d)
 }
 make_segment_contrast = make_contrast
-
-
-##' Helper function for making segment contrasts from a wildBinSeg object OR
-##' bsFt object.
-##' @param obj Result from running wbs()
-##' @export
-make_all_segment_contrasts <- function(obj){
-
-    ## Basic checks
-    if(length(obj$cp)==0) stop("No detected changepoints!")
-    if(all(is.na(obj$cp)))stop("No detected changepoints!")
-
-    ## Augment the changepoint set for convenience
-    ord = order(obj$cp)
-    cp_aug = c(0,obj$cp[ord],length(obj$y))
-    sn_aug = c(NA,obj$cp.sign[ord],NA)
-    dlist = list()
-
-    ## Make each contrast
-    for(ii in (2:(length(cp_aug)-1))){
-        d = rep(0,length(obj$y))
-        ind1 = (cp_aug[ii-1]+1):cp_aug[ii] ## 1 to 3, 4 to 9
-        ind2 = (cp_aug[ii]+1):cp_aug[ii+1]
-        d[ind1] = -1/length(ind1)
-        d[ind2] = 1/length(ind2)
-        dlist[[ii-1]] = d * sn_aug[ii]
-    }
-    names(dlist) = (obj$cp * obj$cp.sign)[ord]
-    return(dlist)
-}
 
 
 ## Checking if intervals is correct.
@@ -371,4 +323,3 @@ make_all_segment_contrasts <- function(obj){
     return(generate_intervals(n=n, start.end.list = unique.start.end.list))
 
 }
-
