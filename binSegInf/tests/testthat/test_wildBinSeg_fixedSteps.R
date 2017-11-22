@@ -1,3 +1,31 @@
+test_that("Reduction of inference procedure into collecting Gy and Gv correctly works",{
+
+    n=60
+    lev = 0
+    mn = c(rep(0,n/2), rep(lev,n/2))
+    sigma = 1
+    y = mn + rnorm(n, 0, sigma)
+    numIntervals = 10
+    numSteps = 3
+    g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps, cumsum.y=cumsum.y, cumsum.v=cumsum.v, inference.type='rows')
+    vlist <- make_all_segment_contrasts(g)
+    v=vlist[[1]]
+    cumsum.y = cumsum(y)
+    cumsum.v = cumsum(v)
+
+    ## ## See if the results are equal
+    ## all.equal(sort(as.numeric(g$gamma %*% y)), sort(as.numeric( g$Gy)))
+    ## all.equal(sort(as.numeric(g$gamma %*% v)), sort(as.numeric( g$Gv)))
+    ## poly = polyhedra(obj=g$gamma, u=g$u)
+
+    ## See if there is speedup
+    g1 = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps, cumsum.y=cumsum.y, cumsum.v=cumsum.v, inference.type="pre-multiply")
+    g1 = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps, cumsum.y=cumsum.y, cumsum.v=cumsum.v, inference.type="rows")
+    microbenchmark({g2=wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps, cumsum.y=cumsum.y, cumsum.v=cumsum.v, inference.type="pre-multiply")}, times=100)
+    microbenchmark({g1=wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps, cumsum.y=cumsum.y, cumsum.v=cumsum.v, inference.type="rows")}, times=100)
+
+
+
 test_that("WBS.FT gives uniform p-values",{
 
     mysim = function(n){
