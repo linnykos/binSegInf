@@ -1,42 +1,33 @@
 ##' Does a single randomized wbs (rwbs) inference for a given y
 do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), consec=2,
-                             sigma, postprocess=TRUE, better.segment=TRUE,
+                             sigma, postprocess=TRUE, better.segment=FALSE,
                              locs=1:length(y), numIS=100,
                              inference.type=inference.type,
-                             improve.nomass.problem=TRUE){
+                             improve.nomass.problem=TRUE, bits=1000){
 
     ## Fit initial WBS for a generous number of steps
     g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=max.numSteps,
-                              inference.type='none')
+                              inference.type='rows')
     cumsum.y = cumsum(y)
 
     ## Collect the IC information and polyhedron
-    ## Get ic-stopping polyhedron
     ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
     ic_poly = ic_obj$poly
+    stoptime  = ic_obj$stoptime
 
     ## Check for flag
-    if(ic_obj$flag=="normal" ){
-        if(!randomized){
-            ## Get ic-stopped model selection polyhedron
-            stopped.gamma = do.call(rbind, g$rows.list[1:(ic_obj$stoptime+consec)])
-            stopped.u = rep(0, nrow(stopped.gamma))
-            poly = polyhedra(obj=rbind(stopped.gamma, ic_obj$poly$gamma),
-                             u=c(stopped.u, ic_obj$gamma$u))
-        }
-    } else {
-        return(ic_obj$flag)
+    if(ic_obj$flag!="normal" ){
+        return(NA)
     }
-    stoptime  = ic_obj$stoptime
 
     ## Extract changepoints from stopped model and declutter
     cp = g$cp[1:stoptime]
     cp.sign = g$cp.sign[1:stoptime]
-    if(postprocess){
-        cpobj = declutter(cp=cp, cp.sign)$cp.sign
-        cp = cpobj$cp
-        cp.sign = cpobj$cp.sign
-    }
+    ## if(postprocess){
+    ##     cpobj = declutter(coords)
+    ##     cp = cpobj$cp
+    ##     cp.sign = cpobj$cp.sign
+    ## }
 
     ## Form contrasts
     if(better.segment){
@@ -61,7 +52,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                                                     cumsum.v=cumsum.v,
                                                     stop.time=stoptime+consec,
                                                     ic.poly=ic_poly,
-                                                    improve.nomass.problem=improve.nomass.problem)
+                                                    improve.nomass.problem=improve.nomass.problem,
+                                                    bits=bits)
                                                     ))})
     names(pvs) = (cp*cp.sign)[retain]
     return(list(pvs=pvs, locs=cp[retain]))
@@ -71,11 +63,12 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 ##' Does a single randomized wbs (rwbs) inference for a given y
 do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
-                             sigma.add = 0.2, bits=50){
+                             sigma.add = 0.2, bits=50, inference.type=c("rows", "inference")){
 
+    inference.type = match.arg(inference.type)
 
     ## Fit model and get IC information
-    n=length(y)
+    n = length(y)
     new.noise = rnorm(length(y),0,sigma.add)
     h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=max.numSteps)
     ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma+sigma.add, type="bic")
@@ -106,10 +99,39 @@ do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
         pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
-                                ic.poly = ic_obj$poly, bits=bits)
+                                ic.poly = ic_obj$poly, bits=bits,
+                                inference.type=inference.type)
+        return(pv)
     })
+
+
 
     names(pvs) = (cp*cp.sign)[retain]
 
     return(list(pvs=pvs, locs=cp[retain]))
 }
+
+
+## do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
+##                              postprocess=TRUE, locs=1:length(y), numIS=100,
+##                              sigma.add = 0.2, bits=50){
+##         ## Get nonrandomized p-value
+##         D = genlassoinf::makeDmat(n,type='tf',ord=0)
+##         f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
+##         Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
+##         poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
+##         vlist <- make_all_segment_contrasts(f.nonfudged)
+##         if(!is.null(visc)){
+##             retain = which((f.nonfudged$cp %in% visc))
+##             if(length(retain)==0){
+##                 return(data.frame(pvs=NA, locs=NA))
+##             }
+##             vlist = vlist[retain]
+##         }
+##         locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]
+
+##         pvs = sapply(vlist, function(v){
+##             pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
+##         })
+
+##     ooooooooooook

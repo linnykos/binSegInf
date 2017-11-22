@@ -253,7 +253,6 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
     if(type=="fl.rand"){
         ## Draw new noise
         new.noise = rnorm(n,0,sigma.add)
-
         ## Fit binseg on fudged data
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
         f.fudged = genlassoinf::dualpathSvd2(y+new.noise, D=D, maxsteps=numSteps, approx=T)

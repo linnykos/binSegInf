@@ -1,79 +1,158 @@
 context("Test IC wrapper functions")
 
-test_that("Object returned from ic_to_polyhedra() is a valid polyhedra", {
+test_that("IC minimization combined with model selection event has uniform p-values.",
+{
 
-    ## Example
-    set.seed(1)
-    y = c(runif(10),runif(10)+5,runif(10))
-    sigma = .5
-    cp = c(10,20,15,5)
-    consec=1
-    obj <-  get_ic(cp=cp, y=y, sigma=sigma,consec=consec, maxsteps=3)
-    poly <- ic_to_poly(obj)
-    expect_true(is_valid.polyhedra(poly))
+    ## Settings
+    nsim = 20
+    lev = 0
+    n = 10
+    meanfun = onejump
+    sigma = 1
+    numIntervals = n
+    onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
+    meanfun = onejump
+    mn = meanfun(lev,n)
+    nsim = 2000
+    results = mclapply(1:nsim, function(isim){
+
+        ## Generate Data
+        y = mn + rnorm(n, 0, sigma)
+
+        ## Conduct nonrandomized polyhedron
+        h = binSeg_fixedSteps(y, numSteps = 8)
+        ic_obj = get_ic(h$cp, h$y, consec=consec, sigma=sigma, type="bic")
+        if(ic_obj$flag!="normal") return(NA)
+        stoptime = ic_obj$stoptime
+        ic.poly = ic_obj$poly
+        poly = polyhedra(h, numSteps=stoptime)
+
+        ## Get combined polyhedron
+        cp = h$cp[1:stoptime]
+        cp.sign = h$cp.sign[1:stoptime]
+        poly$gamma = rbind(poly$gamma, ic.poly$gamma)
+        poly$u = c(poly$u, ic.poly$u)
+
+        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        pvs = lapply(vlist, function(v){
+            poly.pval2(y=y,v=v,poly=poly, sigma=sigma)$pv
+        })
+        return(pvs)
+    }, mc.cores=4)
+
+    ## all.pvs = results[sapply(results,length)==1]
+    all.pvs=unlist(results)
+    all.pvs = all.pvs[!is.na(all.pvs)]
+    qqunif(all.pvs)
+
+    ## Expect uniform
+    expect_equal(ks.test(all.pvs,"punif")$p.value > 0.05)
 })
 
 
+test_that("IC polyhedron gives exact up and downs.", {
 
-
-
-
-## test_that("IC wrapper works properly", {
-
-##     ## Example
-##     set.seed(1)
-##     y = c(rnorm(10),rnorm(10)+5,rnorm(10))
-##     sigma = 1
-##     obj = binSeg_fixedThresh(y,1)
-##     cp = c(10,20,15,5)
-##     consec=1
-##     stp <- ic_wrapper(obj,y,sigma=sigma)
-##     obj <-  get_ic(cp=cp, y=y, sigma=sigma,consec=consec, maxsteps=3)
-##     poly <- ic_to_poly(obj)
-##     expect_true(is_valid.polyhedra(poly))
-## })
-
-
-
-test_that("IC minimization works properly", {
-
-    nsim=20
-    lev = 0
+    ## Draw original data.
     n = 10
-    meanfun=onejump
-    sigma=1
-    numIntervals=n
-    mn = meanfun(lev,n)
-    set.seed(21)
-    y = mn + rnorm(n, 0, sigma)
-    cumsum.y = cumsum(y)
-
-    ## Fit initial WBS for a generous number of steps
-    numSteps=10
-    g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps,
-                              inference.type='rows')
-
-    ## Get ic object of two steps
+    mn = rep(0,n)
+    sigma = 1
+    sigma.add = 0.2
+    nsim = 500
     consec=2
-    ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
-    ic_poly = ic_obj$poly
-    ic_poly$gamma%*%y > ic_poly$u
-    expect_true(all(ic_poly$gamma %*% g$y >= ic_poly$u))
+    max.numSteps = n-2
+    set.seed(11)
+    y.orig = mn + rnorm(n,0,sigma)
 
-    ## Generate new y's
-    nsim=1000
-    sigmadd=1
-    for(isim in 1:nsim){
-        ynew = mn + rnorm(n, 0, sigma)
-        ic_obj_new = get_ic(g$cp, ynew, consec=consec, sigma=sigma, type="bic")
-        if(all(ic_poly$gamma %*% ynew >= ic_poly$u)){
-            expect_equal(ic_obj_new$stoptime, ic_obj$stoptime)
-            expect_equal(ic_obj_new$seqdirs, ic_obj$seqdirs)
-        } ## else {
-        ##     if(!is.na(ic_obj_new$stoptime) & ic_obj_new$stoptime==2){
-        ##         print(ic_obj_new$stoptime)
-        ##         print(ic_obj_new$seqdir)
-        ##     }
-        ## }
-    }
+    ## Nonrandomized inference
+    h = binSeg_fixedSteps(y.orig, numSteps = max.numSteps)
+    ic_obj = get_ic(h$cp, h$y, consec=consec, sigma=sigma, type="bic")
+    if(ic_obj$flag!="normal") return(ic_obj$flag)
+    stoptime = ic_obj$stoptime
+    orig.seqdirs = c(.getorder(ic_obj$ic))
+    ic.poly = ic_obj$poly
+
+    ## Basic check: is my original y even covered?
+    poly = polyhedra(h, numSteps=stoptime+consec)
+    poly$gamma = rbind(poly$gamma, ic.poly$gamma)
+    poly$u = c(poly$u, ic.poly$u)
+    expect_true(all(poly$gamma%*%y.orig>poly$u))
+
+    nsim = 200
+    results = mclapply(1:nsim, function(isim){
+
+        ## Generate new data
+        printprogress(isim,nsim)
+        ## set.seed(isim)
+        ## y.new = mn + rnorm(n,0,sigma)
+        y.new = y.orig + rnorm(n,0,0.1)
+        h.new = binSeg_fixedSteps(y.new, numSteps = stoptime+consec)
+
+        ## Get the IC sequence
+        ic_obj.new = get_ic(h.new$cp, h.new$y, consec=consec, sigma=sigma, type="bic")
+        new.seqdirs = c(.getorder(ic_obj.new$ic))
+
+        ## See if the signs matching make the data be in the polyhedron
+        if(all(h.new$cp*h.new$cp.sign  == (h$cp*h$cp.sign)[1:(stoptime+consec)] )){
+            if((all.equal(new.seqdirs, orig.seqdirs[1:(stoptime+consec+1)])==TRUE)) {
+                expect_true(all(poly$gamma %*%y.new > poly$u))
+            }}
+    },mc.cores=4)
+
+
+    nsim=200
+    results = mclapply(1:nsim, function(isim){
+
+        ## Generate new data
+        printprogress(isim,nsim)
+        ## set.seed(isim)
+        ## y.new = mn + rnorm(n,0,sigma)
+        y.new = y.orig + rnorm(n,0,0.1)
+        h.new = binSeg_fixedSteps(y.new, numSteps = stoptime+consec)
+
+        ## Get the IC sequence
+        ic_obj.new = get_ic(h.new$cp, h.new$y, consec=consec, sigma=sigma, type="bic")
+        new.seqdirs = c(.getorder(ic_obj.new$ic))
+
+        ## See if the signs matching make the data be in the polyhedron
+        if(all(poly$gamma %*%y.new > poly$u)){
+            print('here')
+            expect_equal(ic_obj.new$stoptime, ic_obj$stoptime)
+            expect_equal(ic_obj.new$seqdirs, ic_obj$seqdirs[1:(stoptime+consec+1)])
+        }
+    },mc.cores=4)
+}
+
+
+test_that("IC minimization combined with randomization has uniform p-values.",{
+
+    ## Source in helper
+    source("../main/artificial/artif-helpers.R")
+
+    ## Check uniformity
+    n = 10
+    mn = rep(0,n)
+    sigma = 1
+    sigma.add = 0.2
+    nsim = 500
+    results = mclapply(1:nsim, function(isim){
+        printprogress(isim,nsim)
+        y = mn + rnorm(n,0,sigma)
+        ## Randomized
+        ## pvs = do_rbs_inference(y=y, max.numSteps=8,
+        ##                        consec=2, sigma=sigma, postprocess=TRUE,
+        ##                        locs=1:length(y), numIS=100, sigma.add = sigma.add, bits=1000,
+        ##                        inference.type="rows")
+
+        pvs = do_rwbs_inference(y=y, max.numSteps=10, numIntervals=length(y),
+                                     consec=2, sigma=sigma, postprocess=TRUE,
+                                     better.segment=FALSE, locs=1:length(y),
+                                     numIS=100, inference.type="pre-multiply",
+                                     improve.nomass.problem=TRUE)
+        return(pvs)
+    }, mc.cores=8)
+
+   ## Check uniformity
+    res = results[sapply(results, function(myresult){length(myresult)>1})]
+    ## qqunif(unlist(lapply(res, function(myres) myres$pv)))
+    expect_equal(ks.test(all.pvs,"punif")$p.value > 0.05)
 })

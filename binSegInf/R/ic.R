@@ -129,7 +129,6 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
         ## Store BIC and resid proj vector
         ic[ii+1] <- myRSS + mypen
-        ## print(ic[ii+1])
         pen[ii+1] <- mypen
         RSS[ii+1] <- myRSS
         resid[[ii+1]] <- myresid
@@ -255,7 +254,9 @@ is_valid.ic <- function(obj){
 ## Returns a sequence of +1 and -1 for sequential incr and decrements in a
 ## vector; assume first step always dips; _almost_ always true
 ## @param ic a numeric vector
-.getorder = function(ic){
-  return(c(NA,sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)])))
+.getorder <- function(ic){
+  seqdir = (c(NA,sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)])))
+  names(seqdir) = c(0:(length(ic)-1))
+  return(seqdir)
 }
 

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 test_that("Reduction of inference procedure into collecting Gy and Gv correctly works",{
 
     n=60
@@ -27,40 +28,12 @@ test_that("Reduction of inference procedure into collecting Gy and Gv correctly 
 
 
 test_that("WBS.FT gives uniform p-values",{
+=======
+test_that("WBS has uniform null p-values and power when signal is present.",{
+>>>>>>> Stashed changes
 
-    mysim = function(n){
-        cat("Sample size=", n, fill=TRUE)
-        nsim = 3000
-        pvs = mclapply(1:nsim, function(isim){
-            printprogress(isim,nsim)
+    mysim = function(n, lev){
 
-            ## Generate some data
-            lev = 0
-            mn = c(rep(0,n/2), rep(lev,n/2))
-            sigma = 1
-            y = mn + rnorm(n, 0, sigma)
-
-            ## Fit WBS
-            numIntervals = 3
-            numSteps = 3
-            g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
-            poly = polyhedra(obj=g$gamma, u=g$u)
-            vlist <- make_all_segment_contrasts(g)
-            return(sapply(vlist, function(v){
-                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
-            }))
-        }, mc.cores=2)
-        expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
-        return(pvs)
-    }
-    null.pvals.by.samplesize = sapply(c(10,20,50,100), mysim)
-})
-
-test_that("WBS has power when signal is present.",{
-
-    mysim = function(n){
-
-        lev = 5
         nsim = 1000
         numSteps = 3
         sigma = 1
@@ -69,7 +42,6 @@ test_that("WBS has power when signal is present.",{
 
             ## Generate some data
             mn = c(rep(0,n/2), rep(lev,n/2))
-            set.seed(isim)
             y = mn + rnorm(n, 0, sigma)
 
             ## Fit WBS
@@ -85,9 +57,19 @@ test_that("WBS has power when signal is present.",{
         },mc.cores=4)
         pvs = unlist(pvs)
         pvs = unique(pvs) ## Sometimes ties occur numerically. Not sure why.
-        expect_true(ks.test(unlist(pvs), punif)$p.value < 0.01)
     }
-    null.pvals.by.samplesize = sapply(c(10,20,50,100), mysim)
+
+    null.pvals = sapply(c(10,20,50,100), mysim, lev=0)
+    nonnull.pvals = sapply(c(10,20,50,100), mysim, lev=5)
+
+    ## Do KS tests
+    sapply(null.pvals, function(pvs){
+        expect_true(ks.test(unlist(pvs), punif)$p.value > 0.05)
+    })
+    sapply(nonnull.pvals, function(pvs){
+        expect_true(ks.test(unlist(pvs), punif)$p.value < 0.01)
+    })
+
 })
 
 
