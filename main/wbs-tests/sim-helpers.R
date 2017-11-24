@@ -10,7 +10,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     sigma = 1
 
     results = mclapply(1:nsim,function(isim){
-        set.seed(isim)
         printprogress(isim, nsim)
 
         ## Generate some data
