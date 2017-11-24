@@ -1,6 +1,7 @@
 ##' Helper to get p-values
 dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
-                  inference.type = "rows", locs=1:n, better.segment=FALSE, improve.nomass.problem=FALSE, min.num.things=30){
+                  inference.type = "rows", locs=1:n, better.segment=FALSE,
+                  improve.nomass.problem=FALSE, min.num.things=30, bits=1000){
 
     ## Basic checks
     if(randomized)assert_that(!is.null(numIS))
@@ -9,6 +10,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     sigma = 1
 
     results = mclapply(1:nsim,function(isim){
+        set.seed(isim)
         printprogress(isim, nsim)
 
         ## Generate some data
@@ -16,9 +18,9 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
         y = mn + rnorm(n, 0, sigma)
         cumsum.y=cumsum(y)
 
-        ## Fit WBS
-        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps)
-        poly = polyhedra(obj=g$gamma, u=g$u)
+        ## Fit WBS (without polyhedron)
+        g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps,
+                                  inference.type="none")
         if(better.segment){
             vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g)
         } else {
@@ -40,10 +42,10 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
                                                         numIS=numIS, inference.type=inference.type,
                                                         cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                         improve.nomass.problem=
-                                                            improve.nomass.problem, min.num.things=min.num.things)))
-
-
+                                                            improve.nomass.problem, min.num.things=min.num.things,
+                                                        bits=bits)))
             } else {
+                poly = polyhedra(obj=g$gamma, u=g$u)
                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
         })

@@ -19,13 +19,16 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(all.results)
 }
 
-levs = c(0, 0.5, 1, 1.5, 2)[4:5]
+## levs = c(0, 0.5, 1, 1.5, 2)[4:5]
+## levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[6:7]
+levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[8:9]
 results.by.lev = list()
 mc.cores=8
 nsim=3000
-nsims=seq(from=3000,to=1000,length=5)[4:5]
+nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[8:9]
 n=200
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
+print(levs)
 for(ilev in 1:length(levs)){
     mylev = levs[ilev]
     nsim = nsims[ilev]
@@ -33,15 +36,44 @@ for(ilev in 1:length(levs)){
     results.by.lev[[ilev]] = onecompare(lev=mylev,
                                         nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
                                         numSteps=4, bits=1000, mc.cores=mc.cores, n=200, numIS=200)
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump-45.Rdata")
-    save(list=c("results.by.lev","levs","nsim", "n"), file="compare-methods-fourjump-123.Rdata")
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-45.Rdata"))
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-123.Rdata"))
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
+    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
 }
 
 
 
+## Load 123
+outputdir = "../output"
+## load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
+## load(file=file.path(outputdir, "compare-methods-fourjump-45.Rdata"))
 
+## results.by.lev.master = list()
+## results.by.lev.master[1:3] = results.by.lev[1:3]
+## results.by.lev.master[4:5] = results.by.lev[1:2]
+## results.by.lev = results.by.lev.master
 
+## Parse the results
+myclean <- function(myresult){
+    aa = lapply(myresult, function(a) do.call(rbind,a))
+    return(aa)
+}
+mycleanresult = lapply(results.by.lev, myclean)
 
+## Extract powers from it
+levs = c(0, 0.5, 1, 1.5, 2)
+names(mycleanresult) = levs
+pows = sapply(levs, function(mylev){
+    print(mylev)
+    pvs = mycleanresult[[toString(mylev)]][[1]][,1]
+    pvs = pvs[!is.na(pvs)]
+    mypow = sum(pvs<0.05/4)/length(pvs)
+})
+
+plot(pows)
+
+## What does the onecompare() function produce NA's for?
 
 
 ## load(file=file.path(outputdir, 'compare-methods-lev3.Rdata'))
