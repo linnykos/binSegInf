@@ -6,7 +6,7 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
 
     all.names = c("fl.rand", "fl.nonrand", "sbs.rand",
                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
-                 "cbs.rand", "cbs.nonrand")
+                 "cbs.rand", "cbs.nonrand")[1:2]
 
     all.results = lapply(all.names, function(myname){
         print(myname)
@@ -21,7 +21,8 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
 
 ## levs = c(0, 0.5, 1, 1.5, 2)[4:5]
 ## levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[6:7]
-levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[8:9]
+## levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[8:9]
+levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
 results.by.lev = list()
 mc.cores=8
 nsim=3000
@@ -39,20 +40,26 @@ for(ilev in 1:length(levs)){
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-45.Rdata"))
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-123.Rdata"))
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
-    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
+    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-only-fl.Rdata"))
 }
 
 
 
 ## Load 123
 outputdir = "../output"
-## load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
-## load(file=file.path(outputdir, "compare-methods-fourjump-45.Rdata"))
 
-## results.by.lev.master = list()
-## results.by.lev.master[1:3] = results.by.lev[1:3]
-## results.by.lev.master[4:5] = results.by.lev[1:2]
-## results.by.lev = results.by.lev.master
+## Aggregate the results
+results.by.lev.master = list()
+load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
+results.by.lev.master[1:3] = results.by.lev[1:3]
+load(file=file.path(outputdir, "compare-methods-fourjump-45.Rdata"))
+results.by.lev.master[4:5] = results.by.lev[1:2]
+load(file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
+results.by.lev.master[6:7] = results.by.lev[1:2]
+load(file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
+results.by.lev.master[8:9] = results.by.lev[1:2]
+results.by.lev = results.by.lev.master
 
 ## Parse the results
 myclean <- function(myresult){
@@ -62,16 +69,95 @@ myclean <- function(myresult){
 mycleanresult = lapply(results.by.lev, myclean)
 
 ## Extract powers from it
-levs = c(0, 0.5, 1, 1.5, 2)
+levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
 names(mycleanresult) = levs
-pows = sapply(levs, function(mylev){
-    print(mylev)
+cond.pows = sapply(levs, function(mylev){
     pvs = mycleanresult[[toString(mylev)]][[1]][,1]
     pvs = pvs[!is.na(pvs)]
     mypow = sum(pvs<0.05/4)/length(pvs)
 })
 
-plot(pows)
+## Collect uncond pows
+all.names = c("fl.rand", "fl.nonrand", "sbs.rand",
+                 "sbs.nonrand", "wbs.rand", "wbs.nonrand",
+                 "cbs.rand", "cbs.nonrand")[c(1,3,5,7)]
+
+## cond.pows.by.method = sapply(all.names, function(methodname){
+## uncond.pows.by.method = sapply(all.names, function(methodname){
+recoveries.by.method = sapply(all.names, function(methodname){
+
+
+    ## ## Investigating a few things:
+    ## methodname="wbs.nonrand"
+    ## methodname="fl.nonrand"
+    ## par(mfrow=c(3,3))
+    ## lapply(levs, function(mylev){
+    ## pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
+    ## locs = mycleanresult[[toString(mylev)]][[methodname]][,"locs"]
+    ## hist(abs(locs)[!is.na(locs)])
+    ## })
+
+    methodname = "fl.rand"
+    cond.pows = sapply(levs, function(mylev){
+        print(mylev)
+        pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
+        pvs = pvs[!is.na(pvs)]
+        mypow = sum(pvs<0.05/4)/length(pvs)
+        print(mypow)
+    })
+    names(cond.pows) = levs
+    return(cond.pows)
+
+
+    ## uncond.pows = sapply(levs, function(mylev){
+    ##     print(mylev)
+    ##     pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
+    ##     len = length(pvs)
+    ##     pvs = pvs[!is.na(pvs)]
+    ##     mypow = sum(pvs<0.05/4)/len
+    ## })
+    ## names(uncond.pows) = levs
+    ## return(uncond.pows)
+
+    ## recoveries = sapply(levs, function(mylev){
+    ##     print(mylev)
+    ##     len= nrow(mycleanresult[[toString(mylev)]][[methodname]])
+    ##     mycleanresult[[toString(mylev)]][["sbs.nonrand"]]
+    ##     pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
+    ##     pvs = pvs[!is.na(pvs)]
+    ##     ## mypow = sum(pvs<0.05/4)/length(pvs)
+    ##     recovery = length(pvs)/(len)
+    ## })
+    ## names(recoveries) = levs
+    ## return(recoveries)
+
+})
+cols = RColorBrewer::brewer.pal(4,"Set3")
+lwd = rep(2,4)
+lty = rep(1,4)
+matplot(y=cond.pows.by.method, x=levs, type='l', col=cols, lwd=lwd, lty=lty)
+matplot(y=recoveries.by.method, x=levs, type='l', col=cols, lwd=lwd, lty=lty)
+legend("bottomright", col=cols, lwd=lwd, lty=lty, legend=all.names)
+
+
+
+## Get detection ability
+## lapply(results.by.lev[[2]]$wbs.rand, function(myresult){
+##     any(is.na(unlist(myresult)))})
+wbs.rand.detect.prop <- lapply(results.by.lev, function(my.result.by.lev){
+    len = length(my.result.by.lev$wbs.rand)
+    pvs = unlist(lapply(my.result.by.lev$wbs.rand, function(myresult){
+        (myresult)[,"pvs"] }))
+    pvs = pvs[!is.na(pvs)]
+    recovery = length(pvs)/(4*len)
+    return(recovery)
+})
+
+plot(pows, type='l')
+
+
+
+
 
 ## What does the onecompare() function produce NA's for?
 

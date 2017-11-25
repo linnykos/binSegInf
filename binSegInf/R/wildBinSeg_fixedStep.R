@@ -184,3 +184,7 @@ is_valid.wbsFs <- function(obj){
     return(mylist)
 }
 
+
+polyhedra.wbsFs <- function(obj){
+    polyhedra(obj = obj$gamma, u = obj$u)
+}

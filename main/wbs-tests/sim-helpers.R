@@ -11,6 +11,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
     results = mclapply(1:nsim,function(isim){
         printprogress(isim, nsim)
+        set.seed(isim)
 
         ## Generate some data
         mn = meanfun(lev,n)
@@ -19,7 +20,8 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
         ## Fit WBS (without polyhedron)
         g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=numSteps,
-                                  inference.type="none")
+                                  inference.type="rows")
+                                  ## inference.type="fix")
         if(better.segment){
             vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g)
         } else {
@@ -273,7 +275,8 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits,
+                                inference.type="rows")
         })
 
         return(data.frame(pvs=pvs,
@@ -284,7 +287,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         ## Get nonrandomized p-value
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
-        f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
+        f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=numSteps, approx=T)
         Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
         poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
         vlist <- make_all_segment_contrasts(f.nonfudged)

@@ -7,6 +7,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                max.numIS = 2000, inference.type = c("rows", "pre-multiply")){
 
     ## New: Get many fudged TG statistics.
+    inference.type = match.arg(inference.type)
     done=FALSE
     pvs = c()
     denoms = c()
@@ -72,7 +73,13 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         numIS = round(numIS*1.5)
 
         ## Check if all pvalues are the same, and if so sample more.
-        enough.things = any(pvs!=pvs[1])
+        enough.things = (any(pvs!=pvs[1]) | sum(denoms==1)>10) ## Second part
+                                                               ## added because
+                                                               ## sometimes
+                                                               ## there is no
+                                                               ## variation but
+                                                               ## all denoms are
+                                                               ## 1.
         reached.limit = (numIS > max.numIS)
         if(reached.limit | enough.things){ done = TRUE }
     }
