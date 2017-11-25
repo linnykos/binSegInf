@@ -96,7 +96,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
                             ic.poly=NULL, bits=50, numIS.max=1000,
-                            improve.nomass.problem=FALSE, min.num.things=30){
+                            improve.nomass.problem=FALSE, min.num.things=30, verbose=FALSE,
+                            mc.cores=1){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -109,7 +110,9 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight")
     while(!done){
-        parts = sapply(1:numIS, function(isim){
+        parts = mclapply(1:numIS, function(isim){
+            if(verbose) printprogress(isim, numIS,
+                                      "importance sampling replicate")
             rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                       numIntervals=numIntervals,
                       numSteps=winning.wbs.obj$numSteps,
@@ -120,7 +123,10 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       stop.time=stop.time,
                       ic.poly=ic.poly,
                       bits=bits)
-        })
+        }, mc.cores=mc.cores)
+
+        ## Combine the things.
+        parts = t(do.call(rbind,parts)) ## Not ideal but works for now
 
         parts.so.far = cbind(parts.so.far, parts)
         ## Handling the problem of p-value being NaN/0/1
