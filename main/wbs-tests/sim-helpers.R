@@ -36,7 +36,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 
         ## Get the p-values
         vlist = vlist[retain] ## Added
-        print(vlist)
         pvs = sapply(vlist, function(v){
             if(randomized){
                 cumsum.v = cumsum(v)
