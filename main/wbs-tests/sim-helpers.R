@@ -28,14 +28,15 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
             vlist <- make_all_segment_contrasts_from_cp(cp=g$cp, cp.sign=g$cp.sign, n=n)
         }
 
-        ## retain only the guys we want
-        retain = which((g$cp %in% locs))
+        ## Retain only the guys we want
+        retain = which((abs(as.numeric(names(vlist))) %in% locs))
         if(length(retain)==0){
             return(list(pvs=c(), null.true=c()))
         }
 
         ## Get the p-values
         vlist = vlist[retain] ## Added
+        print(vlist)
         pvs = sapply(vlist, function(v){
             if(randomized){
                 cumsum.v = cumsum(v)
@@ -50,7 +51,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
                return(poly.pval2(y=y, poly=poly, v=v, sigma=sigma)$pv)
             }
         })
-        names(pvs) = (g$cp*g$cp.sign)[retain]
+        names(pvs) = names(vlist)
 
         ## Also store other information
         null.true = sapply(vlist, function(v){
@@ -65,7 +66,8 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     ## results = results[sapply(results,function(a)length(a)==2)]
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
     truths = unlist(lapply(results, function(a)a[["null.true"]]))
-    return(list(pvs=pvs, truths=truths))
+
+    return(list(pvs=pvs, truths=truths, vlist=vlist))
 }
 
 
@@ -275,8 +277,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits,
-                                inference.type="rows")
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
         })
 
         return(data.frame(pvs=pvs,
