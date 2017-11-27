@@ -66,7 +66,7 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
     pvs = unlist(lapply(results, function(a)a[["pvs"]]))
     truths = unlist(lapply(results, function(a)a[["null.true"]]))
 
-    return(list(pvs=pvs, truths=truths, vlist=vlist))
+    return(list(pvs=pvs, truths=truths))
 }
 
 
