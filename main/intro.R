@@ -1,3 +1,4 @@
+## Synopsis: introductory example for paper
 load(file="../data/ng754-s11-sheet3.Rdata")
 library(xtable)
 

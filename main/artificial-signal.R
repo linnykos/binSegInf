@@ -50,25 +50,3 @@ plot(y,ylim=c(-1,1), main = paste0("Signal size /stretched/ from snr=1 to ",lev)
 lines(mn(lev,n),col='red')
 }
 graphics.off()
-
-## Time things
-lev=4
-y <- mn(lev,n) + rnorm(n,0,std)
-method <- wildBinSeg_fixedSteps
-intervals <- generate_intervals(n=length(y),numIntervals=numIntervals)
-
-print("This is how long it took to run the algorithm:")
-mytime <- proc.time()
-obj <- method(y, numSteps=numSteps, intervals=intervals, verbose=TRUE)
-mynewtime <- proc.time()
-print(mynewtime - mytime)
-
-contrast <- make_all_segment_contrasts(obj)
-v = contrast[[1]]
-
-print("This is how long it took to make the polyhedra:")
-mytime <- proc.time()
-poly <- polyhedra(obj,v=v,reduce=TRUE,sigma=sigma)
-mynewtime <- proc.time()
-print(mynewtime - mytime)
-print(format(object.size(poly), "Mb"))

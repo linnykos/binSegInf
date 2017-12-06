@@ -4,17 +4,18 @@ source("../main/justin/barebones/funs.R")
 source("../main/justin/barebones/tests.R") ## unit tests
 
 ## Example settings
-nsim = 10000
+## nsim = 10000
+nsim = 200
 sigma=1
 sigma.add=.1
 n=6
-all.pvs = mclapply(1:nsim, function(isim){
+all.pvs2 = mclapply(1:nsim, function(isim){
     printprogress(isim,nsim)
     y = rep(0,n) + rnorm(n,0,sigma)
     added.noise = rep(0,n) + rnorm(n,0,sigma.add)
     rtg(y=y, sigma=sigma, shift=added.noise, sigma.add=sigma.add, nsim.inner=100)
 }, mc.cores=4)
-qqunif(a..p.vs)
+qqunif(unlist(all.pvs))
 
 
 
