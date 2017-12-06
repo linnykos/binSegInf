@@ -5,64 +5,78 @@ source("../main/wbs-tests/sim-helpers.R")
 outputdir = "../output"
 
 ## Fixed interval recovery for more complicated signal
-n=60
-lev=3
+n=200
+lev=2
 nsim=1000
 visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
 numSteps=4
 locs = Map(function(my.numInterval)
+    print(my.numInterval)
     dosim_recovery(lev=lev,n=n,nsim=nsim,
+
                    numSteps=numSteps,
                    randomized=TRUE, numIS=100,
                    meanfun=fourjump,
                    numIntervals = my.numInterval,
                    mc.cores=mc.cores, locs=visc), numIntervals)
+filename = "numIntervals-recovery.Rdata"
+save(list=c("locs", "visc", "n", "lev", "numIntervals"),
+     file=file.path(outputdir, filename))
 
-## Plot the recovery
+## Plot the recoveries across numIntervlas
+load(file=file.path(outputdir, filename))
 pdf(file=file.path(outputdir,"varying-intervals-prop-recovery-fourjump.pdf"), width=5, height=5)
-## recoveries = (sapply(c(locs), function(myloc) sum(myloc %in% visc)))/nsim
-## props = numIntervals/n
-## plot(recoveries~props, type='l', ylim=c(0,1))
 plot(unlist(locs)~props,type='l', ylim=c(0,1))
 graphics.off()
+
 
 
 ## Now run see powers
 library(genlassoinf)
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-onecompare <- function(lev=0, filename, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, n, numIntervals=n){
+onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
+                       numSteps=1, n, numIntervals=n, bits=1000){
 
     print("wbs.nonrand")
     result.wbs.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.nonrand", n=n, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps,
-                      numIntervals=numIntervals)
+        dosim_compare(type="wbs.nonrand", n=n, lev=lev, numIS=200,
+                      meanfun=meanfun, visc=visc, numSteps=numSteps,
+                      numIntervals=numIntervals, bits=bits)
     }, mc.cores=mc.cores)
 
     print("wbs.rand")
     result.wbs.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200, meanfun=meanfun, visc=visc, numSteps=numSteps)
+        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200,
+                      meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
     }, mc.cores=mc.cores)
 
     return(list(result.wbs.nonrand=result.wbs.nonrand, result.wbs.rand=result.wbs.rand))
 }
 
-n=60
-lev=3
+## n=60
+n=200
+lev=1
 nsim=200
+bits=1000
 numSteps=4
-mc.cores=8
 visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
+mc.cores=8
 numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
 results.list = lapply(numIntervals, function(nI){
-    onecompare(lev=lev, filename=file.path(outputdir,'fourjump-varying-intervals.Rdata'),
-               nsim=nsim, meanfun=fourjump, visc=visc, numSteps=numSteps, mc.cores=mc.cores,
-               n=n, numIntervals=nI)
+    onecompare(lev=lev, nsim=nsim, meanfun=fourjump, visc=visc,
+               numSteps=numSteps, mc.cores=mc.cores, n=n, numIntervals=nI,
+               bits=bits)
 })
-save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals.Rdata"))
+save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200.Rdata"))
+
+
+## Load the data
+load(file=file.path(outputdir,"varying-intervals.Rdata"))
+load(file=file.path(outputdir,"varying-intervals-n200.Rdata"))
 
 ## Calculate it
 avg.power.list = lapply(results.list,function(a){

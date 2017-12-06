@@ -1,49 +1,23 @@
 ## Synopsis: Try to make a better, improved segment test by using the winning
 ## intervals as segments
 
-## Sample settings
-set.seed(1)
-sigma=1
-lev=3
-n=10
-meanfun = onejump
-numSteps=1
-numIntervals=n
-randomized=FALSE
-visc = n/2 + c((-1),0,+1)
-locs = visc
-
-n=60
-nsims=c(3000,700,500,250)
-## numSteps=3
-mc.cores=1
-visc = (n/2+((-1):1))
-## results = lapply(levs, dosim, n=n, nsim=nsim, numSteps=numSteps, randomized=TRUE, numIS=100, meanfun=onejump, mc.cores=mc.cores)
-source("../main/wbs-tests/sim-helpers.R")
-results = Map(function(lev,nsim)dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,
-                                      randomized=randomized,numIS=100,meanfun=onejump,
-                                      mc.cores=mc.cores, locs=visc, better.segment=TRUE), levs, nsims)
-
-
-
 ## On fourjump example
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-## whichlevs=1:2
-## whichlevs = 3:5
-levs = c(0,1,2,3,4)[whichlevs]
+whichlevs = 4:6
+## whichlevs = 1:3
+levs = c(0,0.5,1,2,3,4)[whichlevs]
 n = 200
 meanfun = fourjump
 numSteps = 4
 randomized = TRUE
-## visc = n/5
 ## visc = 3*n/5 + c((-2):2)
 visc = 2*n/5 + c((-2):2)
+print(visc)
 mc.cores = 8
 min.num.things = 10
 bits=1000
-## nsims = seq.int(from=500, to=100, length=5)[whichlevs]
-nsims = c(1500, 750, 300, 100, 100)[whichlevs]
+nsims = c(1500, 1000, 750, 300, 100, 100)[whichlevs]
 source("../main/wbs-tests/sim-helpers.R")
 for(ilev in 1:length(whichlevs)){
     lev = levs[ilev]
@@ -68,7 +42,7 @@ for(ilev in 1:length(whichlevs)){
 }
 
 ## Load and make QQ plot better vs original segment test.
-lev=3
+lev = 3
 filename= paste0("better-segment-fourjump-lev", lev, ".Rdata")
 load(file=file.path(outputdir, filename))
 qqunif(results$pv)
@@ -77,14 +51,16 @@ points(a,col='red')
 legend("bottomright", legend=c("orig", "improved"), col = c("red", "black"), pch=c(16,16))
 
 ## Make power table
-levs = c(0,2,3,4)
-powermat = matrix(ncol=2,nrow=5)
+levs = c(0,0.5,1,2,3,4)
+powermat = matrix(ncol=2,nrow=6)
 colnames(powermat) = c("power", "powers.orig")
 rownames(powermat) = levs
-for(lev in levs){
-    print(lev)
+for(ilev in 1:6){
+    lev = levs[ilev]
+    if(lev == 0.5) lev= "onehalf" ## For saving purposes
     ## Load and clean
-    filename = paste0("better-segment-fourjump-lev", lev, ".Rdata")
+    filename = paste0("better-segment-fourjump-80-lev", lev, ".Rdata")
+    ## filename = paste0("better-segment-fourjump-lev", lev, ".Rdata")
     load(file=file.path(outputdir, filename))
     pvs.orig = results.orig$pv
     pvs.orig = pvs.orig[!is.na(pvs.orig)]
@@ -94,6 +70,58 @@ for(lev in levs){
     ## Calculate original powers
     power.orig = sum(pvs.orig < 0.05/4)/length(pvs.orig)
     power = sum(pvs< 0.05/4)/length(pvs)
-    powermat[lev+1,] = c(power, power.orig)
+    powermat[ilev,] = c(power, power.orig)
 }
+round(powermat,3)
+xtable::xtable(powermat,digits=3)
 
+
+
+
+## Why is this thing so better at lev1? Load the two up, and compare seed by seed.
+n = 200
+meanfun = fourjump
+numSteps = 4
+randomized = TRUE
+## visc = n/5
+## visc = 3*n/5 + c((-2):2)
+visc = 2*n/5 + c((-2):2)
+mc.cores = 8
+min.num.things = 10
+bits=1000
+source("../main/wbs-tests/sim-helpers.R")
+lev=1
+nsim=750
+filename = paste0("better-segment-fourjump-lev", lev, ".Rdata")
+load(file=file.path(outputdir, filename))
+pvs.orig = results.orig$pv
+pvs.orig = pvs.orig[!is.na(pvs.orig)]
+
+## The first one is already huely
+pvs = results$pvs
+pvs = pvs[!is.na(pvs)]
+
+plot(pvs~pvs.orig)
+
+
+source("../main/wbs-tests/sim-helpers.R")
+nsim=1
+randomized=TRUE
+mc.cores=1
+meanfun=fourjump
+numSteps=4
+n=200
+visc = 3*n/5 + c((-2):2)
+bits=1000
+min.num.things = 10
+nsim = 5
+results = dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps, randomized=randomized,
+                numIS=100, meanfun=meanfun, mc.cores=mc.cores, locs=visc,
+                better.segment=TRUE, improve.nomass.problem = TRUE, inference.type="pre-multiply",
+                min.num.things=min.num.things, bits=bits)
+results.orig = dosim(lev=lev,n=n,nsim=nsim,numSteps=numSteps,
+                     randomized=randomized,numIS=100, meanfun=meanfun,
+                     mc.cores=mc.cores, locs=visc, better.segment=FALSE,
+                     inference.type = "pre-multiply",
+                     improve.nomass.problem = TRUE, min.num.things=min.num.things,
+                     bits=bits)

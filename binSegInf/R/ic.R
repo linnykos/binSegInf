@@ -1,80 +1,3 @@
-##' Embed stopping time into the path.
-##' @param obj A list object containing an element named \code{"cp"}, which is a
-##'     integer vector with changepoints, in the order they were selected by the
-##'     sequential algorithm
-##' @param sigma Standard deviation of noise generating the data, in \code{y}
-##' @param type One of \code{c("bic","ebic","aic")}. Defaults to
-##'     \code{"bic"}. Only BIC is possible for now.
-##' @param consec Number of rises in IC before stop is to happen. Defaults to 2.
-##' @return list containing two objects: ''poly'' and ''stoptime''.
-##'
-##' @export
-ic_wrapper <- function(obj, y, consec=2, maxsteps=length(obj$cp), sigma,
-                       type = "bic"){
-
-    ## Basic checks
-    stopifnot(c("cp") %in% objects(obj))
-    if(type!="bic") stop("Only BIC is possible, for now.")
-
-    ## Get ic information
-    ic_obj = get_ic(obj$cp, obj$y, consec=consec, sigma=sigma, type=type)
-
-    ## Collect flag for abnormal stoppage
-    ## if(ic_obj$stoptime ==0){ return()}
-    newpoly = ic_to_poly(ic_obj)
-
-    ## Return
-    return(list(poly=newpoly, stoptime = ic_obj$stoptime)) ## Why return +1? If the stoptime is zero
-}
-
-##' Takes an IC object and creates polyhedra.
-##' @param resid list of residual vectors
-##' @param obj object of class \code{ic} from \code{get_ic()}, which contains
-##'     things needed for sequential information criteria (ic) comparison.
-##'
-##' @return Object of class \code{polyhedra}, for sequential IC comparisons. If
-##'     stoptime is zero, then returns an empty polyhedron.
-ic_to_poly <- function(obj){
-
-    ## Basic checks
-    stopifnot(is_valid.ic(obj))
-    if(obj$flag != "normal") return(make_empty.polyhedra(n))
-
-    ## Get order of ICs
-    seqdirs = c(.getorder(obj$ic))
-
-    ## Make empty things
-    newrows = matrix(NA, nrow = 2*(obj$stoptime+obj$consec+1),
-                     ncol = length(obj$y))
-    newu = rep(NA, 2*(obj$stoptime+obj$consec+1))
-    irow = 0
-
-    ## Collect halfspaces
-    for(jj in 1:(obj$stoptime + obj$consec)){
-
-        residual = obj$resid[[jj+1]]
-        const    = obj$pen[jj+1] - obj$pen[jj]
-
-        if(seqdirs[jj+1] > 0){
-            ## Add one row \sqrt{C} < z_a \times a^Ty
-            newrows[irow+1,] = (sign(as.numeric(t(residual)%*%obj$y)) * residual)/sqrt(sum(residual^2))
-            newu[irow+1] = sqrt(const)
-            irow = irow + 1
-        } else {
-            ## Add two rows -\sqrt{C} < z_a \times a^Ty < \sqrt{C}
-            newrows[irow+1,] = (sign(as.numeric(t(residual)%*%obj$y)) * residual) / sqrt(sum(residual^2))
-            newrows[irow+2,] = (-sign(as.numeric(t(residual)%*%obj$y)) * residual)/sqrt(sum(residual^2))
-            newu[irow+1] = -sqrt(const)
-            newu[irow+2] = -sqrt(const)
-            irow = irow + 2
-        }
-    }
-    ## Form polyhedra
-    poly = polyhedra(obj = trim(newrows), u = trim(newu))
-    return(poly)
-}
-
-
 ##' Function that takes changepoint location vector \code{cp} (in the order that
 ##' they entered, from fixed step SBS of fixed step WBS), and calcualtes BIC of
 ##' each intermediate changepoint model (piecewise constant underlying mean
@@ -93,7 +16,7 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
     ## Collect things
     n = length(y)
-    D = dual1d_Dmat(n)
+    ## D = dual1d_Dmat(n)
     ic = pen = RSS = rep(NA, maxsteps)
     resid = list()
 
