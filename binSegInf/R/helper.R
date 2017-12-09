@@ -465,58 +465,58 @@ make_all_segment_contrasts_from_wbs <- function(wbs_obj, cps=NULL, scaletype = c
 
 ##' Helper function to take all neighboring-to-each-other clusters,
 ##' And declutter them by removing all but (rounded up) centroids
+##' @param coords.sign optional set of signs.
 ##' @export
-declutter <- function(coords, how.close = 1, sort=T, indexonly = F){#closeby.same.direction.are.disallowed=F
+declutter <- function(coords, coords.sign=NULL, how.close = 1){
 
-    ## n
-    unsorted.coords=coords
-    coords = sort(coords)
+    ## unsorted.coords = coords
+    ## unsorted.coords.sign = coords.sign
+    coords.order = order(coords)
+    coords = coords[coords.order]
+    if(is.null(coords.sign)) coords.sign=rep(1,length(coords))
+    coords.sign = coords.sign[coords.order]
 
-    ## error checking
+    ## Error checking
     if(length(coords)<=1){
       if(length(coords)==0) cat('\n',"attempting to declutter", length(coords), "coordinates",'\n')
       return(coords)
     }
 
-    ## get the clique memberships
+    ## Get the clique memberships
     adjacent.diffs = abs(coords[1:(length(coords)-1)] - coords[2:length(coords)])
-
     cliq.num=1
     cliq.vec=rep(NA,length(coords))
     for(ii in 1:length(adjacent.diffs)){
       if(adjacent.diffs[ii] <= how.close){  ## used to be ==1
         cliq.vec[ii] = cliq.vec[ii+1] = cliq.num
       } else {
-        cliq.num = cliq.num+1
+        cliq.vec[ii] = cliq.num
+        cliq.num = cliq.num + 1
+        if(ii==length(adjacent.diffs)){
+            cliq.vec[ii+1] = cliq.num
+        }
       }
     }
 
-    ## determine who will leave
-    leavelist = c()
-    for(cliq.num in unique(cliq.vec[!is.na(cliq.vec)])){
-        members = which(cliq.vec == cliq.num)
-        stay = round(mean(members))
-        leave = members[members!=stay]
-        leavelist = c(leavelist,leave)
-    }
-    if(length(leavelist)>=1){
-      processed.coords = coords[-leavelist]
-      ## processed.signs = signs[-leavelist]
-    } else {
-      processed.coords = coords
-      ## processed.signs = signs
-    }
+    ## Get the centroids of clique memberships
+    ## if(any(table(cliq.vec)>=2)){
+    ## browser()
 
-    ## Also determine the sign, based on majority vote
+    ## Get cliq centers
+    cliq.centers = sapply(1:max(cliq.vec),function(cliq.num){
+        floor(mean(which(cliq.vec==cliq.num)))
+    })
 
+    ## Get majority vote of signs in each clump
+    cliq.signs = sapply(1:max(cliq.vec), function(cliq.num){
+        this.clump.signs = coords.sign[which(cliq.vec==cliq.num)]
+        sign(sum(this.clump.signs))
+    })
 
-    if(indexonly){
-      return(which(unsorted.coords %in% processed.coords))
-    } else {
-        if(sort){
-        return(processed.coords)
-      } else {
-        return(unsorted.coords[unsorted.coords %in% processed.coords])
-      }
-    }
+    ## Handle when the clump sign is zero
+    cliq.signs[which(cliq.signs==0)] = coords.sign[cliq.centers[which(cliq.signs==0)]]
+
+    ## Return processed coords
+    processed.coords = coords[cliq.centers] * cliq.signs
+    return(processed.coords)
 }
