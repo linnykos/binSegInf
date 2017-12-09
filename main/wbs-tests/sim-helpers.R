@@ -98,9 +98,7 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
                                   inference.type='rows')
 
         ## Collect the IC information and polyhedron
-        ## Get ic-stopping polyhedron
         ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
-        ## ic_poly = ic_to_poly(ic_obj)
         ic_poly = ic_obj$poly
 
         ## Check for flag
@@ -210,13 +208,14 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         vlist <- make_all_segment_contrasts(g)
 
         if(!is.null(visc)){
-            retain = which((g$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (g$cp * g$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
+        retain = which(abs(as.numeric(names(vlist))) %in% visc)
 
         ## Get the p-values
         pvs = sapply(vlist, function(v){
@@ -238,13 +237,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         poly.wbs = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
         if(!is.null(visc)){
-            retain = which((g$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (g$cp * g$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
 
         pvs = sapply(vlist, function(v){
             cumsum.v = cumsum(v)
@@ -260,19 +259,19 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         ## Fit binseg on fudged data
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
         f.fudged = genlassoinf::dualpathSvd2(y+new.noise, D=D, maxsteps=numSteps, approx=T)
-        Gobj.fudged = genlassoinf::getGammat.naive(obj=f.fudged, y=y, condition.step=1)
+        Gobj.fudged = genlassoinf::getGammat.naive(obj=f.fudged, y=y, condition.step=numSteps) ## Why is this 1?
         poly.fudged = polyhedra(obj=Gobj.fudged$G, u=Gobj.fudged$u)
 
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(f.fudged)
         if(!is.null(visc)){
-            retain = which((f.fudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (f.fudged$cp * f.fudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
@@ -288,17 +287,17 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         ## Get nonrandomized p-value
         D = genlassoinf::makeDmat(n,type='tf',ord=0)
         f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=numSteps, approx=T)
-        Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
+        Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=numSteps)
         poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
         vlist <- make_all_segment_contrasts(f.nonfudged)
         if(!is.null(visc)){
-            retain = which((f.nonfudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
 
         pvs = sapply(vlist, function(v){
             pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
@@ -320,13 +319,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.fudged)
         if(!is.null(visc)){
-            retain = which((h.fudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (h.fudged$cp * h.fudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
         pvs = sapply(vlist, function(v){
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
@@ -345,13 +344,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.nonfudged)
         if(!is.null(visc)){
-            retain = which((h.nonfudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
         pvs = sapply(vlist, function(v){
             pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma,bits=bits)$pv
         })
@@ -374,13 +373,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         vlist <- make_all_segment_contrasts(h.fudged)
 
         if(!is.null(visc)){
-            retain = which((h.fudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (h.fudged$cp * h.fudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
@@ -401,13 +400,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
         ## Get randomized p-value
         vlist <- make_all_segment_contrasts(h.nonfudged)
         if(!is.null(visc)){
-            retain = which((h.nonfudged$cp %in% visc))
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
             if(length(retain)==0){
                 return(data.frame(pvs=NA, locs=NA))
             }
             vlist = vlist[retain]
         }
-        locs = (h.nonfudged$cp * h.nonfudged$cp.sign)[retain]
+        locs = as.numeric(names(vlist))
         pvs = sapply(vlist, function(v){
         pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
         })
@@ -447,3 +446,162 @@ dosim_recovery <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomiz
     ## return(unlist(results))
 
 }
+
+
+##' Does single fixed-step comparison between fl and bs
+dosim_compare_fl_and_bs <- function(){
+
+    ## Simulation settings
+    numSteps = 4
+    sigma = 1
+    meanfun = fourjump
+    lev = 2
+    mn = meanfun(lev=lev,n=n)
+    retain = 1:n
+    visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
+    bits = 1000
+
+    ## Data
+    y = mn + rnorm(n, 0, sigma)
+
+    ## Get nonrand binary segmentation
+    h.nonfudged = binSeg_fixedSteps(y, numSteps=numSteps)
+    poly.nonfudged = polyhedra(h.nonfudged)
+    vlist <- make_all_segment_contrasts(h.nonfudged)
+    retain = which((h.nonfudged$cp %in% visc))
+    if(length(retain)==0){
+        pvs.sbs.nonrand = NULL
+    } else {
+        vlist = vlist[retain]
+        pvs.sbs.nonrand = sapply(vlist, function(v){
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma,bits=bits)$pv
+        })
+    }
+
+    ## Get nonrand fused lasso p-value
+    D = genlassoinf::makeDmat(n,type='tf',ord=0)
+    f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=numSteps, approx=T)
+    Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
+    poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
+    vlist <- make_all_segment_contrasts(f.nonfudged)
+    retain = which((f.nonfudged$cp %in% visc))
+    if(length(retain)==0){
+        ## return(data.frame(pvs=NA, locs=NA))
+        pvs.fl.nonrand = NULL
+    } else {
+        vlist = vlist[retain]
+        pvs.fl.nonrand = sapply(vlist, function(v){
+            pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
+        })
+    }
+
+    return(list(pvs.fl.nonrand=pvs.fl.nonrand,
+                pvs.sbs.nonrand=pvs.sbs.nonrand))
+}
+
+
+## Synopsis 2: Compare FL and BS (nonrand) version with IC stopping and with
+## decluttering
+dosim_compare_fl_and_bs_with_stoprule_and_decluttering <- function(){
+
+    ## Simulation settings
+    n = 200  ## n=50
+    consec = 2
+    meanfun = fourjump
+    lev = 1
+    mn = meanfun(lev,n)
+    sigma = 1
+    y = mn + rnorm(n, 0, sigma)
+    cumsum.y = cumsum(y)
+    sigma.add = 0.2
+    numSteps = 15
+    numIS = 100
+    new.noise = rnorm(n,0,sigma.add)
+    visc = sapply(1:4, function(ii){ii/5*n + c(-2,-1,0,1,2)})
+    improve.nomass.problem = TRUE
+    inference.type="pre-multiply"
+
+    ## 1. Get stopped SBS p-values
+    h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+    ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma, type="bic")
+    stoptime1 = ic_obj$stoptime
+
+    ## Get stopped polyhedron
+    if(ic_obj$flag=="normal" ){
+
+        ## Get model selection event polyhedron
+        poly.fudged = polyhedra(h.fudged, numSteps = stoptime1+consec)
+
+        ## Get ic-stoppage polyhedron
+        ic_poly = ic_obj$poly
+
+        ## Combine them
+        combined.poly = polyhedra(obj = rbind(poly.fudged$gamma, ic_poly$gamma),
+                                  u = c(poly.fudged$u, ic_poly$u))
+
+        ## Postprocess and retain vicinity contrasts
+        cp = h.fudged$cp[1:stoptime1]
+        cp.sign = h.fudged$cp.sign[1:stoptime1]
+        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        numtests.before.retain.sbs <- length(vlist)
+        retain = which(abs(as.numeric(names(vlist))) %in% visc)
+        vlist = vlist[retain]
+
+        ## Collect the p-values
+        pvs.sbs = sapply(vlist, function(v){
+            pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                    sigma.add=sigma.add,
+                                    orig.fudged.poly=combined.poly)
+        })
+    } else {
+        pvs.sbs=NULL
+    }
+
+    ## 2. Get stopped FL p-values
+    g.fudged = dualpathSvd2(y + new.noise, maxsteps=numSteps, D = makeDmat(n,ord=0))
+    ic_obj = get_ic(g.fudged$cp, g.fudged$y, consec=consec, sigma=sigma, type="bic")
+    stoptime2 = ic_obj$stoptime
+
+    ## Get stopped polyhedron
+    if(ic_obj$flag=="normal" ){
+
+        ## Get model selection event polyhedron
+        Gobj.fudged = genlassoinf::getGammat.naive(obj=g.fudged, y=y, condition.step=stoptime2+consec)
+        poly.fudged = polyhedra(obj=Gobj.fudged$G, u=Gobj.fudged$u)
+
+        ## Get ic-stopped model selection polyhedron
+        ic_poly = ic_obj$poly
+
+        ## Combine them
+        combined.poly = polyhedra(obj = rbind(poly.fudged$gamma, ic_poly$gamma),
+                                  u = c(poly.fudged$u, ic_poly$u))
+
+        ## Postprocess and retain vicinity contrasts
+        cp = g.fudged$cp[1:stoptime1]
+        cp.sign = g.fudged$cp.sign[1:stoptime1]
+        cp = declutter_new(coords=cp, coords.sign=cp.sign, how.close=3)
+        cp.sign = sign(cp)
+        cp = abs(cp)
+        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        numtests.before.retain.fl <- length(vlist)
+        retain = which(abs(as.numeric(names(vlist))) %in% visc)
+        vlist = vlist[retain]
+
+        ## Collect the p-values
+        pvs.fl = sapply(vlist, function(v){
+            pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                    sigma.add=sigma.add,
+                                    orig.fudged.poly= combined.poly)
+        })
+    } else {
+        pvs.fl = NULL
+    }
+
+    return(list(pvs.sbs=pvs.sbs,
+                numtests.before.retain.sbs=numtests.before.retain.sbs,
+                pvs.fl=pvs.fl,
+                numtests.before.retain.fl=numtests.before.retain.fl
+                ))
+}
+
+
