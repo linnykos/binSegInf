@@ -16,29 +16,31 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
     ## Collect things
     n = length(y)
-    ## D = dual1d_Dmat(n)
+    D = dual1d_Dmat(n)
     ic = pen = RSS = rep(NA, maxsteps)
     resid = list()
 
     ## Collect BIC at each step 0 ~ (maxsteps-1)
     allsteps = 0:(pmin(maxsteps,length(cp)) )
     for(ii in allsteps ){
+
         if(verbose)  cat('step', ii, '\n')
 
         ## Form proj null(D_{-B}) by orth proj onto row(D_{-B}) = col(t(D_{-B})) ~= tD
         if(ii==0){
-            tD = t(D)
+            tDb = rep(1,n)
+            curr.proj = .proj(tDb)
         } else {
-            tD = cbind(t(D)[,-cp[1:ii]])
+            tDb = make.tDb(cps = cp[1:ii], n=n)
+            curr.proj = .proj(tDb)
         }
-        rr = rankMatrix(tD)
-        tDb = svd(tD)$u[,1:rr]
-        curr.proj = .proj(tDb)
-        y.fitted = (diag(1,n) - curr.proj) %*% y
+            ## y.fitted = rep(mean(y),n)
+            y.fitted = (curr.proj) %*% y
 
         ## Obtain RSS and penalty
         myRSS = sum( (y - y.fitted)^2 )
-        mydf  = n-rr
+        ## mydf  = n-rr
+        mydf = ii + 1
         if(ii==0) prev.df = mydf
         mypen = (sigma^2) * mydf * log(n)
 
@@ -46,11 +48,11 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
         if(ii==0){
             myresid = rep(NA,n)
         } else {
-            myresid = svd(curr.proj - prev.proj)$u[,1]
-            myresid = myresid / sqrt(sum((myresid)^2))
+            myresid = get_basis(cps_old=(if(ii==1) c() else cp[1:(ii-1)]),
+                               cp_new=cp[ii], n=n)
         }
 
-        ## Store BIC and resid proj vector
+        ## Store BIC and re
         ic[ii+1] <- myRSS + mypen
         pen[ii+1] <- mypen
         RSS[ii+1] <- myRSS
@@ -182,4 +184,43 @@ is_valid.ic <- function(obj){
   names(seqdir) = c(0:(length(ic)-1))
   return(seqdir)
 }
+
+
+
+##' Helper function to make basis vectors for the piecewise constant space
+##' broken at changepoints at |cps|. |tDb| just stands for D^T[,-b].
+make.tDb <- function(cps=c(), n){
+    cps = sort(cps)
+    if(length(cps)==0){
+        return(cbind(rep(1/n,n)))
+    } else {
+        ncp = length(cps)
+        tDb = matrix(0, nrow=n, ncol=ncp+1)
+        cps.aug = c(0,cps,n)
+        for(ii in 1:(ncp+1)){
+            nonzero.inds = (cps.aug[ii]+1):(cps.aug[ii+1])
+            tDb[nonzero.inds, ii] = 1/length(nonzero.inds)
+        }
+    }
+    return(tDb)
+}
+
+##' Get basis vector of the residual subspace between the two spanned by
+##' \code{c(cps_old)} and \code{c(cps_old, cp_new)}.
+get_basis <- function(cps_old, cp_new, n){
+    if(length(cps_old)!=0){
+        sorted_cps_old = sort(cps_old)
+    } else {
+        sorted_cps_old=cps_old
+    }
+    sorted_cps_old = c(0,sorted_cps_old,n)
+    imin = which.min(cp_new > sorted_cps_old)
+    cp_right = sorted_cps_old[imin]
+    cp_left = sorted_cps_old[imin-1]
+    basisvec = make_all_segment_contrasts_from_cp(cp = c(cp_left, cp_new, cp_right),
+                                                  cp.sign = rep(1,3),
+                                                  n=n, scaletype = "unitnorm")[[toString(cp_new)]]
+    return(basisvec)
+}
+
 
