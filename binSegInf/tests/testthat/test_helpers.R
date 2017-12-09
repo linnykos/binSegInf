@@ -31,3 +31,27 @@ test_that("Trimming matrices are done correctly", {
 
 
 })
+
+
+
+test_that("decluttering is done correctly", {
+
+    ## Decluttering should be not done to anything
+    coords = c(1,30,60)
+    expect_equal(coords, declutter(coords=coords, how.close=1))
+
+    ## Decluttering should give proper membership (without signs)
+    coords=c(119, 121, 118,  82, 161, 160)
+    expect_equal(sort(coords), sort(declutter(coords=coords, how.close=0)))
+    expect_equal(c(82, 118, 121, 160), declutter(coords=coords, how.close=1))
+    expect_equal(c(82, 119, 160), declutter(coords=coords, how.close=2))
+
+
+    ## Handles some typical cases (with signs)
+    coords = c(87, 83, 107, 80, 120, 159)
+    coords.sign = c(-1, -1, -1, -1, -1, 1)
+    expect_equal(c(-80,-83, -87,-107,-120,159),declutter(coords,coords.sign, how.close=1))
+    expect_equal(c(-80,-87,-107,-120,159),declutter(coords,coords.sign, how.close=3))
+    expect_equal(c(-83,-107,-120,159),declutter(coords,coords.sign, how.close=5))
+
+})
