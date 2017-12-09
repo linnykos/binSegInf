@@ -5,9 +5,13 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                              inference.type=inference.type,
                              improve.nomass.problem=TRUE, bits=1000){
 
+    ## ## Example setting
+    ## y = rep()
+
+
     ## Fit initial WBS for a generous number of steps
     g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=max.numSteps,
-                              inference.type='rows')
+                              inference.type='none')
     cumsum.y = cumsum(y)
 
     ## Collect the IC information and polyhedron
@@ -17,14 +21,14 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
     ## Check for flag
     if(ic_obj$flag!="normal" ){
-        return(NA)
+        return(NULL)
     }
 
     ## Extract changepoints from stopped model and declutter
     cp = g$cp[1:stoptime]
     cp.sign = g$cp.sign[1:stoptime]
     ## if(postprocess){
-    ##     cpobj = declutter(coords)
+    ##     cpobj = declutter(cp=coords)
     ##     cp = cpobj$cp
     ##     cp.sign = cpobj$cp.sign
     ## }
@@ -42,6 +46,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
     ## Calculate the p-values
     vlist = vlist[retain]
+    vlist = vlist[1]
     pvs = sapply(vlist, function(v){
             cumsum.v = cumsum(v)
             return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
@@ -55,7 +60,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                                                     improve.nomass.problem=improve.nomass.problem,
                                                     bits=bits)
                                                     ))})
-    names(pvs) = (cp*cp.sign)[retain]
+    ## names(pvs) = (cp*cp.sign)[retain]
+    names(pvs) = names(vlist)[1]
     return(list(pvs=pvs, locs=cp[retain]))
 }
 
