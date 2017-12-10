@@ -188,13 +188,10 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
-    ## numSteps = 1
     sigma = 1
-    ## mn = c(rep(0,n/2), rep(lev,n/2))
     mn = meanfun(lev=lev,n=n)
     y = mn + rnorm(n, 0, sigma)
     cumsum.y = cumsum(y)
-    ## numIS = 100
     inference.type = "pre-multiply"
     improve.nomass.problem = TRUE
     retain=1:n
@@ -290,6 +287,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
 
         ## 2. Get stopped FL p-values
         numSteps = 10
+        consec=2
         g.fudged = dualpathSvd2(y + new.noise, maxsteps=numSteps, D = makeDmat(n,ord=0))
         ic_obj = get_ic(g.fudged$cp, g.fudged$y, consec=consec, sigma=sigma, type="bic")
         stoptime2 = ic_obj$stoptime
