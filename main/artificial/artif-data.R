@@ -9,8 +9,8 @@ data(coriell)
 CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
                   coriell$Chromosome,coriell$Position,
                   data.type="logratio",sampleid=c("c05296","c13330"))
-names(coriell)
 y.orig = (coriell[,"Coriell.05296"])
+## y.orig = (coriell[,"Coriell.13330"])
 
 ## Harvest a sparse-fused lasso
 nonmissing = which(!is.na(y.orig))
@@ -19,7 +19,6 @@ coriell = coriell[nonmissing,]
 a = fusedlasso1d(y.orig)
 cv = cv.trendfilter(a)
 mn.elnet = softthresh(a,lambda=cv$lambda.1se,gamma=0.05)
-plot(mn.elnet)
 
 ## Refit the segment means (because sparse fused lasso estimate is biased)
 D = makeDmat(length(y.orig),type="tf",ord=0)
@@ -32,16 +31,23 @@ segments = lapply(1:(length(cp)+1), function(ii){
     (v[ii]+1):(v[ii+1]) })
 segment.means = sapply(segments, function(mysegment){mean(y.orig[mysegment])})
 cleanmn = rep(NA,length(y.orig))
-for(ii in 1:length(segments){
-    cleanmn[segments[[ii]]] <<- segment.means[ii]
+for(ii in 1:length(segments)){
+    cleanmn[segments[[ii]]] <- segment.means[ii]
 }
-std = sd(y.orig-cleanmn)
+
 
 ## Make means, forcing some things to be zero.
 newmn = rep(NA,length(y.orig))
 segment.means[c(1,3,5)] = 0
 lapply(1:length(segments), function(ii){newmn[segments[[ii]]] <<- segment.means[ii]})
 resid.cleanmn <- y.orig - cleanmn
+
+## Get rid of outliers from everything (data, mean)
+outlier.ind = which(y.orig[1:1000] < -0.5)
+y.orig = y.orig[-outlier.ind]
+cleanmn = cleanmn[-outlier.ind]
+resid.cleanmn = resid.cleanmn[-outlier.ind]
+newmn = newmn[-outlier.ind]
 
 ## Save it
 filename = "../data/coriell05296.Rdata"
@@ -52,7 +58,6 @@ save(y.orig,
      cleanmn,
      resid.cleanmn,
      newmn,
-     std,
      file = filename)
 
 
