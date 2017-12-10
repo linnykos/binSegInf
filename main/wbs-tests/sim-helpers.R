@@ -181,7 +181,7 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 
 
 ## Compare p-values from three methods
-dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
+dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sbs.rand",
                                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
                                  "cbs.rand", "cbs.nonrand"),
                           n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL, numSteps=1, bits=50){
