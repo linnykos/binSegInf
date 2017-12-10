@@ -36,17 +36,17 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
         cp.sign = sign(cpobj)
     }
 
-    # ## Plot things
+    ## # ## Plot things
     ## plot(y)
     ## abline(v=cp, col='purple',lwd=2)
     ## abline(v=g$cp, col="grey80")
-    ## abline(v=g$cp[1:ic_obj$stoptime], col='blue', lwd=2)
+    ## ## abline(v=g$cp[1:ic_obj$stoptime], col='blue', lwd=2)
     ## text(x=g$cp+3, y=rep(1,length(g$cp)), label = 1:length(g$cp))
 
 
     ## Form contrasts
     if(better.segment){
-
+        vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g, cps=cp)
     } else {
         vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=length(y))
     }
