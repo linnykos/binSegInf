@@ -3,10 +3,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                              sigma, postprocess=TRUE, better.segment=FALSE,
                              locs=1:length(y), numIS=100,
                              inference.type=inference.type,
-                             improve.nomass.problem=TRUE, bits=1000){
-
-    ## ## Example setting
-    ## y = rep()
+                             improve.nomass.problem=TRUE, bits=1000,
+                             write.time = FALSE, verbose=FALSE){
 
 
     ## Fit initial WBS for a generous number of steps
@@ -18,6 +16,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
     ic_poly = ic_obj$poly
     stoptime  = ic_obj$stoptime
+    if(verbose) cat("stoptime is", stoptime, fill=TRUE)
 
     ## Check for flag
     if(ic_obj$flag!="normal" ){
@@ -46,23 +45,24 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
     ## Calculate the p-values
     vlist = vlist[retain]
-    vlist = vlist[1]
-    pvs = sapply(vlist, function(v){
-            cumsum.v = cumsum(v)
-            return(suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
-                                                    sigma=sigma,
-                                                    numIS=numIS,
-                                                    inference.type=inference.type,
-                                                    cumsum.y=cumsum.y,
-                                                    cumsum.v=cumsum.v,
-                                                    stop.time=stoptime+consec,
-                                                    ic.poly=ic_poly,
-                                                    improve.nomass.problem=improve.nomass.problem,
-                                                    bits=bits)
-                                                    ))})
-    ## names(pvs) = (cp*cp.sign)[retain]
-    names(pvs) = names(vlist)[1]
-    return(list(pvs=pvs, locs=cp[retain]))
+    pvs = sapply(1:length(vlist), function(iv){
+        print(iv)
+        v=vlist[[iv]]
+        cumsum.v = cumsum(v)
+        pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
+                                              sigma=sigma,
+                                              numIS=numIS,
+                                              inference.type=inference.type,
+                                              cumsum.y=cumsum.y,
+                                              cumsum.v=cumsum.v,
+                                              stop.time=stoptime+consec,
+                                              ic.poly=ic_poly,
+                                              improve.nomass.problem=improve.nomass.problem,
+                                              bits=bits))
+        if(write.time) write.time.to.file(myfile="rwbs-main-example-timing.txt")
+        return(pv)})
+    names(pvs) = names(vlist)
+    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs))))
 }
 
 
@@ -141,3 +141,9 @@ do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
 ##         })
 
 ##     ooooooooooook
+
+##' Quick helper to write to file.
+write.time.to.file <- function(myfile){
+    line = Sys.time()
+    write(toString(line),file=myfile,append=TRUE)
+}
