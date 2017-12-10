@@ -309,7 +309,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
             ## Postprocess and retain vicinity contrasts
             cp = g.fudged$cp[1:stoptime]
             cp.sign = g.fudged$cp.sign[1:stoptime]
-            cp = declutter_new(coords=cp, coords.sign=cp.sign, how.close=3)
+            cp = declutter(coords=cp, coords.sign=cp.sign, how.close=3)
             cp.sign = sign(cp)
             cp = abs(cp)
             vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
@@ -629,7 +629,7 @@ dosim_compare_fl_and_bs_with_stoprule_and_decluttering <- function(){
         ## Postprocess and retain vicinity contrasts
         cp = g.fudged$cp[1:stoptime1]
         cp.sign = g.fudged$cp.sign[1:stoptime1]
-        cp = declutter_new(coords=cp, coords.sign=cp.sign, how.close=3)
+        cp = declutter(coords=cp, coords.sign=cp.sign, how.close=3)
         cp.sign = sign(cp)
         cp = abs(cp)
         vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
