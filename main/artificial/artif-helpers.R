@@ -8,6 +8,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
 
     ## Fit initial WBS for a generous number of steps
+    max.numSteps=20
     g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=max.numSteps,
                               inference.type='none')
     cumsum.y = cumsum(y)
@@ -16,6 +17,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     ic_obj = get_ic(g$cp, g$y, consec=consec, sigma=sigma, type="bic")
     ic_poly = ic_obj$poly
     stoptime  = ic_obj$stoptime
+
     if(verbose) cat("stoptime is", stoptime, fill=TRUE)
 
     ## Check for flag
@@ -26,17 +28,25 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     ## Extract changepoints from stopped model and declutter
     cp = g$cp[1:stoptime]
     cp.sign = g$cp.sign[1:stoptime]
+
     ## if(postprocess){
     ##     cpobj = declutter(cp=coords)
     ##     cp = cpobj$cp
     ##     cp.sign = cpobj$cp.sign
     ## }
 
+    ## ## Plot things
+    ## plot(y)
+    ## abline(v=g$cp, col="grey80")
+    ## abline(v=g$cp[1:ic_obj$stoptime], col='blue', lwd=2)
+    ## text(x=g$cp+3, y=rep(1,length(g$cp)), label = 1:length(g$cp))
+
+
     ## Form contrasts
     if(better.segment){
         vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g, cps=cp)
     } else {
-        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=length(y))
     }
 
     ## Retain only the changepoints we want results from:
