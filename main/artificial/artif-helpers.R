@@ -1,14 +1,15 @@
 ##' Does a single randomized wbs (rwbs) inference for a given y
 do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), consec=2,
-                             sigma, postprocess=TRUE, better.segment=FALSE,
-                             locs=1:length(y), numIS=100,
-                             inference.type=inference.type,
-                             improve.nomass.problem=TRUE, bits=1000,
-                             write.time = FALSE, verbose=FALSE){
+                              sigma, postprocess=TRUE, how.close = 5,
+                              better.segment=FALSE,
+                              locs=1:length(y), numIS=100,
+                              inference.type=inference.type,
+                              improve.nomass.problem=TRUE, bits=1000,
+                              write.time = FALSE, verbose=FALSE){
 
 
     ## Fit initial WBS for a generous number of steps
-    max.numSteps=20
+    max.numSteps = 20
     g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=max.numSteps,
                               inference.type='none')
     cumsum.y = cumsum(y)
@@ -29,14 +30,15 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     cp = g$cp[1:stoptime]
     cp.sign = g$cp.sign[1:stoptime]
 
-    ## if(postprocess){
-    ##     cpobj = declutter(cp=coords)
-    ##     cp = cpobj$cp
-    ##     cp.sign = cpobj$cp.sign
-    ## }
+    if(postprocess){
+        cpobj = declutter(cp, cp.sign, how.close=how.close)
+        cp = abs(cpobj)
+        cp.sign = sign(cpobj)
+    }
 
-    ## ## Plot things
+    # ## Plot things
     ## plot(y)
+    ## abline(v=cp, col='purple',lwd=2)
     ## abline(v=g$cp, col="grey80")
     ## abline(v=g$cp[1:ic_obj$stoptime], col='blue', lwd=2)
     ## text(x=g$cp+3, y=rep(1,length(g$cp)), label = 1:length(g$cp))
@@ -44,7 +46,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
     ## Form contrasts
     if(better.segment){
-        vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g, cps=cp)
+
     } else {
         vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=length(y))
     }
