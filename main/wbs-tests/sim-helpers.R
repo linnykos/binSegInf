@@ -290,13 +290,13 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
         consec=2
         g.fudged = dualpathSvd2(y + new.noise, maxsteps=numSteps, D = makeDmat(n,ord=0))
         ic_obj = get_ic(g.fudged$cp, g.fudged$y, consec=consec, sigma=sigma, type="bic")
-        stoptime2 = ic_obj$stoptime
+        stoptime = ic_obj$stoptime
 
         ## Get stopped polyhedron
         if(ic_obj$flag=="normal" ){
 
             ## Get model selection event polyhedron
-            Gobj.fudged = genlassoinf::getGammat.naive(obj=g.fudged, y=y, condition.step=stoptime2+consec)
+            Gobj.fudged = genlassoinf::getGammat.naive(obj=g.fudged, y=y, condition.step=stoptime+consec)
             poly.fudged = polyhedra(obj=Gobj.fudged$G, u=Gobj.fudged$u)
 
             ## Get ic-stopped model selection polyhedron
@@ -307,8 +307,8 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
                                       u = c(poly.fudged$u, ic_poly$u))
 
             ## Postprocess and retain vicinity contrasts
-            cp = g.fudged$cp[1:stoptime1]
-            cp.sign = g.fudged$cp.sign[1:stoptime1]
+            cp = g.fudged$cp[1:stoptime]
+            cp.sign = g.fudged$cp.sign[1:stoptime]
             cp = declutter_new(coords=cp, coords.sign=cp.sign, how.close=3)
             cp.sign = sign(cp)
             cp = abs(cp)
