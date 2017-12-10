@@ -335,6 +335,50 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","sbs.rand",
                           locs=locs))
     }
 
+    if(type=="sbs.rand.plus"){
+
+        ## Draw new noise
+        new.noise = rnorm(n,0,sigma.add)
+
+        ## Get fudged SBS model
+        numSteps = 10
+        h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+        ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma, type="bic")
+        stoptime1 = ic_obj$stoptime
+
+        ## Get stopped polyhedron
+        if(ic_obj$flag=="normal" ){
+
+            ## Get model selection event polyhedron
+            poly.fudged = polyhedra(h.fudged, numSteps = stoptime1+consec)
+
+            ## Get ic-stoppage polyhedron
+            ic_poly = ic_obj$poly
+
+            ## Combine them
+            combined.poly = polyhedra(obj = rbind(poly.fudged$gamma, ic_poly$gamma),
+                                      u = c(poly.fudged$u, ic_poly$u))
+
+            ## Postprocess and retain vicinity contrasts
+            cp = h.fudged$cp[1:stoptime1]
+            cp.sign = h.fudged$cp.sign[1:stoptime1]
+            vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+            numtests.before.retain.sbs <- length(vlist)
+            retain = which(abs(as.numeric(names(vlist))) %in% visc)
+            vlist = vlist[retain]
+
+            ## Collect the p-values
+            pvs = sapply(vlist, function(v){
+                pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                        sigma.add=sigma.add,
+                                        orig.fudged.poly=combined.poly)
+            })
+            locs = as.numeric(names(vlist))
+        } else {
+            return(data.frame(pvs=NA, locs=NA))
+        }
+    }
+
     if(type=="sbs.nonrand"){
 
         ## Fit binseg on nonfudged data
@@ -595,7 +639,7 @@ dosim_compare_fl_and_bs_with_stoprule_and_decluttering <- function(){
         })
     } else {
         pvs.fl = NULL
-    }
+   }
 
     return(list(pvs.sbs=pvs.sbs,
                 numtests.before.retain.sbs=numtests.before.retain.sbs,
