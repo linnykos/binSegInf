@@ -220,7 +220,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
             pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
-                                                  improve.nomass.problem =improve.nomass.problem,
+                                                  improve.nomass.problem=improve.nomass.problem,
                                                   bits=bits
                                                   ))
         })
@@ -323,6 +323,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
                                         orig.fudged.poly= combined.poly)
             })
             locs = as.numeric(names(vlist))
+            return(data.frame(pvs=pvs, locs=locs))
         } else {
             return(data.frame(pvs=NA, locs=NA))
         }
