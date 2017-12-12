@@ -4,9 +4,9 @@ outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
 onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=50, n=60, numIS=200){
 
-    all.names = c("fl.rand", "fl.nonrand", "sbs.rand",
-                 "sbs.nonrand", "wbs.rand", "wbs.nonrand",
-                 "cbs.rand", "cbs.nonrand")[c(2,4)]
+    all.names = c("fl.rand", "fl.rand.plus", "fl.nonrand", "sbs.rand",
+                  "sbs.nonrand", "wbs.rand", "wbs.nonrand", "cbs.rand",
+                  "cbs.nonrand")[c(2)]
 
     all.results = lapply(all.names, function(myname){
         print(myname)
@@ -19,13 +19,16 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(all.results)
 }
 
-## whichlev = c(1,2,5,6,7,8,9)
-whichlev=c(4)
+whichlev = 1:9
+## whichlev=c(1:3)
+## whichlev=c(4:5)
+## whichlev=c(6:7)
+## whichlev=c(8:9)
 levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
-## results.by.lev = list()
-mc.cores=4#8
-nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]
-n=200
+results.by.lev = list()
+mc.cores = 8
+nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]#/200
+n=200## n=50
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 print(levs)
 for(ilev in 1:length(levs)){
@@ -34,28 +37,18 @@ for(ilev in 1:length(levs)){
     print(mylev)
     results.by.lev[[ whichlev[ilev] ]] = onecompare(lev=mylev,
                                         nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
-                                        numSteps=4, bits=1000, mc.cores=mc.cores, n=200, numIS=200)
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-123.Rdata"))
+                                        numSteps=4, bits=1000, mc.cores=mc.cores, n=n, numIS=100)
+
+    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-flplus.Rdata"))
+    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-45.Rdata"))
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
     ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-only-fl.Rdata"))
-    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-temp.Rdata"))
 }
 
-## Finally save once
-levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
-names(results.by.lev) = levs
-save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-only-fl.Rdata"))
-
-
-results.by.lev.master = list()
-
-
-## Load 123
-outputdir = "../output"
 
 ## Aggregate the results
+outputdir = "../output"
 results.by.lev.master = list()
 load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
 results.by.lev.master[1:3] = results.by.lev[1:3]
@@ -68,16 +61,11 @@ results.by.lev.master[8:9] = results.by.lev[1:2]
 results.by.lev = results.by.lev.master
 
 
-## Only do once (and erase the entire code)
-load(file=file.path(outputdir, 'compare-methods-fourjump-only-fl.Rdata'))
-results.by.lev.only.fl = results.by.lev
-for(ilev in 1:9){
-    results.by.lev.master[[ilev]]$fl.nonrand = results.by.lev.only.fl[[ilev]]$fl.nonrand
-    results.by.lev.master[[ilev]]$fl.rand = results.by.lev.only.fl[[ilev]]$fl.rand
+## Add the fl.randplus results to everything
+for(ii in 1:9){
+    results.by.lev.master[[ii]]
 }
-results.by.lev = results.by.lev.master
 
-save(list=c("results.by.lev","levs","nsim","n")file=file.path(outputdir, "compare-methods-fourjump-1to9.Rdata"))
 
 
 ## Parse the results
@@ -85,29 +73,18 @@ myclean <- function(myresult){
     aa = lapply(myresult, function(a) do.call(rbind,a))
     return(aa)
 }
+## load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata")) ## Temporary, for flplus 3
 mycleanresult = lapply(results.by.lev, myclean)
 levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
 names(mycleanresult) = levs
 
 
 ## Collect uncond pows
-all.names = c("fl.rand", "fl.nonrand", "sbs.rand",
+all.names = c("fl.rand", "fl.rand.plus",  "fl.nonrand", "sbs.rand",
                  "sbs.nonrand", "wbs.rand", "wbs.nonrand",
-                 "cbs.rand", "cbs.nonrand")[c(2,4)]#[c(1,3,5,7)]
+                 "cbs.rand", "cbs.nonrand")#[c(2,4)]#[c(1,3,5,7)]
 
 cond.pows.by.method = sapply(all.names, function(methodname){
-
-    ## ## Investigating a few things:
-    ## methodname="wbs.nonrand"
-    ## methodname="fl.nonrand"
-    ## par(mfrow=c(3,3))
-    ## lapply(levs, function(mylev){
-    ## pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
-    ## locs = mycleanresult[[toString(mylev)]][[methodname]][,"locs"]
-    ## hist(abs(locs)[!is.na(locs)])
-    ## })
-
-    methodname = "fl.nonrand"
     cond.pows = sapply(levs, function(mylev){
         pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
         pvs = pvs[!is.na(pvs)]
@@ -117,11 +94,17 @@ cond.pows.by.method = sapply(all.names, function(methodname){
     return(cond.pows)
 })
 
+mycleanresult[["0"]][["fl.rand.plus"]][,"pvs"]
+myclean(results.)
+aa = lapply(results, function(a) do.call(rbind,a))
+pvs = mycleanresult[["0"]][["fl.rand.plus"]]
+
+
 uncond.pows.by.method = sapply(all.names, function(methodname){
     uncond.pows = sapply(levs, function(mylev){
         pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
-        ## len = nsims[toString(mylev)]
-        len=300
+        len = nsims[toString(mylev)]
+        ## len=300
         pvs = pvs[!is.na(pvs)]
         mypow = sum(pvs<0.05/4)/(len*4)
     })
