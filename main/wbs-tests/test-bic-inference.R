@@ -1,24 +1,18 @@
 ## Synopsis: Check uniformity of bic inference.
 
-
 ## Fixed step inference
 source("../main/artificial/artif-helpers.R")
 n = 10
 ## mn = rep(0,n)
-lev = 2
+lev = 0
 mn = c(rep(0,n/2), rep(lev,n/2))
 sigma = 1
 sigma.add = 0.2
-nsim = 2000
+nsim = 5000
 results = mclapply(1:nsim, function(isim){
     printprogress(isim,nsim)
     set.seed(isim)
     y = mn + rnorm(n,0,sigma)
-    ## ## Randomized
-    ## pvs = do_rfl_inference(y=y, max.numSteps=8,
-    ##                        consec=2, sigma=sigma, postprocess=TRUE,
-    ##                        locs=1:length(y), numIS=100, sigma.add = sigma.add, bits=1000,
-    ##                        inference.type="rows")
 
     ## Nonrandomized inference
     h = binSeg_fixedSteps(y, numSteps = 8)
@@ -41,28 +35,27 @@ results = mclapply(1:nsim, function(isim){
         return(v%*%mn!=0)
     })
     return(pvs)
-}, mc.cores=3)
+}, mc.cores=8)
 
-## Nonrandomized fixed inference doesn't seem to have uniform p-values.. Why?
+## Nonrandomized fixed inference seem to have slightly super-uniform p-values..
+## Why?
 res = results[sapply(results, function(myresult){length(myresult)>1})]
+res = results[sapply(results, class)!="character"]
 qqunif(unlist(res))
 (unlist(lapply(res, function(myres) myres$pv)))
 
-## Slightly /anticonservative/ for fixed p-values..
 
-
-## Now trying /randomized/ inference
-
-n = 10
-## mn = rep(0,n)
-lev=2
+## Now trying /randomized/ inference with IC.
+n = 30
+lev = 0
 mn = c(rep(0,n/2), rep(lev,n/2))
 sigma = 1
 sigma.add = 0.2
-nsim = 2000
-max.numSteps=8
-locs=1:n
+nsim = 1000
+max.numSteps = 8
+locs = 1:n
 inference.type = "pre-multiply"
+consec=2
 results = mclapply(1:nsim, function(isim){
     printprogress(isim,nsim)
     set.seed(isim)
@@ -84,11 +77,6 @@ results = mclapply(1:nsim, function(isim){
     cp = h.fudged$cp[1:stoptime]
     cp.sign = h.fudged$cp.sign[1:stoptime]
     vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=length(y))
-    ## if(postprocess){
-    ##     cpobj = declutter(cp=cp, cp.sign)$cp.sign
-    ##     cp = cpobj$cp
-    ##     cp.sign = cpobj$cp.sign
-    ## }
 
     ## Retain only the changepoints we want results from:
     retain = which((cp %in% locs))
@@ -97,26 +85,102 @@ results = mclapply(1:nsim, function(isim){
 
     ## Do noise-added inference
     pvs = sapply(vlist, function(v){
-        cumsum.v = cumsum(v)
         pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
-                                numSteps = stoptime+consec,
+                                numSteps = stoptime + consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type)
         return(pv)
     })
     names(pvs) = names(vlist)
 
+    ## ## Get truths
+    ## truths = sapply(vlist, function(v){
+    ##     return(v%*%mn!=0)
+    ## })
+    ## names(truths) = names(vlist)
+
+    return(pvs)
+}, mc.cores=8)
+res = results[sapply(results, function(myresult){length(myresult)>1})]
+qqunif(unlist(res))
+(unlist(lapply(res, function(myres) myres$pv)))
+
+
+
+## Now trying /randomized/ inference /without/ IC
+n = 10
+lev = 0
+mn = c(rep(0,n/2), rep(lev,n/2))
+sigma = 1
+sigma.add = 0.2
+nsim = 500
+max.numSteps = 8
+locs = 1:n
+numSteps = 2
+inference.type = "pre-multiply"
+numIS=100
+bits=2000
+nsim = 100
+results = mclapply(1:nsim, function(isim){
+    printprogress(isim,nsim)
+    y = mn + rnorm(n,0,sigma)
+
+    ## Fit model and get IC information
+    new.noise = rnorm(length(y),0,sigma.add)
+    h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+    vlist <- make_all_segment_contrasts(h.fudged)
+
+    ## Do noise-added inference
+    pvs = sapply(vlist, function(v){
+        pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                sigma.add=sigma.add, orig.fudged.obj = h.fudged,
+                                numSteps = numSteps,
+                                bits=bits,
+                                inference.type=inference.type)
+        return(pv)
+    })
+    names(pvs) = names(vlist)
+
     ## Get truths
-    truths = lapply(vlist, function(v){
+    truths = sapply(vlist, function(v){
         return(v%*%mn!=0)
     })
     names(truths) = names(vlist)
 
     return(pvs)
-}, mc.cores=4)
+    ## })
+}, mc.cores=8)
 
 ## Nonrandomized fixed inference doesn't seem to have uniform p-values.. Why?
 res = results[sapply(results, function(myresult){length(myresult)>1})]
 qqunif(unlist(res))
 (unlist(lapply(res, function(myres) myres$pv)))
+
+
+
+
+## ## Timing null p-values.
+## a = microbenchmark({
+## numSteps=2
+## y = mn + rnorm(n,0,sigma)
+
+## ## Fit model and get IC information
+## new.noise = rnorm(length(y),0,sigma.add)
+## h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=numSteps)
+## vlist <- make_all_segment_contrasts(h.fudged)
+
+## ## Do noise-added inference
+## pvs = sapply(vlist, function(v){
+
+## ## v=vlist[[1]]
+##     print(v)
+##     pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
+##                             sigma.add=sigma.add, orig.fudged.obj = h.fudged,
+##                             numSteps = numSteps,
+##                             bits=bits,
+##                             inference.type=inference.type)
+##     return(pv)
+## })
+## },times=10)
+

@@ -1,6 +1,6 @@
 context("Test IC wrapper functions")
 
-test_that("IC minimization combined with model selection event has uniform p-values.",
+test_that("IC minimization combined with fixed (nonrandomized) binseg model selection event has uniform p-values.",
 {
     ## Settings
     nsim = 20
@@ -142,6 +142,8 @@ test_that("IC minimization combined with WBS randomization has uniform p-values.
         ##                        locs=1:length(y), numIS=100, sigma.add = sigma.add, bits=1000,
         ##                        inference.type="rows")
 
+        expect_equal(coords, declutter(coords=coords, how.close=1))
+
         pvs = do_rwbs_inference(y=y, max.numSteps=10, numIntervals=length(y),
                                 consec=2, sigma=sigma, postprocess=TRUE,
                                 better.segment=FALSE, locs=1:length(y),
@@ -192,5 +194,55 @@ test_that("Helper functions for get_ic() are working correctly", {
 
 test_that("IC minimization combined with additive noise randomization has uniform p-values.",
 {
-    print("not written yet!")
+    ## Warning! Even on 8 cores, this takes about 5-10 minutes to run
+    n = 30
+    lev = 0
+    mn = c(rep(0,n/2), rep(lev,n/2))
+    sigma = 1
+    sigma.add = 0.2
+    nsim = 1000
+    max.numSteps = 8
+    locs = 1:n
+    inference.type = "pre-multiply"
+    consec=2
+    results = mclapply(1:nsim, function(isim){
+        printprogress(isim,nsim)
+        set.seed(isim)
+        y = mn + rnorm(n,0,sigma)
+        cumsum.y = cumsum(y)
+
+        ## Fit model and get IC information
+        new.noise = rnorm(length(y),0,sigma.add)
+        h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=max.numSteps)
+        ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma+sigma.add, type="bic")
+        stoptime = ic_obj$stoptime
+        if(ic_obj$flag!="normal"){return(ic_obj$flag)}
+
+        ## Collect stopped model and postprocess
+        cp = h.fudged$cp[1:stoptime]
+        cp.sign = h.fudged$cp.sign[1:stoptime]
+        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=length(y))
+
+        ## Retain only the changepoints we want results from:
+        retain = which((cp %in% locs))
+        if(length(retain)==0) return(list(pvs=c(), null.true=c()))
+        vlist = vlist[retain]
+
+        ## Do noise-added inference
+        pvs = sapply(vlist, function(v){
+            pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
+                                    sigma.add=sigma.add, orig.fudged.obj = h.fudged,
+                                    numSteps = stoptime + consec,
+                                    ic.poly = ic_obj$poly, bits=bits,
+                                    inference.type=inference.type)
+            return(pv)
+        })
+        names(pvs) = names(vlist)
+
+        return(pvs)
+    }, mc.cores=8)
+    res = results[sapply(results, class)!="character"]
+    all.pvs = (unlist(res))
+    expect_equal(ks.test(all.pvs,"punif")$p.value > 0.05, TRUE)
 })
+
