@@ -11,11 +11,12 @@
 #' @export
 polyhedra.bsFs <- function(obj, numSteps = NA,
                            inference.type=c('rows','pre-multiply'),
-                           new.noise=NULL, v=NULL,icpoly=NULL,...){
+                           new.noise=NULL, v=NULL, icpoly=NULL, y=NULL,...){
 
     ## Basic checks
     inference.type = match.arg(inference.type)
-    is_valid(obj)
+    ## is_valid(obj)
+    if(inference.type=="pre-multiply" & is.null(y)) stop("Need to provide a y!")
 
     ## Collect halfspaces or pre-multiplied quantities
     n <- .get_startEnd(obj$tree$name)[2]

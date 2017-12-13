@@ -17,9 +17,9 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     while(!done){
         inner.tgs = sapply(1:numIS, function(isim){
             new.noise = rnorm(length(y),0,sigma.add)
-
             if(inference.type=="rows"){
-                ## if(is.na(numSteps))
+
+                ## If applicable,append IC poly to the original poly
                 if(is.null(ic.poly)){
                     poly = orig.fudged.poly
                 } else {
@@ -33,7 +33,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                 premult = polyhedra.bsFs(orig.fudged.obj,
                                          inference.type="pre-multiply",
                                          new.noise=new.noise, v=v,
-                                         numSteps=numSteps)
+                                         numSteps=numSteps, y=y)
                 ## Append IC stopping to Gy, Gv, Gw
                 if(!is.null(ic.poly)){
                     ic.Gy = as.numeric(ic.poly$gamma%*%y)
