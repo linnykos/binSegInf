@@ -194,7 +194,6 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
     cumsum.y = cumsum(y)
     inference.type = "pre-multiply"
     improve.nomass.problem = TRUE
-    retain=1:n
 
 
     if(type == "wbs.rand"){

@@ -11,6 +11,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     done=FALSE
     pvs = c()
     denoms = c()
+    if(sigma.add==0) numIS=1
 
     ## Do importance sampling until you have some number of variation..
     while(!done){
@@ -73,7 +74,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         numIS = round(numIS*1.5)
 
         ## Check if all pvalues are the same, and if so sample more.
-        enough.things = (any(pvs!=pvs[1]) | sum(denoms==1)>10) ## Second part
+        enough.things = (sigma.add==0 | any(pvs!=pvs[1]) | sum(denoms==1)>10) ## Last part
                                                                ## added because
                                                                ## sometimes
                                                                ## there is no
