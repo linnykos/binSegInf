@@ -467,7 +467,7 @@ make_all_segment_contrasts_from_wbs <- function(wbs_obj, cps=NULL, scaletype = c
 ##' And declutter them by removing all but (rounded up) centroids
 ##' @param coords.sign optional set of signs.
 ##' @export
-declutter <- function(coords, coords.sign=NULL, how.close = 1){
+declutter_new <- function(coords, coords.sign=NULL, how.close = 1){
 
     ## unsorted.coords = coords
     ## unsorted.coords.sign = coords.sign
@@ -520,3 +520,5 @@ declutter <- function(coords, coords.sign=NULL, how.close = 1){
     processed.coords = coords[cliq.centers] * cliq.signs
     return(processed.coords)
 }
+
+declutter_new = declutter
