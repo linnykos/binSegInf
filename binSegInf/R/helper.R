@@ -520,5 +520,3 @@ declutter_new <- function(coords, coords.sign=NULL, how.close = 1){
     processed.coords = coords[cliq.centers] * cliq.signs
     return(processed.coords)
 }
-
-declutter_new = declutter
