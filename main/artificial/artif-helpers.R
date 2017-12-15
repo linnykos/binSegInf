@@ -59,7 +59,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     vlist = vlist[retain]
     pvs = sapply(1:length(vlist), function(iv){
         print(iv)
-        v=vlist[[iv]]
+        v = vlist[[iv]]
         cumsum.v = cumsum(v)
         pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
                                               sigma=sigma,
@@ -82,7 +82,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
                              sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
-                             write.time=FALSE){
+                             write.time=FALSE, numIntervals=length(y)){
 
     inference.type = match.arg(inference.type)
 
@@ -109,7 +109,10 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
     vlist = vlist[retain]
 
     ## Do noise-added inference
-    pvs = sapply(vlist, function(v){
+    pvs = sapply(1:length(vlist), function(iv){
+        print(iv)
+        v = vlist[[iv]]
+
         pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,

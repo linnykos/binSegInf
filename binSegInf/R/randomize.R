@@ -2,9 +2,10 @@
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
-                               numSteps=NA, numIntervals, numIS, bits=50,
+                               numSteps=NA, numIS, bits=50,
                                orig.fudged.obj = NULL, ic.poly=NULL,
-                               max.numIS = 2000, inference.type = c("rows", "pre-multiply")){
+                               max.numIS = 2000,
+                               inference.type = c("rows", "pre-multiply")){
 
     ## New: Get many fudged TG statistics.
     inference.type = match.arg(inference.type)
@@ -29,7 +30,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                 }
                 obj.new = partition_TG(y=y, poly=poly, shift=new.noise,
                                        v=v, sigma=sqrt(sigma^2), bits=bits)
-            } else {
+            } else if (inference.type == "rows"){
                 premult = polyhedra.bsFs(orig.fudged.obj,
                                          inference.type="pre-multiply",
                                          new.noise=new.noise, v=v,
@@ -52,6 +53,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                 pv = obj.new$pv
                 if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix
 
+            } else {
+                stop("inference type not recognized!")
             }
             ## Handle boundary cases
             pv.new = obj.new$pv
