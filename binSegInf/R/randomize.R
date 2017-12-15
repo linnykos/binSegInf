@@ -4,7 +4,7 @@
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                numSteps=NA, numIS, bits=50,
                                orig.fudged.obj = NULL, ic.poly=NULL,
-                               max.numIS = 2000,
+                               max.numIS=2000,
                                inference.type = c("rows", "pre-multiply")){
 
     ## New: Get many fudged TG statistics.
@@ -30,7 +30,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                 }
                 obj.new = partition_TG(y=y, poly=poly, shift=new.noise,
                                        v=v, sigma=sqrt(sigma^2), bits=bits)
-            } else if (inference.type == "rows"){
+            } else if (inference.type=="pre-multiply"){
                 premult = polyhedra.bsFs(orig.fudged.obj,
                                          inference.type="pre-multiply",
                                          new.noise=new.noise, v=v,
