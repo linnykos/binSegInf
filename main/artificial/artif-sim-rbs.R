@@ -12,7 +12,7 @@ coriell_mn <- function(lev=1, n){
 }
 
 ## Simulation settings
-onesim_rbs <- function(y.orig){
+onesim_rbs <- function(y.orig, bits=1000){
 
     ## Add bootstrapped residuals around a cleaned mean, with known sigma
     y = newmn + bootstrap_sample(resid.cleanmn)
@@ -27,6 +27,19 @@ onesim_rbs <- function(y.orig){
                                consec=2, sigma=sigma, postprocess=TRUE,
                                better.segment=TRUE, locs=1:length(y), numIS=100,
                                inference.type="pre-multiply",
-                               improve.nomass.problem=TRUE, bits=1000)
+                               improve.nomass.problem=TRUE, bits=bits,
+                               write.file=TRUE)
     return(pvs.rbs)
+}
+
+nsim = 50
+bits = 5000
+results = mclapply(1:nsim, function(isim){
+    printprogress(isim,nsim)
+    return(onesim_rbs(y.orig, bits=bits))
+},mc.cores=8)
+
+## Reading and seeing speed from file
+read.time.from.file <- function(myfile){
+    sort(readLines(myfile))
 }

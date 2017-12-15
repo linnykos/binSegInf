@@ -79,9 +79,10 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 
 
 ##' Does a single randomized wbs (rwbs) inference for a given y
-do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
+do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
-                             sigma.add = 0.2, bits=50, inference.type=c("rows", "inference")){
+                             sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
+                             write.time=FALSE){
 
     inference.type = match.arg(inference.type)
 
@@ -101,11 +102,6 @@ do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
     cp = h.fudged$cp[1:stoptime]
     cp.sign = h.fudged$cp.sign[1:stoptime]
     vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
-    ## if(postprocess){
-    ##     cpobj = declutter(cp=cp, cp.sign)$cp.sign
-    ##     cp = cpobj$cp
-    ##     cp.sign = cpobj$cp.sign
-    ## }
 
     ## Retain only the changepoints we want results from:
     retain = which((cp %in% locs))
@@ -119,14 +115,12 @@ do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type)
+        if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)
     })
+    names(pvs) = names(vlist)
 
-
-
-    names(pvs) = (cp*cp.sign)[retain]
-
-    return(list(pvs=pvs, locs=cp[retain]))
+    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs))))
 }
 
 
