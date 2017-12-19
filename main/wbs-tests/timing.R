@@ -60,3 +60,8 @@ for(iplot in 1:2){
 graphics.off()
 
 
+
+
+
+    getmedtime <- function(mytime){(mytime$time[3])/1000000000}
+    medtimes= sapply(results, getmedtime)

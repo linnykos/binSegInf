@@ -4,6 +4,7 @@
 library(DNAcopy)
 library(genlasso); library(genlassoinf)
 data(coriell)
+datadir = "../data"
 
 #Combine into one CNA object to prepare for analysis on Chromosomes 1-23
 CNA.object <- CNA(cbind(coriell$Coriell.05296,coriell$Coriell.13330),
@@ -58,7 +59,7 @@ save(y.orig,
      cleanmn,
      resid.cleanmn,
      newmn,
-     file = filename)
+     file = file.path(datadir, filename))
 
 
 

@@ -181,10 +181,12 @@ dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, ran
 
 
 ## Compare p-values from three methods
-dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sbs.rand",
-                                 "sbs.nonrand", "wbs.rand", "wbs.nonrand",
-                                 "cbs.rand", "cbs.nonrand"),
-                          n, lev, numIntervals=n, sigma.add=0.2, numIS=100, meanfun=onejump, visc=NULL, numSteps=1, bits=50){
+dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus",
+                                 "sbs.rand", "sbs.nonrand", "wbs.rand",
+                                 "wbs.nonrand", "cbs.rand", "cbs.nonrand"), n,
+                          lev, numIntervals=n, sigma.add=0.2, numIS=100,
+                          meanfun=onejump, visc=NULL, numSteps=1, bits=1000,
+                          max.numIS=2000){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
@@ -378,7 +380,8 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus","sb
         locs = as.numeric(names(vlist))
         pvs = sapply(vlist, function(v){
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
+                                    sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits,
+                                    max.numIS=max.numIS)
         })
 
         return(data.frame(pvs=pvs,
