@@ -4,45 +4,44 @@ source("../main/wbs-tests/plot-helpers.R")
 source("../main/wbs-tests/sim-helpers.R")
 outputdir = "../output"
 
-## Fixed interval recovery for more complicated signal
-n=200
-lev=2
-nsim=1000
-visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
+## Detection for more complicated signal
+n = 200
+lev = 2
+nsim = 1000
+visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp){cp + c(-1,0,1)}))
 numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
 numSteps=4
 locs = Map(function(my.numInterval)
     print(my.numInterval)
     dosim_recovery(lev=lev,n=n,nsim=nsim,
-
                    numSteps=numSteps,
                    randomized=TRUE, numIS=100,
                    meanfun=fourjump,
                    numIntervals = my.numInterval,
                    mc.cores=mc.cores, locs=visc), numIntervals)
-filename = "numIntervals-recovery.Rdata"
+filename = "numIntervals-detection.Rdata"
 save(list=c("locs", "visc", "n", "lev", "numIntervals"),
      file=file.path(outputdir, filename))
 
 ## Plot the recoveries across numIntervlas
 load(file=file.path(outputdir, filename))
-pdf(file=file.path(outputdir,"varying-intervals-prop-recovery-fourjump.pdf"), width=5, height=5)
+pdf(file=file.path(outputdir,"varying-intervals-detection-fourjump.pdf"), width=5, height=5)
 plot(unlist(locs)~props,type='l', ylim=c(0,1))
 graphics.off()
 
 
 
-## Now run see powers
+## Now run inference simulations to see power
 library(genlassoinf)
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
 onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
-                       numSteps=1, n, numIntervals=n, bits=1000){
+                       numSteps=1, n=200, numIntervals=n, bits=1000){
 
     print("wbs.nonrand")
     result.wbs.nonrand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.nonrand", n=n, lev=lev, numIS=200,
+        dosim_compare(type="wbs.nonrand", n=n, lev=lev, numIS=100,
                       meanfun=meanfun, visc=visc, numSteps=numSteps,
                       numIntervals=numIntervals, bits=bits)
     }, mc.cores=mc.cores)
@@ -50,32 +49,33 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     print("wbs.rand")
     result.wbs.rand =  mclapply(1:nsim, function(isim) {
         printprogress(isim,nsim);
-        dosim_compare(type="wbs.rand", n=60, lev=lev, numIS=200,
+        dosim_compare(type="wbs.rand", n=n, lev=lev, numIS=100,
                       meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
     }, mc.cores=mc.cores)
-
     return(list(result.wbs.nonrand=result.wbs.nonrand, result.wbs.rand=result.wbs.rand))
 }
 
-## n=60
-n=200
-lev=1
-nsim=200
-bits=1000
-numSteps=4
+n = 200
+lev = 3
+nsim = 500#100# 2000
+bits = 2000
 visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
-mc.cores=8
+mc.cores = 8
 numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
-results.list = lapply(numIntervals, function(nI){
-    onecompare(lev=lev, nsim=nsim, meanfun=fourjump, visc=visc,
-               numSteps=numSteps, mc.cores=mc.cores, n=n, numIntervals=nI,
-               bits=bits)
-})
-save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200.Rdata"))
+## numIntervals = round(seq(from=1/10,to=1.5,by=2/5)*n)
+results.list = list()
+for(ii in 1:length(numIntervals)){
+    nI = numIntervals[ii]
+    results.list[[ii]] = onecompare(lev=lev, nsim=nsim, meanfun=fourjump, visc=visc,
+                                    numSteps=4, mc.cores=mc.cores, n=n, numIntervals=nI,
+                                    bits=bits)
+    save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200.Rdata"))
+    ## save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n20.Rdata"))
+}
 
 
 ## Load the data
-load(file=file.path(outputdir,"varying-intervals.Rdata"))
+## load(file=file.path(outputdir,"varying-intervals.Rdata"))
 load(file=file.path(outputdir,"varying-intervals-n200.Rdata"))
 
 ## Calculate it
@@ -94,7 +94,9 @@ avg.power.list = lapply(results.list,function(a){
     verdicts = unlist(sapply(b, function(my.b){
         pvs = my.b[,"pvs"]
         if(all(is.na(pvs))) return(NA)
-        return(pvs<(0.05/length(pvs)))
+        ## length(pvs)
+        print(pvs)
+        return(pvs<(0.05/4))
     }))
     verdicts = verdicts[!is.na(verdicts)]
     return(sum(verdicts)/length(verdicts))

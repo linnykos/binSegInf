@@ -20,6 +20,7 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
 }
 
 whichlev = 1:9
+## whichlev = 9
 ## whichlev=c(1:3)
 ## whichlev=c(4:5)
 ## whichlev=c(6:7)
@@ -27,7 +28,7 @@ whichlev = 1:9
 levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
 results.by.lev = list()
 mc.cores = 8
-nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]#/200
+nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]
 n=200## n=50
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 print(levs)

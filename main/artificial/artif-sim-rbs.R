@@ -34,7 +34,10 @@ nsim = 50
 bits = 5000
 results = mclapply(1:nsim, function(isim){
     printprogress(isim,nsim)
-    (onesim_rbs(y.orig, bits=bits))
+    myresult = onesim_rbs(y.orig, bits=bits)
+    filename = paste0("rbs-sim-", isim, "Rdata")
+    save(myresult, file.path(outputdir, filename))
+    return(myresult)
 },mc.cores=8)
 
 ## Reading and seeing speed from file
