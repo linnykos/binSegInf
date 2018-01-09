@@ -99,7 +99,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
-                            ic.poly=NULL, bits=50, numIS.max=1000,
+                            ic.poly=NULL, bits=50, max.numIS=2000,
                             improve.nomass.problem=FALSE, min.num.things=30, verbose=FALSE,
                             mc.cores=1){
 

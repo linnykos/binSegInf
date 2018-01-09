@@ -5,6 +5,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                               locs=1:length(y), numIS=100,
                               inference.type=inference.type,
                               improve.nomass.problem=TRUE, bits=1000,
+                              max.numIS=2000,
                               write.time = FALSE, verbose=FALSE){
 
 
@@ -31,7 +32,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     cp.sign = g$cp.sign[1:stoptime]
 
     if(postprocess){
-        cpobj = declutter(cp, cp.sign, how.close=how.close)
+        cpobj = declutter_new(cp, cp.sign, how.close=how.close)
         cp = abs(cpobj)
         cp.sign = sign(cpobj)
     }
@@ -58,7 +59,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     ## Calculate the p-values
     vlist = vlist[retain]
     pvs = sapply(1:length(vlist), function(iv){
-        print(iv)
+        printprogress(iv, length(vlist), type = "tests")
         v = vlist[[iv]]
         cumsum.v = cumsum(v)
         pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
@@ -70,7 +71,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                                               stop.time=stoptime+consec,
                                               ic.poly=ic_poly,
                                               improve.nomass.problem=improve.nomass.problem,
-                                              bits=bits))
+                                              bits=bits,
+                                              max.numIS=max.numIS))
         if(write.time) write.time.to.file(myfile="rwbs-main-example-timing.txt")
         return(pv)})
     names(pvs) = names(vlist)
@@ -82,7 +84,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
 do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
                              sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
-                             write.time=FALSE, numIntervals=length(y)){
+                             write.time=FALSE, numIntervals=length(y),
+                             max.numIS=2000){
 
     inference.type = match.arg(inference.type)
 
@@ -117,7 +120,8 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
-                                inference.type=inference.type)
+                                inference.type=inference.type,
+                                max.numIS=max.numIS)
         if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)
     })

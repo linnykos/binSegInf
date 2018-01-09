@@ -135,10 +135,6 @@ sanity.check <- function(z1list, Proj.perp, tolerance){
 }
 
 
-##' Function to print progress of simulations.
-printprogress <- function(isim,nsim){cat("\r", "simulation ", isim,
-                                             "out of", nsim)}
-
 
 ## Simulation helper
 .get_cp_from_segment_contrast <- function(v){
