@@ -222,7 +222,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus",
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                   improve.nomass.problem=improve.nomass.problem,
-                                                  bits=bits
+                                                  bits=bits, max.numIS=max.numIS
                                                   ))
         })
         return(data.frame(pvs=pvs,
@@ -273,7 +273,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus",
 
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits)
+                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits, max.numIS=max.numIS)
         })
 
         return(data.frame(pvs=pvs,
@@ -322,7 +322,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus",
                 pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                         sigma.add=sigma.add,
                                         orig.fudged.poly= combined.poly,
-                                        bits=bits)
+                                        bits=bits, max.numIS=max.numIS)
             })
             locs = as.numeric(names(vlist))
             return(data.frame(pvs=pvs, locs=locs))
@@ -438,7 +438,7 @@ dosim_compare <- function(type=c("wbs","fl.nonrand","fl.rand","fl.rand.plus",
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
-                                bits=bits)
+                                bits=bits, max.numIS=max.numIS)
         })
 
         return(data.frame(pvs=pvs,

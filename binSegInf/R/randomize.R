@@ -129,17 +129,16 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       bits=bits)
         }, mc.cores=mc.cores)
 
-        ## Combine the things.
+        ## Combine the new parts with the prexisting.
         parts = t(do.call(rbind,parts)) ## Not ideal but works for now
-
         parts.so.far = cbind(parts.so.far, parts)
+
+        browser()
+
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts.so.far["weight",]>0)
         enough.things = (things > min.num.things)
-        if(!improve.nomass.problem){
-            done=TRUE
-        }
-        if(enough.things){
+        if(!improve.nomass.problem | enough.things){
             done=TRUE
         }
         pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
