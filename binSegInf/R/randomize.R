@@ -149,7 +149,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         ## printf("things is %d", things)
         ## printf("numIS is %f", numIS)
 
-        if(numIS > numIS.max) done=TRUE
+        if(numIS > max.numIS) done=TRUE
     }
     return(pv)
 }
