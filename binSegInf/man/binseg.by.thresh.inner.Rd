@@ -7,7 +7,7 @@
 \code{thresh} is set to zero, then this can be used to collect the
 unbalanced haar wavelet basis.}
 \usage{
-binseg.by.thresh.inner(y, thresh, s = 1, e = length(y), j = 0, k = 1,
+binseg.by.thresh.inner(y, thresh, s = 1, e = length(y), j = 1, k = 1,
   verbose = F, env = NULL)
 }
 \arguments{

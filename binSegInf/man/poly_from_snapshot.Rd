@@ -6,20 +6,33 @@
 This means the characterization of the cusum statistic at (b.max, m.max and
 s.max) being the largest among all the competing intervals at that step.}
 \usage{
-poly_from_snapshot(obj, mystep, reduce = FALSE, latest.poly = NULL)
+poly_from_snapshot(obj, mystep, reduce = FALSE, vup = NULL, vlo = NULL,
+  v = NULL, sigma = NULL, bits = NULL, env = NULL, verbose = FALSE)
 }
 \arguments{
 \item{obj}{\code{wbsFt} object.}
 
 \item{mystep}{step in the path}
 
-\item{reduce}{If TRUE, then does a Vup/Vlo comparison to see if you
-should add (chunks) of r}
+\item{reduce}{If TRUE, then does a Vup/Vlo comparison to see if you should
+add (chunks) of the polyhedron or not. This assumes you've chosen the
+contrast \code{v} already.}
 
-\item{latest.poly}{If \code{reduce} is set to TRUE, this is the latest
-polyhedron outside of. This is necessary because polyhedron
-approximations only work if the checking for change in (Vup, Vlo) is
-done /cumulatively/. Defaults to NULL.}
+\item{vup}{vup.}
+
+\item{vlo}{vlo.}
+
+\item{v}{v.}
+
+\item{sigma}{noise level.}
+
+\item{bits}{bits.}
+
+\item{verbose}{load or not.}
+
+\item{contrast}{Contrast vector of interest of inference; only to be used
+when \code{reduce==TRUE}. Approximations only work if the checking for
+change in (Vup, Vlo) is done /cumulatively/. Defaults to NULL.}
 }
 \value{
 a polyhedra object with the selection event at that step.

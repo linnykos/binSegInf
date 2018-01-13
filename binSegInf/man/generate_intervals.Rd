@@ -4,8 +4,7 @@
 \alias{generate_intervals}
 \title{Function to generate random intervals for wild binary segmentation.}
 \usage{
-generate_intervals(n, numIntervals, seed = NULL, start.end.list = NULL,
-  augment = FALSE)
+generate_intervals(n, numIntervals, seed = NULL, start.end.list = NULL)
 }
 \arguments{
 \item{n}{length of data.}
@@ -16,8 +15,6 @@ generate_intervals(n, numIntervals, seed = NULL, start.end.list = NULL,
 
 \item{start.end.list}{Manual list of starts and ends. Literally an R list
 with two equal length vectors, each named |start| and |end|}
-
-\item{augment}{Augment the intervals with [s,e]}
 }
 \value{
 List containing starts and ends and intervals etc.

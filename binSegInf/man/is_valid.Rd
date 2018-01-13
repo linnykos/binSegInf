@@ -13,6 +13,6 @@ is_valid(obj)
 void
 }
 \description{
-Generic function that fails noisily with a stop message if the object is 
+Generic function that fails noisily with a stop message if the object is
 invalid. Otherwise, nothing happens.
 }

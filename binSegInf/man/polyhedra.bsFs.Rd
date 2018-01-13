@@ -4,7 +4,7 @@
 \alias{polyhedra.bsFs}
 \title{Generate polyhedra matrix from bsFs object}
 \usage{
-\method{polyhedra}{bsFs}(obj, ...)
+\method{polyhedra}{bsFs}(obj, numSteps = NA, ...)
 }
 \arguments{
 \item{obj}{bsFs object}

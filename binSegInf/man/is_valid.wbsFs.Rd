@@ -2,16 +2,10 @@
 % Please edit documentation in R/wildBinSeg_fixedStep.R
 \name{is_valid.wbsFs}
 \alias{is_valid.wbsFs}
-\title{is_valid for wbs}
+\title{Checks if obj is a valid |wbs| class object}
 \usage{
 \method{is_valid}{wbsFs}(obj)
 }
-\arguments{
-\item{obj}{wbs object}
-}
-\value{
-TRUE if valid
-}
 \description{
-is_valid for wbs
+Checks if obj is a valid |wbs| class object
 }

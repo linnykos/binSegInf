@@ -2,10 +2,11 @@
 % Please edit documentation in R/wildBinSeg_fixedStep_polyhedra.R
 \name{polyhedra.wbsFs}
 \alias{polyhedra.wbsFs}
-\title{Generate polyhedra matrix from wbs output
-Forms both Gamma matrix and u vector}
+\title{Generate polyhedra matrix from wbs output Forms both Gamma matrix and u
+vector.}
 \usage{
-\method{polyhedra}{wbsFs}(obj, v = NULL, reduce = FALSE, ...)
+\method{polyhedra}{wbsFs}(obj, v = NULL, reduce = FALSE, sigma = NULL,
+  verbose = FALSE, ...)
 }
 \arguments{
 \item{obj}{Output from wbs}
@@ -14,11 +15,15 @@ Forms both Gamma matrix and u vector}
 
 \item{reduce}{If TRUE, then does a Vup/Vlo comparison to see if you
 should add (chunks) of rows instead of /all/ of them.}
+
+\item{sigma}{noise level.}
+
+\item{verbose}{load or not.}
 }
 \value{
 An object of class polyhedra
 }
 \description{
-Generate polyhedra matrix from wbs output
-Forms both Gamma matrix and u vector
+Generate polyhedra matrix from wbs output Forms both Gamma matrix and u
+vector.
 }

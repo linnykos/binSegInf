@@ -2,7 +2,7 @@
 % Please edit documentation in R/contrast_vector.R
 \name{contrast_vector}
 \alias{contrast_vector}
-\title{Generate contrast bector}
+\title{Generate contrast vector}
 \usage{
 contrast_vector(obj, jump.idx, sorted = F, type = c("segment", "spike"),
   ...)
@@ -22,5 +22,5 @@ contrast_vector(obj, jump.idx, sorted = F, type = c("segment", "spike"),
 numeric vector
 }
 \description{
-Generate contrast bector
+Generate contrast vector
 }

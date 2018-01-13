@@ -4,7 +4,8 @@
 \alias{ic_wrapper}
 \title{Embed stopping time into the path.}
 \usage{
-ic_wrapper(obj, y, consec = 2, maxsteps = length(cp), sigma, type = "bic")
+ic_wrapper(obj, y, consec = 2, maxsteps = length(obj$cp), sigma,
+  type = "bic")
 }
 \arguments{
 \item{obj}{A list object containing an element named \code{"cp"}, which is a

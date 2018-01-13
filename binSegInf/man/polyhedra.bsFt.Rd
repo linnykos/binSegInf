@@ -2,8 +2,8 @@
 % Please edit documentation in R/binSeg_polyhedra.R
 \name{polyhedra.bsFt}
 \alias{polyhedra.bsFt}
-\title{Function to collect polyhedra given some output from the
-binSeg_fixedThresh(), of class "bsFt".}
+\title{Function to collect halfsapces for output from the binSeg_fixedThresh(),
+embedded in an object |obj| of class "bsFt".}
 \usage{
 \method{polyhedra}{bsFt}(obj, verbose = F)
 }
@@ -16,6 +16,6 @@ binSeg_fixedThresh(), of class "bsFt".}
 An object of class polyhedra
 }
 \description{
-Function to collect polyhedra given some output from the
-binSeg_fixedThresh(), of class "bsFt".
+Function to collect halfsapces for output from the binSeg_fixedThresh(),
+embedded in an object |obj| of class "bsFt".
 }

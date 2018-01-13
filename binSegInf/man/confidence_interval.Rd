@@ -2,11 +2,12 @@
 % Please edit documentation in R/confidence_interval.R
 \name{confidence_interval}
 \alias{confidence_interval}
-\title{Confidence interval from post-selection inference}
+\title{TG confidence interval from post-selection inference. Assumes that one-sided
+test is in the right-sided direction i.e. H_0: v^T\mu>0.}
 \usage{
-confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
+confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
   gridsize = 250, alternative = c("two.sided", "one.sided"),
-  precBits = NA)
+  precBits = NA, fac = 10)
 }
 \arguments{
 \item{y}{numeric vector}
@@ -18,20 +19,26 @@ confidence_interval(y, polyhedra, contrast, sigma = 1, alpha = 0.95,
 \item{sigma}{numeric to denote the sd of the residuals}
 
 \item{alpha}{numeric between 0 and 1 with default of 0.95. This is the
-significance level, guaranteeing that alpha percentage
-of the intervals will cover the true parameter.}
+significance level, guaranteeing that alpha percentage of the intervals
+will cover the true parameter.}
 
 \item{gridsize}{numeric to denote how fine of a grid to invert the hypothesis
 test}
 
-\item{alternative}{string of either "one.sided" or "two.sided" for the 
-alternative. If one.sided, the alternative means the test statistic is positive.}
+\item{alternative}{string of either "one.sided" or "two.sided" for the
+alternative. If one.sided, the alternative means the test statistic is
+positive.}
 
 \item{precBits}{precision of Rmpfri}
+
+\item{fac}{A positive factor that makes the search over \eqn{v^T\mu} to be
+over a range of \code{(-fac*(max(y)-min(y)), fac*(max(y)- min(y)))}.
+Defaults to \code{10}.}
 }
 \value{
 a vector of two numbers, the lower and upper end of the confidence interval
 }
 \description{
-Confidence interval from post-selection inference
+TG confidence interval from post-selection inference. Assumes that one-sided
+test is in the right-sided direction i.e. H_0: v^T\mu>0.
 }

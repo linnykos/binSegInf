@@ -2,16 +2,16 @@
 % Please edit documentation in R/wildBinSeg_fixedThresh.R
 \name{is_valid.wbsFt}
 \alias{is_valid.wbsFt}
-\title{is_valid for wbs}
+\title{is_valid for wbs-ft}
 \usage{
 \method{is_valid}{wbsFt}(obj)
 }
 \arguments{
-\item{obj}{wbs object}
+\item{obj}{wbsft object}
 }
 \value{
 TRUE if valid
 }
 \description{
-is_valid for wbs
+is_valid for wbs-ft
 }

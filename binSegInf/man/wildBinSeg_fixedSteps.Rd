@@ -2,32 +2,22 @@
 % Please edit documentation in R/wildBinSeg_fixedStep.R
 \name{wildBinSeg_fixedSteps}
 \alias{wildBinSeg_fixedSteps}
-\title{Wild binary segmentation, with fixed threshold}
+\title{Fixed step WBS function. There is a ``mimic'' option that helps you create
+new polyhedron that says that the same |numSteps| winners win, but among a
+new set of intervals.}
 \usage{
-wildBinSeg_fixedSteps(y, numSteps, numIntervals = NULL, return.env = FALSE,
-  seed = NULL, verbose = FALSE, intervals = NULL, augment = FALSE)
+wildBinSeg_fixedSteps(y, numSteps, numIntervals = NULL, intervals = NULL,
+  mimic = FALSE, wbs.obj = NULL, comprehensive = FALSE)
 }
 \arguments{
-\item{y}{numeric vector to contain data}
-
-\item{numSteps}{numeric of number of stepsemas}
-
-\item{numIntervals}{number of random intervals to sample}
-
-\item{intervals}{Intervals to manually use, produced from
-\code{generate_intervals()}. Defaults to NULL.}
-
-\item{augment}{TRUE if the qualifying set of intervals in wild binary
-segmentation should be augmented by the large interval \code{c(s,e)}.
-Defaults to FALSE.}
-
-\item{tol}{tolerance to handle divide by zero instances}
+\item{intervals}{Optionally, add an |intervals| class object that contains
+intervals.}
 }
 \value{
-either an environment address which contains output
-    (\code{env$intervals} and \code{env$tree}), or a list of wild binary
-    segmentation output.
+List of useful algorithm results, including the |gamma| matrix and |u|.
 }
 \description{
-Wild binary segmentation, with fixed threshold
+Fixed step WBS function. There is a ``mimic'' option that helps you create
+new polyhedron that says that the same |numSteps| winners win, but among a
+new set of intervals.
 }

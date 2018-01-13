@@ -18,10 +18,10 @@ pvalue(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 
 \item{null_mean}{the null-hypothesis mean to test against}
 
-\item{alternative}{string of either "one.sided" or "two.sided" for the 
+\item{alternative}{string of either "one.sided" or "two.sided" for the
 alternative. If one.sided, the alternative means the test statistic is positive.}
 
-\item{precBits}{precision of Rmpfri}
+\item{precBits}{precision of Rmpfr}
 }
 \value{
 a numeric p-value between 0 and 1

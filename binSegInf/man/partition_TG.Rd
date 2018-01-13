@@ -6,7 +6,8 @@
 is in the polyhedron, conditional on PvperpY. i.e. the probability that Y
 stays in the polyhedron, fixing n-1 dimensions of it.}
 \usage{
-partition_TG(y, poly, v, sigma, nullcontrast = 0, bits = 50)
+partition_TG(y, poly, v, sigma, nullcontrast = 0, bits = 50, reduce,
+  correct.ends = FALSE)
 }
 \arguments{
 \item{y}{data}

@@ -2,12 +2,14 @@
 % Please edit documentation in R/cplist.R
 \name{trim.mat}
 \alias{trim.mat}
-\title{Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
-Returns NULL if mat is all NA's.}
+\title{Function to trim a matrix from the right and bottom, ridding of all-NA
+rows/columns. Why is it a function in itself? It includes the boundary case
+handling that takes up code room -- so that returns NULL if mat is all NA's.}
 \usage{
 trim.mat(mat, type = c("rowcol", "row"))
 }
 \description{
-Function to trim a matrix from the right and bottom, ridding of all-NA rows/columns.
-Returns NULL if mat is all NA's.
+Function to trim a matrix from the right and bottom, ridding of all-NA
+rows/columns. Why is it a function in itself? It includes the boundary case
+handling that takes up code room -- so that returns NULL if mat is all NA's.
 }

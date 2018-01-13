@@ -4,7 +4,7 @@
 \alias{tnorm.surv}
 \title{Temporarily added from selectiveInference package.}
 \usage{
-tnorm.surv(z, mean, sd, a, b, bits = NULL)
+tnorm.surv(z, mean, sd, a, b, bits = NULL, correct.ends = TRUE)
 }
 \description{
 Temporarily added from selectiveInference package.

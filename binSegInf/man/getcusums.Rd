@@ -4,7 +4,7 @@
 \alias{getcusums}
 \title{Get all cusums, given start point \code{s} and end point \code{e}}
 \usage{
-getcusums(s, e, y, unsigned = FALSE)
+getcusums(s, e, y, unsigned = FALSE, simplereturn = FALSE)
 }
 \arguments{
 \item{s}{Starting index, between \code{1} and \code{n}}
@@ -14,6 +14,8 @@ getcusums(s, e, y, unsigned = FALSE)
 \item{y}{\code{n}-lengthed data vector.}
 
 \item{unsigned}{\code{TRUE} to return alsolute value.}
+
+\item{simplereturn}{\code{TRUE} just to return the cusums.}
 }
 \value{
 list of information about the cusum calculations and maximizers in

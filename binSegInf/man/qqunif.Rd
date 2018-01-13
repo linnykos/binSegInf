@@ -4,14 +4,14 @@
 \alias{qqunif}
 \title{Function to plot qqlot of p-values. Use extra parameter}
 \usage{
-qqunif(pp, main = NULL, ...)
+qqunif(pp, main = NULL, plot.it = TRUE, cols = NULL, ...)
 }
 \arguments{
 \item{pp}{numeric vector of p-values.}
 
 \item{main}{label to plot as main title.}
 
-\item{...}{other graphical parameters for \code{plot()}.}
+\item{cols}{colors if |pp| is a list of numeric vectors.}
 }
 \description{
 Function to plot qqlot of p-values. Use extra parameter
