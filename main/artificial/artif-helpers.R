@@ -53,8 +53,12 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
     }
 
     ## Retain only the changepoints we want results from:
+    print((abs(as.numeric(names(vlist)))))
     retain = which((abs(as.numeric(names(vlist))) %in% locs))
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
+
+    ## Temporarily added
+    if(length(retain)!=0) browser()
 
     ## Calculate the p-values
     vlist = vlist[retain]

@@ -1,6 +1,15 @@
 load("../results/artificial.Rdata")
+load(file=file.path(outputdir, "artif-rwbs.Rdata"))
 
 ## Extract results
+pvs = (unlist(sapply(results, function(myresult) myresult$pvs)))
+all.locs = (unique(names(pvs)))
+pvs.by.loc = sapply(all.locs, function(myloc){
+    pvs[which(names(pvs)==myloc)]
+})
+sum(is.nan(pvs.by.loc[["-964"]]))
+length(pvs.by.loc[["-964"]])
+
 results[[1]]$pmat.bsfs[,"cp"]
 results[[1]]$pmat.wbsfs[,"cp"]
 results[[1]]$pmat.wbsfs.nonrand[,"cp"]

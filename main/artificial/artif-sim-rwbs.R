@@ -1,5 +1,6 @@
 # Data directory
 datadir = "../data"
+outputdir = "../output"
 filename = "coriell05296.Rdata"
 load(file=file.path(datadir,filename))
 source(file=file.path("../main/artificial/artif-helpers.R"))
@@ -26,11 +27,14 @@ onesim_rwbs <- function(y.orig){
     return(pvs.rwbs)
 }
 
-nsim = 50
+nsim = 300 # 50
 results = mclapply(1:nsim,function(isim){
     printprogress(isim,nsim)
     return(onesim_rwbs(y.orig))
 },mc.cores=5)
+
+
+save(results, file=file.path(outputdir, "artif-rwbs.Rdata"))
 
 ## Reading and seeing speed from file
 read.time.from.file <- function(myfile){

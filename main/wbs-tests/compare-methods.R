@@ -2,34 +2,34 @@
 library(genlassoinf)
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=50, n=60, numIS=200){
+onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL, numSteps=1, bits=50, n=60, numIS=200,
+                       max.numIS=1000){
 
     all.names = c("fl.rand", "fl.rand.plus", "fl.nonrand", "sbs.rand",
                   "sbs.nonrand", "wbs.rand", "wbs.nonrand", "cbs.rand",
-                  "cbs.nonrand")[c(2)]
+                  "cbs.nonrand")
 
     all.results = lapply(all.names, function(myname){
         print(myname)
         mclapply(1:nsim, function(isim) {
             printprogress(isim,nsim);
-            dosim_compare(type=myname, n=n, lev=lev, numIS=numIS, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+            dosim_compare(type=myname, n=n, lev=lev, numIS=numIS, meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits,
+                          max.numIS=max.numIS)
         }, mc.cores=mc.cores)
     })
     names(all.results) = all.names
     return(all.results)
 }
 
-whichlev = 1:9
-## whichlev = 9
-## whichlev=c(1:3)
-## whichlev=c(4:5)
-## whichlev=c(6:7)
-## whichlev=c(8:9)
+
+jj = 3
+whichlev.list = list(1:3, 4:6, 7:9)
+whichlev = whichlev.list[[jj]]
 levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
 results.by.lev = list()
 mc.cores = 8
 nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]
-n=200## n=50
+n=200 ## n=50
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 print(levs)
 for(ilev in 1:length(levs)){
@@ -38,14 +38,22 @@ for(ilev in 1:length(levs)){
     print(mylev)
     results.by.lev[[ whichlev[ilev] ]] = onecompare(lev=mylev,
                                         nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
-                                        numSteps=4, bits=1000, mc.cores=mc.cores, n=n, numIS=100)
-
-    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-flplus.Rdata"))
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir,"compare-methods-fourjump-45.Rdata"))
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
-    ## save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
+                                        numSteps=4, bits=3000, mc.cores=mc.cores, n=n, numIS=100,
+                                        max.numIS=3000)
+    filename = paste0("compare-methods-fourjump-", paste0(whichlev.list[[jj]], collapse=""), ".Rdata")
+    save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, filename))
+    print(filename)
 }
+
+
+## Why is fl.nonrand failing? ## TODOcheck and erase
+myname = "fl.nonrand"
+a = mclapply(1:nsim, function(isim) {
+    printprogress(isim,nsim);
+    dosim_compare(type=myname, n=n, lev=lev, numIS=numIS,
+                  meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
+}, mc.cores=mc.cores)
+
 
 
 ## Aggregate the results
@@ -60,12 +68,6 @@ results.by.lev.master[6:7] = results.by.lev[1:2]
 load(file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
 results.by.lev.master[8:9] = results.by.lev[1:2]
 results.by.lev = results.by.lev.master
-
-
-## Add the fl.randplus results to everything
-for(ii in 1:9){
-    results.by.lev.master[[ii]]
-}
 
 
 
@@ -94,12 +96,6 @@ cond.pows.by.method = sapply(all.names, function(methodname){
     names(cond.pows) = levs
     return(cond.pows)
 })
-
-mycleanresult[["0"]][["fl.rand.plus"]][,"pvs"]
-myclean(results.)
-aa = lapply(results, function(a) do.call(rbind,a))
-pvs = mycleanresult[["0"]][["fl.rand.plus"]]
-
 
 uncond.pows.by.method = sapply(all.names, function(methodname){
     uncond.pows = sapply(levs, function(mylev){
