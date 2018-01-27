@@ -126,8 +126,8 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type,
-                                max.numIS=max.numIS,
-                                mc.cores=mc.cores)
+                                max.numIS=max.numIS, mc.cores=mc.cores)
+
         if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)
     })
@@ -159,7 +159,6 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
 ##             pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
 ##         })
 
-##     ooooooooooook
 
 ##' Quick helper to write to file.
 write.time.to.file <- function(myfile){
