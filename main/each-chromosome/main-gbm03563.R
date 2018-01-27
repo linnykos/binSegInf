@@ -18,6 +18,15 @@ chrome.data = chrome.data[which(!is.na(chrome.data[,"y"])),]
 ## plot(chrome.data[,"y"])
 ## abline(v=c(0, cumsum(table(chrome.data[,"chr"]))))
 
+
+chrome2 = chrome.data[chrome.data[,"chr"]==2,"y"] ## This is the noise-harvesting one
+chrome4 = chrome.data[chrome.data[,"chr"]==4,"y"] ## This is the noise-harvesting one
+chrome5 = chrome.data[chrome.data[,"chr"]==5,"y"] ## This is the noise-harvesting one
+chrome6 = chrome.data[chrome.data[,"chr"]==6,"y"] ## This is the noise-harvesting one
+sd(chrome2)
+sd(c(chrome2, chrome4, chrome5, chrome6))
+
+
 ## Repeat the same analysis for four lines
 ## Try 1,3,9,11 , where
 chrome1 = chrome.data[chrome.data[,"chr"]==1,"y"]
@@ -25,7 +34,8 @@ chrome2 = chrome.data[chrome.data[,"chr"]==2,"y"] ## This is the noise-harvestin
 chrome3 = chrome.data[chrome.data[,"chr"]==3,"y"]
 chrome9 = chrome.data[chrome.data[,"chr"]==9,"y"]
 chrome11 = chrome.data[chrome.data[,"chr"]==11,"y"]
-header = "gbm05363"
+header = "gm03563"
+mc.cores = 4
 
 four.chrome.dats = list(chrome1=chrome1, chrome3=chrome3,
                         chrome9=chrome9, chrome11=chrome11)
