@@ -403,14 +403,13 @@ make_all_segment_contrasts_from_cp <- function(cp, cp.sign, n, scaletype = c("se
         ind2 = (cp_aug[ii]+1):cp_aug[ii+1]
         d[ind1] = -1/length(ind1)
         d[ind2] = 1/length(ind2)
-        dlist[[ii-1]] = d * sn_aug[ii]
-
         if(scaletype == "unitnorm"){
             d = d/sqrt(sum(d*d))
         } else if (scaletype == "segmentmean"){
         } else {
             stop("scaletype not written yet!")
         }
+        dlist[[ii-1]] = d * sn_aug[ii]
     }
     names(dlist) = (cp * cp.sign)[ord]
     return(dlist)
