@@ -45,27 +45,96 @@ results = lapply(1:ngrain, function(igrain){
 
 save(sigma.add.list, nsims, results,
      file=file.path(outputdir, "how-much-noise-to-add.Rdata"))
+## load(file=file.path(outputdir, "how-much-noise-to-add.Rdata"))
+load(file=file.path(outputdir, "how-much-noise-to-add-moresim.Rdata"))
 
-load(file=file.path(outputdir, "how-much-noise-to-add.Rdata"))
 
-## Format and plot pvalues
+## Reformat pvalues
 pvs.list = lapply(results, function(myresults){
     pvs = sapply(myresults, function(myresult)myresult[,"pvs"])
     pvs = unlist(pvs)
     pvs = pvs[!is.na(pvs)]
     pvs = pvs[pvs!=1]
 })
-qqunif(pvs.list, cols=1:5)
-legend("bottomright", col=1:5, lty=rep(2,5), lwd=rep(2,5),legend=sigma.add.list  )
 
-
-## Visualize the detection rate
-detections = c()
-sums=c()
-for(ii in 1:10){
+## Calculate the unconditional powers
+cond.pows = c()
+for(ii in 1:5){
     myresults = results[[ii]]
-    sums[ii] = sum(sapply(myresults, nrow))
-    ## detections[ii] = (length(unlist(locs.list)) / (4*length(locs.list)))
+    numtests = sapply(myresults, nrow)
+    rejs = sapply(myresults, function(mymat){
+        pvs = mymat[,"pvs"]
+        pvs[is.nan(pvs)] <- 0
+        rejections = sum(pvs < 0.05/4)
+    })
+    uncond.pows[ii] = sum(rejs)/sum(numtests)
 }
-## plot(detections, type='l')
-plot(sums, type='l')
+
+
+## Visualize unconditional power
+n = 200
+visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-2,-1,0,1,2)))
+cond.pows = detections = c()
+for(ii in 1:5){
+    myresults = results[[ii]]
+    totalnumtests = sum(sapply(myresults, nrow))
+    rejs = sapply(myresults, function(mymat){
+        pvs = mymat[,"pvs"]
+        locs = mymat[,"locs"]
+        pvs = pvs[which(locs %in% visc.fourjump)]
+        pvs[is.nan(pvs)] <- 0
+        rejections = sum(pvs < 0.05/4)
+    })
+    numtests = sapply(myresults, function(mymat){
+        locs = mymat[,"locs"]
+        sum(locs %in% visc.fourjump)
+    })
+    print(summary((numtests)))
+    cond.pows[ii] = sum(rejs)/sum(numtests)
+    detections[ii] = sum(numtests)/totalnumtests
+}
+
+## Visualize the cond/uncond powers and detection, all together
+col.cond = "black"
+col.uncond = "red"
+col.detection = "black"
+lty.detection = 2
+w=5; h=5
+pdf(file=file.path(outputdir, "powers-how-much-noise-to-add.pdf"), width=w, height=h)
+mar = c(4.5,4.5,0.5,0.5)
+par(mar=mar)
+plot(NA, ylim=c(0,1), type='l', lwd=2, xlim = range(sigma.add.list), axes=FALSE,
+     ylab = "Unconditional power", xlab = bquote(Additive~noise~sigma[add]))
+axis(1); axis(2)
+lines(uncond.pows~sigma.add.list[1:5], type='o', col=col.uncond, lwd=2)
+lines(cond.pows~sigma.add.list[1:5], type='o', col=col.cond, lwd=2)
+lines(detections~sigma.add.list[1:5], type = 'o', col=col.detection, lty=lty.detection, lwd=2)
+graphics.off()
+
+
+## Make the QQ plots
+mycols = RColorBrewer::brewer.pal(5, "Set2")
+w=5; h=5
+mar = c(4.5,4.5,0.5,0.5)
+pdf(file=file.path(outputdir, "qqplot-how-much-noise-to-add.pdf"), width=w, height=h)
+par(mar=mar)
+qqunif(pvs.list, cols=mycols[1:5])
+legend("bottomright", col=mycols[1:5], lty=rep(2,5), lwd=rep(2,5),legend=round(sigma.add.list[1:5],3))
+graphics.off()
+
+
+
+
+## ## Visualize the detection rate
+## detections = c()
+## sums=c()
+## ## for(ii in 1:10){
+## for(ii in 1:5){
+##     myresults = results[[ii]]
+##     sums[ii] = sum(sapply(myresults, nrow))
+##     ## detections[ii] = (length(unlist(locs.list)) / (4*length(locs.list)))
+##     ## detections[ii] = (length(unlist(locs.list)) / (4*length(locs.list)))
+##     myresults[[1]]
+## }
+## ## plot(detections, type='l')
+## plot(sums, type='l')
