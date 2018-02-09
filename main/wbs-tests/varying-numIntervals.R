@@ -4,33 +4,6 @@ source("../main/wbs-tests/plot-helpers.R")
 source("../main/wbs-tests/sim-helpers.R")
 outputdir = "../output"
 
-## Detection for more complicated signal
-n = 200
-lev = 2
-nsim = 1000
-visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp){cp + c(-1,0,1)}))
-numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
-numSteps=4
-locs = Map(function(my.numInterval)
-    print(my.numInterval)
-    dosim_recovery(lev=lev,n=n,nsim=nsim,
-                   numSteps=numSteps,
-                   randomized=TRUE, numIS=100,
-                   meanfun=fourjump,
-                   numIntervals = my.numInterval,
-                   mc.cores=mc.cores, locs=visc), numIntervals)
-filename = "numIntervals-detection.Rdata"
-save(list=c("locs", "visc", "n", "lev", "numIntervals"),
-     file=file.path(outputdir, filename))
-
-## Plot the recoveries across numIntervlas
-load(file=file.path(outputdir, filename))
-pdf(file=file.path(outputdir,"varying-intervals-detection-fourjump.pdf"), width=5, height=5)
-plot(unlist(locs)~props,type='l', ylim=c(0,1))
-graphics.off()
-
-
-
 ## Now run inference simulations to see power
 library(genlassoinf)
 outputdir = "../output"
@@ -55,6 +28,13 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(list(result.wbs.nonrand=result.wbs.nonrand, result.wbs.rand=result.wbs.rand))
 }
 
+
+## Synopsis: Varying numIntervals and see recovery properties and conditionial
+## power
+source("../main/wbs-tests/plot-helpers.R")
+source("../main/wbs-tests/sim-helpers.R")
+outputdir = "../output"
+
 n = 200
 lev = 3
 nsim = 500#100# 2000
@@ -69,9 +49,12 @@ for(ii in 1:length(numIntervals)){
     results.list[[ii]] = onecompare(lev=lev, nsim=nsim, meanfun=fourjump, visc=visc,
                                     numSteps=4, mc.cores=mc.cores, n=n, numIntervals=nI,
                                     bits=bits)
-    save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200.Rdata"))
+    ## save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200-lev1.Rdata"))
+    ## save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200-lev2.Rdata"))
+    save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n200-lev3.Rdata"))
     ## save(list=c("results.list", "numIntervals"), file=file.path(outputdir,"varying-intervals-n20.Rdata"))
 }
+
 
 
 ## Load the data
@@ -102,9 +85,13 @@ avg.power.list = lapply(results.list,function(a){
     return(sum(verdicts)/length(verdicts))
 })
 
+## Recovery
+recoveries = lapply(results.list,
+                    function(myresults){sum(sapply(myresults$result.wbs.rand,nrow))/(4*500)})
+
 ## Plot it
 pdf(file=file.path(outputdir,"varying-intervals-prop-recovery-fourjump.pdf"), width=5, height=5)
-recoveries = (sapply(c(locs), function(myloc) sum(myloc %in% visc)))/nsim
+## recoveries = (sapply(c(locs), function(myloc) sum(myloc %in% visc)))/nsim
 props = numIntervals/n
 plot(recoveries~props, type='l', ylim=c(0,1))
 lines(unlist(avg.power.list)~props, col='red')
@@ -153,4 +140,34 @@ legend("bottomleft", pch=c(pch.dat,NA),
        legend=c("Data", "Mean"))
 title(main=expression("Data example"))
 graphics.off()
+
+
+
+
+
+## ## Detection for more complicated signal
+## n = 200
+## lev = 2
+## nsim = 1000
+## visc = unlist(lapply(c(1,2,3,4)*(n/5), function(cp){cp + c(-1,0,1)}))
+## numIntervals = round(seq(from=1/10,to=1.5,by=1/5)*n)
+## numSteps=4
+## locs = Map(function(my.numInterval)
+##     print(my.numInterval)
+##     dosim_recovery(lev=lev,n=n,nsim=nsim,
+##                    numSteps=numSteps,
+##                    randomized=TRUE, numIS=100,
+##                    meanfun=fourjump,
+##                    numIntervals = my.numInterval,
+##                    mc.cores=mc.cores, locs=visc), numIntervals)
+## filename = "numIntervals-detection.Rdata"
+## save(list=c("locs", "visc", "n", "lev", "numIntervals"),
+##      file=file.path(outputdir, filename))
+
+## ## Plot the recoveries across numIntervlas
+## load(file=file.path(outputdir, filename))
+## pdf(file=file.path(outputdir,"varying-intervals-detection-fourjump.pdf"), width=5, height=5)
+## plot(unlist(locs)~props,type='l', ylim=c(0,1))
+## graphics.off()
+
 

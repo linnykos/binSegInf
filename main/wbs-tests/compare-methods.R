@@ -21,7 +21,6 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(all.results)
 }
 
-
 jj = 3
 whichlev.list = list(1:3, 4:6, 7:9)
 whichlev = whichlev.list[[jj]]
@@ -67,8 +66,6 @@ load(file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
 results.by.lev.master[6:7] = results.by.lev[1:2]
 load(file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
 results.by.lev.master[8:9] = results.by.lev[1:2]
-results.by.lev = results.by.lev.master
-
 
 
 ## Parse the results

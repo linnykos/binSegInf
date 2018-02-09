@@ -8,7 +8,6 @@ source(file=file.path("../main/artificial/artif-helpers.R"))
 source(file=file.path("../main/justin/sim-helper.R"))
 outputdir = "../output"
 
-
 y.orig = fibroblast$gm03563
 chr = fibroblast$Chromosome
 
@@ -27,10 +26,9 @@ sd(chrome2)
 sd(c(chrome2, chrome4, chrome5, chrome6))
 
 
-## Repeat the same analysis for four lines
-## Try 1,3,9,11 , where
+## Repeat the same analysis for four lines Try 1,3,9,11 , where 3 and 9 have
+## jumps according to Olshen 2004.
 chrome1 = chrome.data[chrome.data[,"chr"]==1,"y"]
-chrome2 = chrome.data[chrome.data[,"chr"]==2,"y"] ## This is the noise-harvesting one
 chrome3 = chrome.data[chrome.data[,"chr"]==3,"y"]
 chrome9 = chrome.data[chrome.data[,"chr"]==9,"y"]
 chrome11 = chrome.data[chrome.data[,"chr"]==11,"y"]
