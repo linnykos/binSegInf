@@ -35,7 +35,8 @@ dosim_additive_noise <- function(sigma.add=sigma.add, n=20, nsim, lev=1, mc.core
 
 ngrain = 10
 sigma.add.list = seq(from=0, to=2, length=ngrain)
-nsim = 2000
+## nsim = 2000
+nsim = 5
 nsims = rep(nsim, ngrain)
 ## results = list()
 ## for(igrain in 1:ngrain){
@@ -46,11 +47,12 @@ nsims = rep(nsim, ngrain)
     sigma.add = sigma.add.list[igrain]
     results[[igrain]] = dosim_additive_noise(sigma.add=sigma.add, n=200, nsim=nsims[[igrain]],
                          mc.cores=7)
-    save(sigma.add.list, nsims, results,
-         file=file.path(outputdir, "how-much-noise-to-add-moresim8910.Rdata"))
+    ## save(sigma.add.list, nsims, results,
+    ##      file=file.path(outputdir, "how-much-noise-to-add-moresim8910.Rdata"))
     ## save(sigma.add.list, nsims, results,
          ## file=file.path(outputdir, "how-much-noise-to-add-moresim567.Rdata"))
-         file=file.path(outputdir, "how-much-noise-to-add-moresim710.Rdata"))
+    ## save(sigma.add.list, nsims, results,
+         ## file=file.path(outputdir, "how-much-noise-to-add-moresim.Rdata"))
 }
 
 

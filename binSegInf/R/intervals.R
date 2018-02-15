@@ -2,11 +2,13 @@
 ##' @param nrow Number of rows in the empty matrix
 ##' @param existing A 2-row numeric matrix containing start and end points.
 ##'     Column names should be names "s" and "e" respectively.
+##' @param distance minimum distance between s and e i.e. e is at least
+##'     s+distance.
 ##' @return creates an all-NA matrix of dimension nrow x 3. The first two
 ##'     columns must be the numeric (no check yet), but the last column can be
 ##'     of any type you want. Initializes to numeric.
 ##' @export
-intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL) {
+intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, distance=0) {
 
     ## Basic checks
     if(!is.null(existing)){
@@ -18,6 +20,15 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL) {
     ## Make start-end candidates
     starts = ends = c()
     all.se = t(combn(n,2))
+    colnames(all.se) = c("s", "e")
+
+    ## Remove the pairs that are too close
+    too.close = apply(all.se, 1, function(myrow){
+        return((myrow["e"] - myrow["s"]) < distance)
+    })
+    all.se = all.se[-which(too.close),,drop=FALSE]
+
+    ## If |existing| matrix is supplied, then exclude these from consideration.
     if(!is.null(existing)){
         to.exclude = apply(existing,1, function(myrow){
             which((all.se[,1] == myrow["s"]) & (all.se[,2] == myrow["e"]))
@@ -91,7 +102,7 @@ maximize.intervals <- function(intervals, qual.inds){
                 max.sign=max.sign,
                 max.s=intervals$cusummat[max.i,"s"],
                 max.b=intervals$cusummat[max.i,"b"],
-                max.e=intervals$cusummat[max.i,"e"]))}
+               max.e=intervals$cusummat[max.i,"e"]))}
 
 
 form_rows <- function(intervals,...){ UseMethod("form_rows")}
