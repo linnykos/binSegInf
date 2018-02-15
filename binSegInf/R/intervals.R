@@ -26,7 +26,7 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
     too.close = apply(all.se, 1, function(myrow){
         return((myrow["e"] - myrow["s"]) < distance)
     })
-    if(length(too.close)>0){
+    if(any(too.close)){
         all.se = all.se[-which(too.close),,drop=FALSE]
     }
 
