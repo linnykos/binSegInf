@@ -11,8 +11,8 @@ n = 200
 meanfun = fourjump
 numSteps = 4
 randomized = TRUE
-## visc = 3*n/5 + c((-2):2)
-visc = 2*n/5 + c((-2):2)
+visc = 3*n/5 + c((-2):2)
+## visc = 2*n/5 + c((-2):2)
 print(visc)
 mc.cores = 8
 min.num.things = 10
@@ -35,20 +35,20 @@ for(ilev in 1:length(whichlevs)){
 
     ## Save the result
     if(lev == 0.5) lev= "onehalf" ## For saving purposes
-    ## filename= paste0("better-segment-fourjump-lev", lev, ".Rdata")
-    filename= paste0("better-segment-fourjump-80-lev", lev, ".Rdata")
+    filename= paste0("better-segment-fourjump-120-lev", lev, ".Rdata")
+    ## filename= paste0("better-segment-fourjump-80-lev", lev, ".Rdata")
     save(list=c("results", "results.orig"), file=file.path(outputdir, filename))
     print(paste0("saved to ", filename))
 }
 
 ## Load and make QQ plot better vs original segment test.
-lev = 3
-filename= paste0("better-segment-fourjump-lev", lev, ".Rdata")
-load(file=file.path(outputdir, filename))
-qqunif(results$pv)
-a = qqunif(results.orig$pv, plot.it=FALSE)
-points(a,col='red')
-legend("bottomright", legend=c("orig", "improved"), col = c("red", "black"), pch=c(16,16))
+## lev = 3
+## filename= paste0("better-segment-fourjump-lev", lev, ".Rdata")
+## load(file=file.path(outputdir, filename))
+## qqunif(results$pv)
+## a = qqunif(results.orig$pv, plot.it=FALSE)
+## points(a,col='red')
+## legend("bottomright", legend=c("orig", "improved"), col = c("red", "black"), pch=c(16,16))
 
 ## Make power table
 levs = c(0,0.5,1,2,3,4)

@@ -21,14 +21,15 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
     return(all.results)
 }
 
-jj = 3
-whichlev.list = list(1:3, 4:6, 7:9)
+## Run the actual simulations
+jj = 1
+whichlev.list = list(1:3, 4:5,6:7, 8:9)
 whichlev = whichlev.list[[jj]]
 levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
 results.by.lev = list()
-mc.cores = 8
+mc.cores = 6
 nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]
-n=200 ## n=50
+n=200
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 print(levs)
 for(ilev in 1:length(levs)){
@@ -44,46 +45,22 @@ for(ilev in 1:length(levs)){
     print(filename)
 }
 
-
-## Why is fl.nonrand failing? ## TODOcheck and erase
-myname = "fl.nonrand"
-a = mclapply(1:nsim, function(isim) {
-    printprogress(isim,nsim);
-    dosim_compare(type=myname, n=n, lev=lev, numIS=numIS,
-                  meanfun=meanfun, visc=visc, numSteps=numSteps, bits=bits)
-}, mc.cores=mc.cores)
-
-
-
-## Aggregate the results
+## Aggregate the results from the computers
 outputdir = "../output"
-results.by.lev.master = list()
-load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata"))
-results.by.lev.master[1:3] = results.by.lev[1:3]
-load(file=file.path(outputdir, "compare-methods-fourjump-45.Rdata"))
-results.by.lev.master[4:5] = results.by.lev[1:2]
-load(file=file.path(outputdir, "compare-methods-fourjump-67.Rdata"))
-results.by.lev.master[6:7] = results.by.lev[1:2]
-load(file=file.path(outputdir, "compare-methods-fourjump-89.Rdata"))
-results.by.lev.master[8:9] = results.by.lev[1:2]
+for(jj in 1:3){
+    filename = paste0("compare-methods-fourjump-", paste0(whichlev.list[[jj]], collapse=""), ".Rdata")
+    load(file=file.path(outputdir, filename))
+    results.by.lev.master[jj] = results.by.lev[jj]
+}
 
 
 ## Parse the results
-myclean <- function(myresult){
-    aa = lapply(myresult, function(a) do.call(rbind,a))
-    return(aa)
-}
-## load(file=file.path(outputdir,"compare-methods-fourjump-123.Rdata")) ## Temporary, for flplus 3
+myclean <- function(myresult){  return(lapply(myresult, function(a) do.call(rbind,a))) }
 mycleanresult = lapply(results.by.lev, myclean)
-levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
 names(mycleanresult) = levs
 
 
 ## Collect uncond pows
-all.names = c("fl.rand", "fl.rand.plus",  "fl.nonrand", "sbs.rand",
-                 "sbs.nonrand", "wbs.rand", "wbs.nonrand",
-                 "cbs.rand", "cbs.nonrand")#[c(2,4)]#[c(1,3,5,7)]
-
 cond.pows.by.method = sapply(all.names, function(methodname){
     cond.pows = sapply(levs, function(mylev){
         pvs = mycleanresult[[toString(mylev)]][[methodname]][,"pvs"]
@@ -120,6 +97,9 @@ recoveries.by.method = sapply(all.names, function(methodname){
     return(recoveries)
 })
 
+
+
+## Plot the results
 par(mfrow=c(3,1))
 cols = RColorBrewer::brewer.pal(4,"Set2")
 lwd = rep(2,4)
@@ -148,6 +128,12 @@ legend("bottomright", col=cols, lwd=lwd, lty=lty, legend=all.names)
 graphics.off()
 
 
+
+
+#####################
+### Other stuff #####
+#####################
+
 ## Get detection ability
 ## lapply(results.by.lev[[2]]$wbs.rand, function(myresult){
 ##     any(is.na(unlist(myresult)))})
@@ -159,32 +145,4 @@ wbs.rand.detect.prop <- lapply(results.by.lev, function(my.result.by.lev){
     recovery = length(pvs)/(4*len)
     return(recovery)
 })
-
 plot(pows, type='l')
-
-
-
-
-
-## What does the onecompare() function produce NA's for?
-
-
-## load(file=file.path(outputdir, 'compare-methods-lev3.Rdata'))
-## pdf(file=file.path(outputdir,"compare-methods-lev3.pdf"), width=5, height=5)
-
-pvs.list = Map( function(myresult){
-    myresult = lapply(myresult, function(a){colnames(a) = c("pvs", "locs");a})
-    pvs = do.call(rbind, myresult)[,1]
-    ## tab = tab[which(apply(tab,1,function(myrow)!all(is.na(myrow)))),]
-    pvs = pvs[!is.na(pvs)]
-    return(pvs)
-}, all.results)
-pvs.list = lapply(pvs.list, unlist)
-names(pvs.list) = all.names
-mar = c(4.5,4.5,2.5,0.5)
-## cols = RColorBrewer::brewer.pal(8,"Set1")
-cols = rep(RColorBrewer::brewer.pal(3,"Set2")[c(1,2,3)],each=2)
-qqunif_line(pvs.list, cols=cols, names=all.names, lty=c(1,2,1,2,1,2),lwds=rep(4,6))
-title(main=expression(delta==0))
-graphics.off()
-
