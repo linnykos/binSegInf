@@ -26,7 +26,9 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
     too.close = apply(all.se, 1, function(myrow){
         return((myrow["e"] - myrow["s"]) < distance)
     })
-    all.se = all.se[-which(too.close),,drop=FALSE]
+    if(length(too.close)>0){
+        all.se = all.se[-which(too.close),,drop=FALSE]
+    }
 
     ## If |existing| matrix is supplied, then exclude these from consideration.
     if(!is.null(existing)){
@@ -35,6 +37,7 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
         })
         all.se = all.se[-to.exclude,,drop=FALSE]
     }
+    browser()
 
     ## If |comprehensive| == TRUE, draw /all/ possible intervals.
     if(comprehensive){
