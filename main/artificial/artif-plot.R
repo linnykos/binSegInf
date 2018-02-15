@@ -1,4 +1,6 @@
-load("../results/artificial.Rdata")
+## load("../results/artificial.Rdata")
+filename = "coriell05296.Rdata"
+load(file=file.path(datadir,filename))
 load(file=file.path(outputdir, "artif-rwbs.Rdata"))
 
 ## Extract results
@@ -7,6 +9,46 @@ all.locs = (unique(names(pvs)))
 pvs.by.loc = sapply(all.locs, function(myloc){
     pvs[which(names(pvs)==myloc)]
 })
+
+all.names = abs(as.numeric(names(pvs.by.loc)))
+hist(abs(as.numeric(names(pvs))))
+
+## Visulize locations
+par(mfrow=c(2,1))
+plot(y.orig[-(1:200)])
+lines(newmn[-(1:200)], col='red', lwd=3)
+hist(abs(as.numeric(names(pvs))), xlim=c(0,length(y.orig)-200), breaks=100)
+
+newmn.shorter = newmn[-(1:200)]
+bks = which(genlassoinf::makeDmat(length(newmn.shorter))%*%newmn.shorter !=0)
+bks.approx = lapply(bks, function(my.bk) my.bk +  c((-3):3))
+
+all.locs = abs(as.numeric(names(pvs)))
+classify = function(myloc){
+    myclass = which(sapply(bks.approx,
+                 function(mybk.approx) myloc %in% mybk.approx))
+    if(length(myclass)==0) myclass= NA
+    return(myclass)
+}
+which.is.tested = sapply(all.locs, classify )
+cols = RColorBrewer::brewer.pal(8, "Set3")
+par(mfrow=c(1,6))
+for(jj in 1:6){
+    if(jj==6){
+        my.pvs = pvs[which(is.na(which.is.tested))]
+    } else {
+        my.pvs = pvs[which(which.is.tested==jj)]
+        my.pvs[is.nan(my.pvs)] = 0
+    }
+    qqunif(my.pvs, cols = cols[jj], pch=16)
+    title(main=c(bks, "Other")[jj])
+}
+
+## We need more spurious things..
+
+
+
+
 sum(is.nan(pvs.by.loc[["-964"]]))
 length(pvs.by.loc[["-964"]])
 
