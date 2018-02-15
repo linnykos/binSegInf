@@ -37,7 +37,6 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
         })
         all.se = all.se[-to.exclude,,drop=FALSE]
     }
-    browser()
 
     ## If |comprehensive| == TRUE, draw /all/ possible intervals.
     if(comprehensive){
