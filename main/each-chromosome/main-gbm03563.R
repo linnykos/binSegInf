@@ -38,5 +38,7 @@ mc.cores = 4
 four.chrome.dats = list(chrome1=chrome1, chrome3=chrome3,
                         chrome9=chrome9, chrome11=chrome11)
 
+four.chrome.names = paste("Chromosome", c(1,3,9,11))
+
 ## Source in driver
 source("../main/each-chromosome/gbm-driver.R")

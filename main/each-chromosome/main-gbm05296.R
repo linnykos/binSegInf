@@ -43,5 +43,8 @@ four.chrome.dats = list(chrome1= chrome1, chrome4=chrome4, chrome10=chrome10, ch
 header ="gm05296"
 mc.cores=3
 
+four.chrome.names = paste("Chromosome", c(1,4,10,11))
+
 ## Run main driver
 source("../main/each-chromosome/gbm-driver.R")
+## source("../main/each-chromosome/gbm-plot-driver.R")
