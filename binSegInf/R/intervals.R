@@ -2,13 +2,14 @@
 ##' @param nrow Number of rows in the empty matrix
 ##' @param existing A 2-row numeric matrix containing start and end points.
 ##'     Column names should be names "s" and "e" respectively.
-##' @param distance minimum distance between s and e i.e. e is at least
+##' @param distance minimum distance between s and e, i.e. e is at least
 ##'     s+distance.
+##' @param maxlength maximum distance between s and e, i.e. (e-s <= maxlength)
 ##' @return creates an all-NA matrix of dimension nrow x 3. The first two
 ##'     columns must be the numeric (no check yet), but the last column can be
 ##'     of any type you want. Initializes to numeric.
 ##' @export
-intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, distance=0) {
+intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, distance=0, maxlength=n-1) {
 
     ## Basic checks
     if(!is.null(existing)){
@@ -29,6 +30,15 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
     if(any(too.close)){
         all.se = all.se[-which(too.close),,drop=FALSE]
     }
+
+    ## Remove the pairs that are too long
+    too.long = apply(all.se, 1, function(myrow){
+        return((myrow["e"] - myrow["s"]) > maxlength)
+    })
+    if(any(too.long)){
+        all.se = all.se[-which(too.long),,drop=FALSE]
+    }
+
 
     ## If |existing| matrix is supplied, then exclude these from consideration.
     if(!is.null(existing)){
