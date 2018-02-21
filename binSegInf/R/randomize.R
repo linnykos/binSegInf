@@ -135,6 +135,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
         ## Combine the new parts with the prexisting.
         parts = t(do.call(rbind,parts)) ## Not ideal but works for now
+        browser()
         parts.so.far = cbind(parts.so.far, parts)
 
         ## Handling the problem of p-value being NaN/0/1
@@ -199,7 +200,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
         poly.new = polyhedra(obj=g.new$gamma, u=g.new$u)
 
         ## Partition TG to denom and numer
-        pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE)
+        pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE, warn=warn)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom
@@ -234,7 +235,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
     return(info)
 }
 
-poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
+poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50, warn=TRUE){
 
     ## Rounding ridiculously small numbers
     Gv[which(abs(Gv)<1E-15)] = 0
@@ -253,7 +254,7 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50){
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
 
-    if(!(a<=z &  z<=b)){
+    if(!(a<=z &  z<=b) & warn){
         warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
         ## print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
