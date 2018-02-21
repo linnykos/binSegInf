@@ -133,8 +133,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         parts = t(do.call(rbind,parts)) ## Not ideal but works for now
         parts.so.far = cbind(parts.so.far, parts)
 
-        ## browser()
-
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts.so.far["weight",]>0)
         enough.things = (things > min.num.things)
