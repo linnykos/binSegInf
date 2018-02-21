@@ -326,8 +326,16 @@ dual1d_Dmat = function(m){
 ##' @export
 bootstrap_sample <- function(vec,seed=NULL){
     if(!is.null(seed)) set.seed(seed)
-    return(vec[sample.int(length(vec),replace=TRUE)])
+    return(vec[bootstrap_ind(length(ved))])
+        ## sample.int(length(vec),replace=TRUE)]
 }
+
+##' Creates a set of bootstrap indices.
+bootstrap_ind <- function(n,seed=NULL){
+    if(!is.null(seed)) set.seed(seed)
+    return(sample.int(n,replace=TRUE))
+}
+
 
 ##' Scale \code{resid} to have empirical std of \code{std}.
 ##' @param resid numeric vector (meant to be residuals from changepoint model).
