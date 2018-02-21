@@ -135,7 +135,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
         ## Combine the new parts with the prexisting.
         parts = t(do.call(rbind,parts)) ## Not ideal but works for now
-        browser()
         parts.so.far = cbind(parts.so.far, parts)
 
         ## Handling the problem of p-value being NaN/0/1
