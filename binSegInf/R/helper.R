@@ -71,7 +71,7 @@ cusum <- function(s,b,e,n=NULL, y=NULL, right.to.left = TRUE, contrast.vec = FAL
 ##'
 ##' @return list of two vectors: denominators and numerators, each named
 ##'     \code{denom} and \code{numer}.
-partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE, shift=NULL, ic.poly=NULL){
+partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,correct.ends=FALSE, shift=NULL, ic.poly=NULL, warn=TRUE){
 
     ## Basic checks
     stopifnot(length(v)==length(y))
@@ -106,7 +106,7 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
     z = Rmpfr::mpfr(vy/sd, precBits=bits)
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
-    if(!(a<=z &  z<=b)){
+    if(!(a<=z &  z<=b) & warn){
         warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
     }
 

@@ -101,7 +101,9 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                                                                        length(winning.wbs.obj$cp)),
                             ic.poly=NULL, bits=50, max.numIS=2000,
                             improve.nomass.problem=FALSE, min.num.things=30, verbose=FALSE,
-                            mc.cores=1){
+                            mc.cores=1,
+                            return.more.things=FALSE,
+                            warn=FALSE){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -113,9 +115,10 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     done=FALSE
     parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight")
+    numIS.cumulative=0
     while(!done){
         parts = mclapply(1:numIS, function(isim){
-            if(verbose) printprogress(isim, numIS,
+            if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
                                       "importance sampling replicate")
             rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                       numIntervals=numIntervals,
@@ -126,7 +129,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                       cumsum.v=cumsum.v,
                       stop.time=stop.time,
                       ic.poly=ic.poly,
-                      bits=bits)
+                      bits=bits,
+                      warn=warn)
         }, mc.cores=mc.cores)
 
         ## Combine the new parts with the prexisting.
@@ -140,7 +144,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
             done=TRUE
         }
         pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
-        numIS = numIS*1.5
+        ## numIS = numIS + numIS
+        numIS.cumulative = numIS.cumulative + numIS
 
         ## cat(fill=TRUE)
         ## printf("things is %d", things)
@@ -148,7 +153,15 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
         if(numIS > max.numIS) done=TRUE
     }
-    return(pv)
+
+    ## Return more information to parse
+    if(return.more.things){
+        return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
+                    parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
+                    ## winning.wbs.obj=winning.wbs.obj))
+    } else {
+        return(pv)
+    }
 }
 
 ##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, singl
@@ -163,7 +176,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 ##' @return A data frame (single row), with "pv" and "weight".
 rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
                       cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps,
-                      ic.poly=NULL, bits=50){
+                      ic.poly=NULL, bits=50, warn=FALSE){
 
     ## Basic checks
     assert_that(is_valid.wbsFs(winning.wbs.obj))
@@ -207,7 +220,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
 
         ## Calculate TG denom and numer directly
         pvobj = poly_pval_from_inner_products(Gy=g.new$Gy, Gv=g.new$Gv, v=v, y=g.new$y,
-                                              sigma=sigma, u=g.new$u, bits=bits)
+                                              sigma=sigma, u=g.new$u, bits=bits, warn=warn)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom

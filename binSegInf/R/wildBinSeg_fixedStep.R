@@ -153,7 +153,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                           numSteps=numSteps,
                           mimic=mimic,
                           intervals=intervals,
-                          numIntervals=numIntervals,
+                          numIntervals=intervals$numIntervals,
                           inference.type=inference.type,
                           y=y), class="wbsFs"))
 }
