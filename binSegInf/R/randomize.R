@@ -108,8 +108,14 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
 
-    ##' New PV information based on newly drawn |numIntervals| - |numSteps|
-    ##' intervals
+    ## Basic checks
+    if(inference.type=="pre-multiply" & (is.null(cumsum.y) | is.null(cumsum.v)) ){
+        stop("Provide cumulative sums of y and v, if you want to use the pre-multiply option.")
+    }
+
+
+    ## New PV information based on newly drawn |numIntervals| - |numSteps|
+    ## intervals
     if(comprehensive) numIS=1
 
     done=FALSE
@@ -164,11 +170,11 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     }
 }
 
-##' Helper for WBSFT randomization, in essence. Rerun WBS to get /new/, singl
-##' set of denom and numers from a new TG statistic, which is calculated from
-##' the /single/ new set of halfspaces that characterize the maximization of the
-##' original |winning.wbs.obj| but among /different/ set of
-##' |numIntervals|-|numSteps| spaces.
+##' Helper for WBSFT randomization. Rerun WBS to get _new_, single set of denom
+##' and numers from a new TG statistic, which is calculated from the _single_
+##' new set of halfspaces that characterize the maximization of the original
+##' |winning.wbs.obj| but among /different/ set of |numIntervals|-|numSteps|
+##' spaces.
 ##' @param winning.wbs.obj Original contrast. We call it winning because we will
 ##'     extract only the winning locations and /those/ winners' enclosing
 ##'     intervals.
