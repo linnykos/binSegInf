@@ -17,10 +17,9 @@ intervals <- function(numIntervals, n, comprehensive=FALSE, existing=NULL, dista
                    msg = "|existing| must be a 2-column matrix with columns names s and e.")
     }
 
-
     ## Make start-end candidates
     starts = ends = c()
-    all.se = t(combn(n,2))
+    all.se = t(combn(n,2)) ## This is computationally intensive and quite unnecessary.
     colnames(all.se) = c("s", "e")
 
     ## Remove the pairs that are too close

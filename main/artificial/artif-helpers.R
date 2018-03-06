@@ -1,5 +1,10 @@
 ##' Does a single randomized wbs (rwbs) inference for a given y
-do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), consec=2,
+##' @param numIntervals Defaults to \code{length(y)}, or if |intervals| is
+##'     provided, the length of that.
+##' @param intervals An object of class |intervals|.
+##' @return List of simulation results (p-values, locations tested, etc.)
+do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
+                              intervals=NULL, consec=2,
                               sigma, postprocess=TRUE, how.close = 5,
                               better.segment=FALSE,
                               locs=1:length(y), numIS=100,
@@ -8,10 +13,17 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
                               max.numIS=2000,
                               write.time = FALSE, verbose=FALSE, mc.cores=1){
 
+    ## Basic checks
+    if(!is.null(intervals)){
+        numIntervals = intervals$numIntervals
+    }
 
     ## Fit initial WBS for a generous number of steps
     max.numSteps = 20
-    g = wildBinSeg_fixedSteps(y, numIntervals=numIntervals, numSteps=max.numSteps,
+    if(is.null(intervals) & !is.null(numIntervals)){
+        intervals = intervals(numIntervals=numIntervals, n=n)
+    }
+    g = wildBinSeg_fixedSteps(y, intervals=intervals, numSteps=max.numSteps,
                               inference.type='none')
     cumsum.y = cumsum(y)
 
@@ -66,6 +78,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
         printprogress(iv, length(vlist), type = "tests")
         v = vlist[[iv]]
         cumsum.v = cumsum(v)
+        browser()
         pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
                                               sigma=sigma,
                                               numIS=numIS,
@@ -81,7 +94,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y), cons
         if(write.time) write.time.to.file(myfile="rwbs-main-example-timing.txt")
         return(pv)})
     names(pvs) = names(vlist)
-    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs))))
+    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), vlist=vlist) )
 }
 
 

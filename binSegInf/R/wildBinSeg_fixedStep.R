@@ -12,6 +12,7 @@
 ##' @param v contrast vector; used only for ic.poly
 ##' @return List of useful algorithm results, including the |gamma| matrix and
 ##'     |u|.
+##' @export
 wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
                                   intervals=NULL, mimic=FALSE, wbs.obj=NULL,
                                   comprehensive=FALSE, cumsum.y=NULL, cumsum.v=NULL,
