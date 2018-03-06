@@ -22,8 +22,11 @@ dosim_additive_noise <- function(sigma.add=sigma.add, n=20, nsim, lev=1, mc.core
 
     ## visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
     visc.fourjump = 1:n
+    start.time = Sys.time()
     pvs.list = mclapply(1:nsim, function(isim){
-        printprogress(isim, nsim)
+        printprogress(isim, nsim,
+                      lapsetime = round(difftime(Sys.time(), start.time,
+                                                 units = "secs"), 2))
         ## set.seed(isim)
         pvs = dosim_compare(type="sbs.rand", n=n, lev=lev, numIntervals=n,
                             sigma.add=sigma.add, numIS=100, meanfun=fourjump,
@@ -35,20 +38,20 @@ dosim_additive_noise <- function(sigma.add=sigma.add, n=20, nsim, lev=1, mc.core
 
 ngrain = 10
 sigma.add.list = seq(from=0, to=2, length=ngrain)
-## nsim = 2000
-nsim = 5
+nsim = 2000
+## nsim = 5
 nsims = rep(nsim, ngrain)
-## results = list()
+results = list()
 ## for(igrain in 1:ngrain){
 ## for(igrain in 5:7){
-## for(igrain in 8:10){
+for(igrain in 8:10){
     printprogress(igrain, ngrain, type="sigma grain")
     cat(fill=TRUE)
     sigma.add = sigma.add.list[igrain]
     results[[igrain]] = dosim_additive_noise(sigma.add=sigma.add, n=200, nsim=nsims[[igrain]],
                          mc.cores=7)
-    ## save(sigma.add.list, nsims, results,
-    ##      file=file.path(outputdir, "how-much-noise-to-add-moresim8910.Rdata"))
+    save(sigma.add.list, nsims, results,
+         file=file.path(outputdir, "how-much-noise-to-add-moresim8910.Rdata"))
     ## save(sigma.add.list, nsims, results,
          ## file=file.path(outputdir, "how-much-noise-to-add-moresim567.Rdata"))
     ## save(sigma.add.list, nsims, results,
