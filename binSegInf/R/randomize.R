@@ -5,7 +5,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                numSteps=NA, numIS, bits=50,
                                orig.fudged.obj = NULL, ic.poly=NULL,
                                max.numIS=2000,
-                               inference.type = c("rows", "pre-multiply")){
+                               inference.type = c("rows", "pre-multiply"),
+                               verbose=FALSE){
 
     ## New: Get many fudged TG statistics.
     inference.type = match.arg(inference.type)
@@ -17,6 +18,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     ## Do importance sampling until you have some number of variation..
     while(!done){
         inner.tgs = sapply(1:numIS, function(isim){
+            if(verbose) printprogress(isim, numIS, "importance sampling replicate")
+
             new.noise = rnorm(length(y),0,sigma.add)
             if(inference.type=="rows"){
 
