@@ -103,7 +103,7 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
                              sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
                              write.time=FALSE, numIntervals=length(y),
-                             max.numIS=2000, mc.cores=1){
+                             max.numIS=2000, verbose=FALSE){
 
     inference.type = match.arg(inference.type)
 
@@ -139,7 +139,7 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type,
-                                max.numIS=max.numIS, mc.cores=mc.cores)
+                                max.numIS=max.numIS, verbose=verbose)
 
         if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)
