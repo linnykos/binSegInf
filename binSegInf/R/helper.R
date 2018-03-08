@@ -326,7 +326,7 @@ dual1d_Dmat = function(m){
 ##' @export
 bootstrap_sample <- function(vec,seed=NULL){
     if(!is.null(seed)) set.seed(seed)
-    return(vec[bootstrap_ind(length(ved))])
+    return(vec[bootstrap_ind(length(vec))])
         ## sample.int(length(vec),replace=TRUE)]
 }
 
