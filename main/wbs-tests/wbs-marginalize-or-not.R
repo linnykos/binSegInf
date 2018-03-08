@@ -1,101 +1,14 @@
 ## Synopsis: Want to see if marginalization of WBS inference is worth it, in
-## terms of (conditional) power!
+## terms of (conditional) power! Taking results from compare-methods
 
 outputdir = "../output"
 source("../main/wbs-tests/sim-helpers.R")
-dosim_compare_rwbs_to_wbs <- function(n=20, numIntervals=n, nsim, lev=1,
-                                      mc.cores=4, type = c("wbs.nonrand", "wbs.rand"),
-                                      visc=1:n){
-
-    ## visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
-    type = match.arg(type)
-    start.time = Sys.time()
-    all.times = rep(NA,nsim)
-    pvs.list = mclapply(1:nsim, function(isim){
-        printprogress(isim, nsim,
-                      lapsetime = round(difftime(Sys.time(), start.time,
-                                            units = "secs"), 2))
-        pvs = dosim_compare(type=type,
-                            n=n, lev=lev, numIntervals=numIntervals,
-                            numIS=100, meanfun=fourjump,
-                            visc=visc, numSteps=4,
-                            max.numIS=20000)
-        return(pvs)
-    }, mc.cores=mc.cores)
-    return(pvs.list)
-}
-
-
-## Running this code on a server
-jj = 2
-n = 200
-numIntervals = n
-mc.cores = 8
-whichlev.list = list(1:2, 3:4, 5:6)
-whichlev = whichlev.list[[jj]]
-levs = c(0.1,0.2,0.3,0.4,0.5, 0.75)[whichlev]
-nsims = seq(from=3000,to=1500,length=6)[whichlev]
-mc.cores = 8
-visc.firstjump = n/5 + c(-1,0,1)
-visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
-results.wbs = results.rwbs = list()
-filename = paste0("wbs-vs-rwbs-lev-", paste0(whichlev, collapse=""), ".Rdata")
-print(filename)
-for(ilev in 1:length(levs)){
-    lev = levs[ilev]
-    nsim = nsims[ilev]
-
-    ## Non-Marginalized WBS
-    results.wbs[[ilev]] = dosim_compare_rwbs_to_wbs(numIntervals=numIntervals, n=n, lev=lev,
-                                           nsim=nsim, mc.cores=mc.cores, type = "wbs.nonrand",
-                                           visc=visc.firstjump)
-    save(results.rwbs, results.wbs, file=file.path(outputdir, filename))
-
-    ## Non-Marginalized WBS
-    results.rwbs[[ilev]] = dosim_compare_rwbs_to_wbs(numIntervals=numIntervals, n=n, lev=lev,
-                                            nsim=nsim, mc.cores=mc.cores, type = "wbs.rand",
-                                            visc=visc.firstjump)
-    save(results.rwbs, results.wbs, file=file.path(outputdir, filename))
-}
-
-
-## Load the results
-load(file=file.path(outputdir, filename))
-
-## Reformating to extract /just/ the p-values.
-pvs.list.wbs = pvs.list.rwbs = list()
-for(ilev in 1:length(levs)){
-    myresult = results.wbs[[ilev]]
-    pvs = unlist(sapply(myresult, function(a)a$pvs))
-    pvs.list.wbs[[ilev]] = pvs[which(!is.na(pvs))]
-
-    ## Additionally filter by location!!
-    locs = unlist(sapply(myresult))
-
-    myresult = results.rwbs[[ilev]]
-    pvs = unlist(sapply(myresult, function(a)a$pvs))
-    pvs.list.rwbs[[ilev]] = pvs[which(!is.na(pvs))]
-}
-
-
-## Pairwise qqplot
-## cols = RColorbrewer::brewer.pal(length(pvs.list), "Set3")
-cols = RColorbrewer::brewer.pal(2, "Set1")
-par(mfrow=c(2,2))
-for(ilev in 1:length(levs)){
-    qqunif(list(wbs=pvs.list.wbs[[ilev]], rwbs=pvs.list.rwbs[[ilev]]), cols=cols)
-}
-
-
-
-
-## Also recall old experiments
 cols = RColorBrewer::brewer.pal(2, "Set1")
 w=10; h=7
 ## loc = c(40,80,120,160)
 ## pdf(file=file.path("~/Desktop", paste0("wbs-around-any-loc.pdf" )), width=w,height=h)
 loc = 160
-pdf(file=file.path("~/Desktop", paste0("wbs-around-", loc, ".pdf" )), width=w,height=h)
+## pdf(file=file.path("~/Desktop", paste0("wbs-around-", loc, ".pdf" )), width=w,height=h)
 par(mfrow=c(2,4))
 levs.master = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
 for(jj in 1:4){
@@ -104,6 +17,7 @@ for(jj in 1:4){
     filename = paste0("compare-methods-fourjump-", paste0(whichlev.list[[jj]], collapse=""), ".Rdata")
     load(file=file.path(outputdir, filename))
     for(kk in whichlev.list2[[jj]]){
+        print(kk)
         rand.results = (results.by.lev[[kk]])$wbs.rand
         nonrand.results = (results.by.lev[[kk]])$wbs.nonrand
 
@@ -148,9 +62,9 @@ pdf(file=file.path(outputdir, "cond-power-comparison.pdf"), width=w, height=h)
 par(mfrow=c(1,2))
 cond.pows.by.method.list = list()
 cols.list = RColorBrewer::brewer.pal(2, "Set2")
+levs.master = levs.master[-1]
 for(iplot in 1:2){
     all.names = all.names.list[[iplot]]
-
 
     ## Parse the results
     myclean <- function(myresult){  return(lapply(myresult, function(a) do.call(rbind,a))) }

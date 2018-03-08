@@ -21,13 +21,14 @@ onecompare <- function(lev=0, nsim=1000, mc.cores=8, meanfun=onejump, visc=NULL,
 ## Run the actual simulations
 jj = 1
 levs = seq(from=0,to=1.5, length=6)
-whichlev.list = list(1:3, 4:5, 6:7, 8:9)/200
+whichlev.list = list(1:3, 4:5, 6:7, 8:9)
 whichlev = whichlev.list[[jj]]
-levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
+## levs = c(0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)[whichlev]
+levs = c(0, 0.5, 1, 1.5)
 results.by.lev = list()
 mc.cores = 6
 nsims=c(seq(from=3000,to=1000,length=5), round(seq(from=600, to=300, length=4) ))[whichlev]
-n=200
+n = 200
 visc.fourjump = unlist(lapply(c(1,2,3,4)*(n/5), function(cp)cp+c(-1,0,1)))
 print(levs)
 for(ilev in 1:length(levs)){
@@ -38,10 +39,15 @@ for(ilev in 1:length(levs)){
                                         nsim=nsim, meanfun=fourjump, visc=visc.fourjump,
                                         numSteps=4, bits=3000, mc.cores=mc.cores, n=n, numIS=100,
                                         max.numIS=3000)
-    filename = paste0("compare-methods-fourjump-", paste0(whichlev.list[[jj]], collapse=""), ".Rdata")
+    filename = paste0("compare-methods-small-", paste0(whichlev.list[[jj]], collapse=""), ".Rdata")
     save(list=c("results.by.lev","levs","nsim", "n"), file=file.path(outputdir, filename))
     print(filename)
 }
+
+
+
+
+
 
 ## Aggregate the results from the computers
 outputdir = "../output"
