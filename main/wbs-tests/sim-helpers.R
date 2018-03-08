@@ -186,7 +186,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                                  "wbs.nonrand", "cbs.rand", "cbs.nonrand"), n,
                           lev, numIntervals=n, sigma.add=0.2, numIS=100,
                           meanfun=onejump, visc=NULL, numSteps=1, bits=1000,
-                          max.numIS=2000){
+                          max.numIS=2000, verbose=FALSE){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
@@ -222,7 +222,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                   improve.nomass.problem=improve.nomass.problem,
-                                                  bits=bits, max.numIS=max.numIS
+                                                  bits=bits, max.numIS=max.numIS, verbose=verbose,
                                                   ))
         })
         return(data.frame(pvs=pvs,
@@ -272,8 +272,10 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
         locs = as.numeric(names(vlist))
 
         pvs = sapply(vlist, function(v){
-        pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits, max.numIS=max.numIS)
+            pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                    sigma.add=sigma.add,
+                                    orig.fudged.poly= poly.fudged, bits=bits,
+                                    max.numIS=max.numIS, verbose=verbose)
         })
 
         return(data.frame(pvs=pvs,
@@ -322,7 +324,8 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                 pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                         sigma.add=sigma.add,
                                         orig.fudged.poly= combined.poly,
-                                        bits=bits, max.numIS=max.numIS)
+                                        bits=bits, max.numIS=max.numIS,
+                                        verbose=verbose)
             })
             locs = as.numeric(names(vlist))
             return(data.frame(pvs=pvs, locs=locs))
@@ -381,7 +384,8 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
         pvs = sapply(vlist, function(v){
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                     sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits,
-                                    max.numIS=max.numIS)
+                                    ## max.numIS=max.numIS)
+                                    max.numIS=max.numIS, verbose=verbose)
         })
 
         return(data.frame(pvs=pvs,
@@ -438,7 +442,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
-                                bits=bits, max.numIS=max.numIS)
+                                bits=bits, max.numIS=max.numIS, verbose=verbose)
         })
 
         return(data.frame(pvs=pvs,
