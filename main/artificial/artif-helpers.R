@@ -131,7 +131,6 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
 
     ## Do noise-added inference
     pvs = sapply(1:length(vlist), function(iv){
-        print(iv)
         v = vlist[[iv]]
 
         pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
