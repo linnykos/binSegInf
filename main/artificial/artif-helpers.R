@@ -99,13 +99,23 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
 
 
 ##' Does a single randomized wbs (rwbs) inference for a given y
+##' @param added.noise is a manually inputted added noise. This /must/ be
+##'     geenrated from i.i.d. Gaussian noise with \code{sigma} standard
+##'     deviation. A rough check is in place, but really just trusting the user
+##'     at this point.
 do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
                              sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
                              write.time=FALSE, numIntervals=length(y),
-                             max.numIS=2000, verbose=FALSE){
+                             max.numIS=2000, verbose=FALSE, min.num.things=10,
+                             added.noise=NULL){
 
+    ## Basic checks
     inference.type = match.arg(inference.type)
+    if( abs(sd(added.noise) - sigma.add) > sigma.add/2){
+        stop("Your added noise doesn't match sigma.add well.")
+    }
+
 
     ## Fit model and get IC information
     n = length(y)
@@ -138,7 +148,8 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type,
-                                max.numIS=max.numIS, verbose=verbose)
+                                max.numIS=max.numIS, verbose=verbose,
+                                min.num.things=min.num.things)
 
         if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)

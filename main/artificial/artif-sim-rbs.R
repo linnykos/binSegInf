@@ -55,17 +55,28 @@ results = mclapply(1:nsim, function(isim){
 
 ## Write to file
 facstring = paste0(unlist(strsplit(toString(fac), split='.', fixed=TRUE)), collapse="")
-filename = paste0("artif-rbs-fac-", facstring, "Rdata")
-save(results, file.path(outputdir, filename))
+filename = paste0("artif-rbs-fac-", facstring, ".Rdata")
+save(results, file=file.path(outputdir, filename))
 
 
 
-
-
-
-## Reading and seeing speed from file
-read.time.from.file <- function(myfile){
-    sort(readLines(myfile))
+## Attempt to see intermediate results; to be applied in next iteration.
+facstring = paste0(unlist(strsplit(toString(fac), split='.', fixed=TRUE)), collapse="")
+filename = paste0("artif-rbs-fac-", facstring, "-chunk.Rdata")
+nchunk = 5
+nsim.chunk = nsim/nchunk
+results.list = list()
+for(ichunk in 1:nchunk){
+    chunkresult = mclapply(1:nsim, function(isim){
+        printprogress(isim, nsim,
+                      lapsetime = round(difftime(Sys.time(), start.time,
+                                                 units = "secs"), 2))
+        ## Run a single result
+        myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=FALSE)
+    }, mc.cores=mc.cores)
+    results.list[[ichunk]] = chunkresult
+    save(results.list, file=file.path(outputdir, filename))
 }
 
-
+## Combining results
+save(results.list, file=file.path(outputdir, filename))
