@@ -6,16 +6,19 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                orig.fudged.obj = NULL, ic.poly=NULL,
                                max.numIS=2000,
                                inference.type = c("rows", "pre-multiply"),
-                               verbose=FALSE){
+                               verbose=FALSE,
+                               min.num.things=10,
+                               improve.nomass.problem=TRUE
+                               ){
 
     ## New: Get many fudged TG statistics.
     inference.type = match.arg(inference.type)
-    done=FALSE
+    done = FALSE
     pvs = c()
     denoms = c()
     if(sigma.add==0) numIS=1
 
-    ## Do importance sampling until you have some number of variation..
+    ## Do importance sampling until you have some amount of variation.
     while(!done){
         inner.tgs = sapply(1:numIS, function(isim){
             if(verbose) printprogress(isim, numIS, "importance sampling replicate")
@@ -23,7 +26,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
             new.noise = rnorm(length(y),0,sigma.add)
             if(inference.type=="rows"){
 
-                ## If applicable,append IC poly to the original poly
+                ## If applicable, append IC poly to the original poly
                 if(is.null(ic.poly)){
                     poly = orig.fudged.poly
                 } else {
@@ -65,11 +68,14 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
 
             ## Handle boundary cases
             if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
-            if(pv.new>1|pv.new<0)  browser() ## Not sure why this would happen, but anyway!
-            if(weight.new<0 | weight.new>1) weight.new=0 ## Nomass problem is to be caught here.
+            if(pv.new > 1 | pv.new < 0)  browser() ## Not sure why this would happen, but anyway!
+            if(weight.new < 0 | weight.new > 1){
+                weight.new=0 ## Nomass problem is to be caught here.
+            }
             return(c(pv.new, weight.new))
         })
 
+        ## In the additive noise case, what could go wrong?
         rownames(inner.tgs) = c("pv", "denom")
         new.pvs = inner.tgs["pv",]
         new.denoms = inner.tgs["denom",]
@@ -79,17 +85,20 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         ## increase numIS
         numIS = round(numIS*1.5)
 
-        ## Check if all pvalues are the same, and if so sample more.
-        enough.things = (sigma.add==0 | any(pvs!=pvs[1]) | sum(denoms==1)>10) ## Last part
-                                                               ## added because
-                                                               ## sometimes
-                                                               ## there is no
-                                                               ## variation but
-                                                               ## all denoms are
-                                                               ## 1.
+        ## Check if all pvalues are the same, and if so, sample more.
+        enough.things = (sum(denoms==1) > min.num.things) ## This is because
+                                                          ## sometimes there is
+                                                          ## no variation but
+                                                          ## all denoms are 1.
         reached.limit = (numIS > max.numIS)
         if(reached.limit | enough.things){ done = TRUE }
+        if(!improve.nomass.problem){ done = TRUE}
+        if(sigma.add==0){ done=TRUE}
+        if(all(pvs==pvs[1]) ){ done=FALSE } ## This is actually obsolete, I
+                                            ## think. But let's leave it in
+                                            ## there for now
     }
+    ## num.things = sum(denoms==1)
 
     ## Calculate randomized TG statistic
     pv = sum(pvs*denoms)/sum(denoms)
@@ -160,7 +169,12 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         ## printf("things is %d", things)
         ## printf("numIS is %f", numIS)
 
-        if(numIS > max.numIS) done=TRUE
+        if(numIS.cumulative > max.numIS) done=TRUE ## This was numIS before..
+                                                   ## which was a bug! Will keep
+                                                   ## going pretty much
+                                                   ## indefinitely sometimes.
+
+        reached.limit = (numIS > max.numIS)
     }
 
     ## Return more information to parse
