@@ -35,7 +35,7 @@ onesim_rbs <- function(y.orig, bits=1000, fac=1, verbose=FALSE){
 
 ## Factor
 ## fac = 2 ## 1, 1.5, 2, 2.5, 3
-whichfac = 4
+whichfac = 5
 fac = c(1, 1.5, 2, 2.5, 3)[whichfac]
 nsim = c(200,300,400,500,600)[whichfac]
 ## nsim = 200
