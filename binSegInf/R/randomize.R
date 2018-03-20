@@ -8,103 +8,107 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                inference.type = c("rows", "pre-multiply"),
                                verbose=FALSE,
                                min.num.things=10,
-                               improve.nomass.problem=TRUE
+                               improve.nomass.problem=TRUE,
+                               mc.cores=1,
+                               return.more.things=FALSE
                                ){
 
     ## New: Get many fudged TG statistics.
     inference.type = match.arg(inference.type)
-    done = FALSE
-    pvs = c()
-    denoms = c()
     if(sigma.add==0) numIS=1
 
-    ## Do importance sampling until you have some amount of variation.
-    while(!done){
-        inner.tgs = sapply(1:numIS, function(isim){
-            if(verbose) printprogress(isim, numIS, "importance sampling replicate")
 
-            new.noise = rnorm(length(y),0,sigma.add)
-            if(inference.type=="rows"){
-
-                ## If applicable, append IC poly to the original poly
-                if(is.null(ic.poly)){
-                    poly = orig.fudged.poly
-                } else {
-                    poly = orig.fudged.poly
-                    poly$gamma = rbind(poly$gamma, ic.poly$gamma)
-                    poly$u = c(poly$u, ic.poly$u)
-                }
-                obj.new = partition_TG(y=y, poly=poly, shift=new.noise,
-                                       v=v, sigma=sqrt(sigma^2), bits=bits)
-            } else if (inference.type=="pre-multiply"){
-                premult = polyhedra.bsFs(orig.fudged.obj,
-                                         inference.type="pre-multiply",
-                                         new.noise=new.noise, v=v,
-                                         numSteps=numSteps, y=y)
-                ## Append IC stopping to Gy, Gv, Gw
-                if(!is.null(ic.poly)){
-                    ic.Gy = as.numeric(ic.poly$gamma%*%y)
-                    ic.Gv = as.numeric(ic.poly$gamma%*%v)
-                    ic.Gw = as.numeric(ic.poly$gamma%*%new.noise)
-                    premult$Gy = c(premult$Gy, ic.Gy)
-                    premult$Gv = c(premult$Gv, ic.Gv)
-                    premult$Gw = c(premult$Gw, ic.Gw)
-                    premult$u = c(premult$u, ic.poly$u)
-                }
-                obj.new = poly_pval_from_inner_products(Gy=premult$Gy,
-                                                        Gv=premult$Gv, v=v, y=y,
-                                                        sigma=sigma,
-                                                        u=premult$u - premult$Gw,
-                                                        bits=bits)
-                pv = obj.new$pv
-                if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix
-
-            } else {
-                stop("inference type not recognized!")
-            }
-            ## Handle boundary cases
-            pv.new = obj.new$pv
-            weight.new = obj.new$denom
-
-            ## Handle boundary cases
-            if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
-            if(pv.new > 1 | pv.new < 0)  browser() ## Not sure why this would happen, but anyway!
-            if(weight.new < 0 | weight.new > 1){
-                weight.new=0 ## Nomass problem is to be caught here.
-            }
-            return(c(pv.new, weight.new))
-        })
-
-        ## In the additive noise case, what could go wrong?
-        rownames(inner.tgs) = c("pv", "denom")
-        new.pvs = inner.tgs["pv",]
-        new.denoms = inner.tgs["denom",]
-        pvs = c(pvs,new.pvs)
-        denoms = c(denoms,new.denoms)
-
-        ## increase numIS
-        numIS = round(numIS*1.5)
-
-        ## Check if all pvalues are the same, and if so, sample more.
-        enough.things = (sum(denoms==1) > min.num.things) ## This is because
-                                                          ## sometimes there is
-                                                          ## no variation but
-                                                          ## all denoms are 1.
-        reached.limit = (numIS > max.numIS)
-        if(reached.limit | enough.things){ done = TRUE }
-        if(!improve.nomass.problem){ done = TRUE}
-        if(sigma.add==0){ done=TRUE}
-        if(all(pvs==pvs[1]) ){ done=FALSE } ## This is actually obsolete, I
-                                            ## think. But let's leave it in
-                                            ## there for now
+    ## If applicable, append IC poly to the original poly
+    poly = orig.fudged.poly
+    if(!is.null(ic.poly)){
+        poly$gamma = rbind(poly$gamma, ic.poly$gamma) ## I don't like this rbind..
+        poly$u = c(poly$u, ic.poly$u)
     }
-    ## num.things = sum(denoms==1)
 
-    ## Calculate randomized TG statistic
-    pv = sum(pvs*denoms)/sum(denoms)
-    return(pv)
+
+    ##' Helper function
+    one_IS_addnoise = function(isim, numIS.cumulative){
+        if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
+                                  "importance sampling replicate")
+
+        new.noise = rnorm(length(y),0,sigma.add)
+
+        if(inference.type=="rows"){
+            obj.new = partition_TG(y=y, poly=poly, shift=new.noise,
+                                   v=v, sigma=sqrt(sigma^2), bits=bits)
+        } else if (inference.type=="pre-multiply"){
+            premult = polyhedra.bsFs(orig.fudged.obj,
+                                     inference.type="pre-multiply",
+                                     new.noise=new.noise, v=v,
+                                     numSteps=numSteps, y=y)
+            ## Append IC stopping to Gy, Gv, Gw
+            if(!is.null(ic.poly)){
+                ic.Gy = as.numeric(ic.poly$gamma%*%y)
+                ic.Gv = as.numeric(ic.poly$gamma%*%v)
+                ic.Gw = as.numeric(ic.poly$gamma%*%new.noise)
+                premult$Gy = c(premult$Gy, ic.Gy)
+                premult$Gv = c(premult$Gv, ic.Gv)
+                premult$Gw = c(premult$Gw, ic.Gw)
+                premult$u = c(premult$u, ic.poly$u)
+            }
+            obj.new = poly_pval_from_inner_products(Gy=premult$Gy,
+                                                    Gv=premult$Gv, v=v, y=y,
+                                                    sigma=sigma,
+                                                    u=premult$u - premult$Gw,
+                                                    bits=bits)
+            pv = obj.new$pv
+            if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix
+        } else {
+            stop("inference type not recognized!")
+        }
+
+        ## Handle boundary cases
+        pv.new = obj.new$pv
+        weight.new = obj.new$denom
+
+        ## Handle boundary cases
+        if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
+        if(pv.new > 1 | pv.new < 0)  browser() ## Not sure why this would happen, but anyway!
+        if(weight.new < 0 | weight.new > 1){
+            weight.new=0 ## Nomass problem is to be caught here.
+        }
+        info = data.frame(pv=pv.new,weight=weight.new)
+        return(info)
+    }
+
+
+    ## Do importance sampling until you have some amount of variation.
+    parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
+    rownames(parts.so.far) = c("pv", "weight")
+    numIS.cumulative=0
+    done = FALSE
+    while(!done){
+        parts = mcmapply(one_IS_addnoise, 1:numIS, numIS.cumulative,
+                         mc.cores=mc.cores)
+
+        ## Combine the new parts with the prexisting.
+        parts.so.far = cbind(parts.so.far, parts)
+
+        ## Handling the problem of p-value being NaN/0/1
+        things = sum(parts.so.far["weight",]>0)
+        enough.things = ((things > min.num.things) | !improve.nomass.problem)
+        numIS.cumulative = numIS.cumulative + numIS
+        reached.limit = numIS.cumulative > max.numIS
+        if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
+        pvs.so.far = unlist(parts.so.far["pv",])
+        if(all(pvs.so.far==pvs.so.far[1])){ done=FALSE } ## obsolete, but just being safe
+    }
+
+    ## Calculate randomized TG statistic and return it.
+    pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/
+        sum(unlist(parts.so.far["weight",]))
+    if(return.more.things){
+        return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
+                    parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
+    } else {
+        return(pv)
+    }
 }
-
 
 ##' Synopsis: randomization wrapper for WBS.
 randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
@@ -124,58 +128,47 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     if(inference.type=="pre-multiply" & (is.null(cumsum.y) | is.null(cumsum.v)) ){
         stop("Provide cumulative sums of y and v, if you want to use the pre-multiply option.")
     }
-
-
-    ## New PV information based on newly drawn |numIntervals| - |numSteps|
-    ## intervals
     if(comprehensive) numIS=1
 
-    done=FALSE
+    ## Helper function (bundler) for a single importance sampling replicate
+    one_IS_wbs = function(isim, numIS.cumulative){
+        if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
+                                  "importance sampling replicate")
+        rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
+                  numIntervals=numIntervals,
+                  numSteps=winning.wbs.obj$numSteps,
+                  sigma=sigma,
+                  inference.type=inference.type,
+                  cumsum.y=cumsum.y,
+                  cumsum.v=cumsum.v,
+                  stop.time=stop.time,
+                  ic.poly=ic.poly,
+                  bits=bits,
+                  warn=warn)
+    }
+
+    ## Actual importance sampling is run here
+    done = FALSE
     parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight")
     numIS.cumulative=0
     while(!done){
-        parts = mclapply(1:numIS, function(isim){
-            if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
-                                      "importance sampling replicate")
-            rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
-                      numIntervals=numIntervals,
-                      numSteps=winning.wbs.obj$numSteps,
-                      sigma=sigma,
-                      inference.type=inference.type,
-                      cumsum.y=cumsum.y,
-                      cumsum.v=cumsum.v,
-                      stop.time=stop.time,
-                      ic.poly=ic.poly,
-                      bits=bits,
-                      warn=warn)
-        }, mc.cores=mc.cores)
-
-        ## Combine the new parts with the prexisting.
-        parts = t(do.call(rbind,parts)) ## Not ideal but works for now
-        parts.so.far = cbind(parts.so.far, parts)
-
-        ## Handling the problem of p-value being NaN/0/1
-        things = sum(parts.so.far["weight",]>0)
-        enough.things = (things > min.num.things)
-        if(!improve.nomass.problem | enough.things){
-            done=TRUE
-        }
-        pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/sum(unlist(parts.so.far["weight",]))
-        ## numIS = numIS + numIS
         numIS.cumulative = numIS.cumulative + numIS
 
-        ## cat(fill=TRUE)
-        ## printf("things is %d", things)
-        ## printf("numIS is %f", numIS)
+        ## Collect parts and combine with preexisting
+        parts = mcmapply(one_IS_wbs, 1:numIS , numIS.cumulative, mc.cores=mc.cores)
+        parts.so.far = cbind(parts.so.far, parts)
 
-        if(numIS.cumulative > max.numIS) done=TRUE ## This was numIS before..
-                                                   ## which was a bug! Will keep
-                                                   ## going pretty much
-                                                   ## indefinitely sometimes.
-
-        reached.limit = (numIS > max.numIS)
+        ## Handling issue of p-value being NaN/0/1
+        things = sum(parts.so.far["weight",] > 0)
+        enough.things = (things > min.num.things)
+        reached.limit = (numIS.cumulative > max.numIS)
+        if(!improve.nomass.problem | reached.limit | enough.things){ done = TRUE }
     }
+
+    ## Calculate p-value
+    pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/
+        sum(unlist(parts.so.far["weight",]))
 
     ## Return more information to parse
     if(return.more.things){
@@ -196,7 +189,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 ##'     extract only the winning locations and /those/ winners' enclosing
 ##'     intervals.
 ##' @param v test contrast
-##' @return A data frame (single row), with "pv" and "weight".
+##' @param data frame with two columns ("pv" and "weight") and single row.
 rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
                       cumsum.y=NULL,cumsum.v=NULL, inference.type, stop.time=numSteps,
                       ic.poly=NULL, bits=50, warn=FALSE){
@@ -206,6 +199,7 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
 
     ## New intervals added onto old winning intervals
     n = length(v)
+    stopifnot(n==length(winning.wbs.obj$y))
     winning_se = rbind(winning.wbs.obj$results[1:stop.time, c("max.s", "max.e")])
     colnames(winning_se) = c("s", "e")
     intervals.new = intervals(numIntervals=numIntervals-stop.time, n=n, existing=winning_se)
@@ -222,7 +216,8 @@ rerun_wbs <- function(winning.wbs.obj, v, numIntervals, numSteps, sigma,
         poly.new = polyhedra(obj=g.new$gamma, u=g.new$u)
 
         ## Partition TG to denom and numer
-        pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma, correct.ends=TRUE, warn=warn)
+        pvobj = partition_TG(y=winning.wbs.obj$y, poly.new, v=v, sigma=sigma,
+                             correct.ends=TRUE, warn=warn)
         pv = pvobj$pv
         if(is.nan(pv)) pv=0 ## temporary fix
         weight = pvobj$denom

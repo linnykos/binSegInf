@@ -3,7 +3,7 @@
 ##'     provided, the length of that.
 ##' @param intervals An object of class |intervals|.
 ##' @return List of simulation results (p-values, locations tested, etc.)
-do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
+do_rwbs_inference <- function(y=y, max.numSteps=20, numIntervals=length(y),
                               intervals=NULL, consec=2,
                               sigma, postprocess=TRUE, how.close = 5,
                               better.segment=FALSE,
@@ -11,15 +11,16 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
                               inference.type=inference.type,
                               improve.nomass.problem=TRUE, bits=1000,
                               max.numIS=2000,
-                              write.time = FALSE, verbose=FALSE, mc.cores=1){
+                              verbose=FALSE, mc.cores=1,
+                              min.num.things=30){
 
     ## Basic checks
     if(!is.null(intervals)){
+        if(is.null(intervals)){stop("Provide either |numIntervals| or |intervals|.")}
         numIntervals = intervals$numIntervals
     }
 
     ## Fit initial WBS for a generous number of steps
-    max.numSteps = 20
     if(is.null(intervals) & !is.null(numIntervals)){
         intervals = intervals(numIntervals=numIntervals, n=n)
     }
@@ -68,17 +69,13 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
     print((abs(as.numeric(names(vlist)))))
     retain = which((abs(as.numeric(names(vlist))) %in% locs))
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-
-    ## ## Temporarily added
-    ## if(length(retain)!=0) browser()
+    vlist = vlist[retain]
 
     ## Calculate the p-values
-    vlist = vlist[retain]
     pvs = sapply(1:length(vlist), function(iv){
         printprogress(iv, length(vlist), type = "tests")
         v = vlist[[iv]]
         cumsum.v = cumsum(v)
-        browser()
         pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
                                               sigma=sigma,
                                               numIS=numIS,
@@ -90,8 +87,7 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
                                               improve.nomass.problem=improve.nomass.problem,
                                               bits=bits,
                                               max.numIS=max.numIS,
-                                              mc.cores=mc.cores))
-        if(write.time) write.time.to.file(myfile="rwbs-main-example-timing.txt")
+                                              mc.cores=mc.cores, min.num.things=min.num.things))
         return(pv)})
     names(pvs) = names(vlist)
     return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), vlist=vlist) )
@@ -103,12 +99,15 @@ do_rwbs_inference <- function(y=y, max.numSteps=10, numIntervals=length(y),
 ##'     geenrated from i.i.d. Gaussian noise with \code{sigma} standard
 ##'     deviation. A rough check is in place, but really just trusting the user
 ##'     at this point.
-do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
+do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
                              postprocess=TRUE, locs=1:length(y), numIS=100,
                              sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
-                             write.time=FALSE, numIntervals=length(y),
+                             numIntervals=length(y),
                              max.numIS=2000, verbose=FALSE, min.num.things=10,
-                             added.noise=NULL){
+                             added.noise=NULL,
+                             mc.cores=1,
+                             improve.nomass.problem=TRUE,
+                             return.more.things=FALSE){
 
     ## Basic checks
     inference.type = match.arg(inference.type)
@@ -142,16 +141,19 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
     ## Do noise-added inference
     pvs = sapply(1:length(vlist), function(iv){
         v = vlist[[iv]]
-
         pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
                                 inference.type=inference.type,
                                 max.numIS=max.numIS, verbose=verbose,
-                                min.num.things=min.num.things)
+                                mc.cores= mc.cores,
+                                improve.nomass.problem=TRUE,
+                                return.more.things=FALSE
+                                )
+                               ## ,
+                                ## min.num.things=min.num.things)
 
-        if(write.time) write.time.to.file(myfile="rbs-main-example-timing.txt")
         return(pv)
     })
     names(pvs) = names(vlist)
@@ -183,8 +185,3 @@ do_rbs_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
 ##         })
 
 
-##' Quick helper to write to file.
-write.time.to.file <- function(myfile){
-    line = Sys.time()
-    write(toString(line),file=myfile,append=TRUE)
-}
