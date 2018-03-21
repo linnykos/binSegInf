@@ -41,7 +41,7 @@ binSeg_fixedSteps <- function(y, numSteps){
   cp.sign <- sign(as.numeric(sapply(leaves, function(x){
       data.tree::FindNode(tree, x)$cusum})))
   obj <- structure(list(tree = tree, y.fit = y.fit, numSteps = numSteps, cp = cp,
-                        cp.sign=cp.sign), class = "bsFs")
+                        cp.sign=cp.sign, y=y), class = "bsFs")
 
 }
 
