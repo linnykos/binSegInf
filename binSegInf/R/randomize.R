@@ -17,7 +17,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
 
     ## New: Get many fudged TG statistics.
     inference.type = match.arg(inference.type)
-    if(sigma.add==0) numIS=1
+    if(sigma.add==0) numIS=max.numIS=1
 
 
     ## If applicable, append IC poly to the original poly
