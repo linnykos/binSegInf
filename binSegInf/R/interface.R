@@ -77,9 +77,6 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
     vlist = vlist[retain]
 
-    ## Temporary addition
-    vlist=vlist[whichv]
-
     ## Do noise-added inference
     results = lapply(1:length(vlist), function(iv){
         v = vlist[[iv]]
