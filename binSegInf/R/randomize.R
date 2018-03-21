@@ -30,9 +30,9 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
 
     ##' Helper function
     one_IS_addnoise = function(isim, numIS.cumulative){
-        if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
+        if(verbose) {printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
                                   "importance sampling replicate",
-                                  start.time = start.time)
+                                  start.time = start.time)}
 
 
         new.noise = rnorm(length(y),0,sigma.add)
@@ -100,6 +100,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
         pvs.so.far = unlist(parts.so.far["pv",])
+        print(things)
     }
 
     ## Calculate randomized TG statistic and return it.

@@ -83,7 +83,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     ## Do noise-added inference
     results = lapply(1:length(vlist), function(iv){
         v = vlist[[iv]]
-        if(verbose){ cat(fill=TRUE); printprogress(iv, length(vlist), "segment tests")}
+        if(verbose){ printprogress(iv, length(vlist), "segment tests"); cat(fill=TRUE); }
         result = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
