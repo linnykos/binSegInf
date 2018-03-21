@@ -94,9 +94,10 @@ do_rwbs_inference <- function(y=y, max.numSteps=20, numIntervals=length(y),
 }
 
 
-##' Does a single randomized wbs (rwbs) inference for a given y
-##' @param added.noise is a manually inputted added noise. This /must/ be
-##'     geenrated from i.i.d. Gaussian noise with \code{sigma} standard
+##' Does a single randomized wbs (rwbs) inference for a given n-lengthed data
+##' vector y.
+##' @param added.noise is a manually inputted additive noise vector. This must
+##'     be generated from i.i.d. Gaussian noise with \code{sigma} standard
 ##'     deviation. A rough check is in place, but really just trusting the user
 ##'     at this point.
 do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
@@ -107,12 +108,17 @@ do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
                              added.noise=NULL,
                              mc.cores=1,
                              improve.nomass.problem=TRUE,
-                             return.more.things=FALSE){
+                             return.more.things=FALSE,
+                             start.time=NULL,
+                             how.close=5,
+                             whichv = 1){
 
     ## Basic checks
     inference.type = match.arg(inference.type)
-    if( abs(sd(added.noise) - sigma.add) > sigma.add/2){
-        stop("Your added noise doesn't match sigma.add well.")
+    if(!is.null(added.noise)){
+        if( abs(sd(added.noise) - sigma.add) > sigma.add/2){
+            stop("Your added noise doesn't match sigma.add well.")
+        }
     }
 
 
@@ -133,15 +139,24 @@ do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
     cp.sign = h.fudged$cp.sign[1:stoptime]
     vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
 
+    if(postprocess){
+        cpobj = declutter_new(cp, cp.sign, how.close=how.close)
+        cp = abs(cpobj)
+        cp.sign = sign(cpobj)
+    }
+
     ## Retain only the changepoints we want results from:
     retain = which((cp %in% locs))
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
     vlist = vlist[retain]
 
+    ## Temporary addition
+    vlist=vlist[whichv]
+
     ## Do noise-added inference
-    pvs = sapply(1:length(vlist), function(iv){
+    results = lapply(1:length(vlist), function(iv){
         v = vlist[[iv]]
-        pv = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
+        result = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
                                 ic.poly = ic_obj$poly, bits=bits,
@@ -149,16 +164,18 @@ do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
                                 max.numIS=max.numIS, verbose=verbose,
                                 mc.cores= mc.cores,
                                 improve.nomass.problem=TRUE,
-                                return.more.things=FALSE
+                                return.more.things=TRUE,
+                                start.time=start.time,
+                                min.num.things=min.num.things
                                 )
-                               ## ,
-                                ## min.num.things=min.num.things)
-
-        return(pv)
+        return(result)
     })
-    names(pvs) = names(vlist)
 
-    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs))))
+    ## pvs = sapply(results, function(result)result$pv)
+    ## names(pvs) = names(vlist)
+    ## return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), results=results ))
+
+    return(results)
 }
 
 

@@ -1,3 +1,4 @@
+
 ##' Synopsis: noise-added saturated inference, for fused lasso or binary
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
@@ -10,7 +11,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                min.num.things=10,
                                improve.nomass.problem=TRUE,
                                mc.cores=1,
-                               return.more.things=FALSE
+                               return.more.things=FALSE,
+                               start.time=NULL
                                ){
 
     ## New: Get many fudged TG statistics.
@@ -29,7 +31,9 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     ##' Helper function
     one_IS_addnoise = function(isim, numIS.cumulative){
         if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
-                                  "importance sampling replicate")
+                                  "importance sampling replicate",
+                                  start.time = start.time)
+
 
         new.noise = rnorm(length(y),0,sigma.add)
 
@@ -91,12 +95,11 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
 
         ## Handling the problem of p-value being NaN/0/1
         things = sum(parts.so.far["weight",]>0)
-        enough.things = ((things > min.num.things) | !improve.nomass.problem)
+        enough.things = ((things >= min.num.things) | !improve.nomass.problem)
         numIS.cumulative = numIS.cumulative + numIS
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
         pvs.so.far = unlist(parts.so.far["pv",])
-        if(all(pvs.so.far==pvs.so.far[1])){ done=FALSE } ## obsolete, but just being safe
     }
 
     ## Calculate randomized TG statistic and return it.
@@ -119,7 +122,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             improve.nomass.problem=FALSE, min.num.things=30, verbose=FALSE,
                             mc.cores=1,
                             return.more.things=FALSE,
-                            warn=FALSE){
+                            warn=FALSE,
+                            start.time=NULL){
 
     numIntervals = winning.wbs.obj$numIntervals
     numSteps = winning.wbs.obj$numSteps
@@ -133,7 +137,10 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     ## Helper function (bundler) for a single importance sampling replicate
     one_IS_wbs = function(isim, numIS.cumulative){
         if(verbose) printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
-                                  "importance sampling replicate")
+                                  "importance sampling replicate",
+                                  start.time = start.time)
+
+
         rerun_wbs(v=v, winning.wbs.obj=winning.wbs.obj,
                   numIntervals=numIntervals,
                   numSteps=winning.wbs.obj$numSteps,
