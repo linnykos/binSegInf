@@ -99,7 +99,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         numIS.cumulative = numIS.cumulative + numIS
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
-        print(things)
+        ## print(things)
         ## print(parts.so.far)
     }
 
