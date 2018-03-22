@@ -31,10 +31,10 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                   added.noise=NULL,
                                   mc.cores=1,
                                   improve.nomass.problem=TRUE,
-                                  return.more.things=FALSE,
                                   start.time=NULL,
-                                  how.close=5,
-                                  whichv = 1){
+                           how.close=5,
+                           myloc ## temporary!
+                           ){
 
     ## Basic checks
     inference.type = match.arg(inference.type)
@@ -54,9 +54,13 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma+sigma.add, type="bic")
         stoptime = ic_obj$stoptime
         if(ic_obj$flag!="normal"){
-            ## return(ic_obj$flag)
+            ## print?
+            ## print('hi')
+            print(ic_obj$flag)
             warning(paste0("IC stopping resulted in: ", ic_obj$flag))
-            return(h.fudged)
+            ## return(ic_obj$flag)
+            ## return(h.fudged)
+            return(NA)
         }
     } else {
         stoptime = max.numSteps
@@ -70,12 +74,27 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         cp = abs(cpobj)
         cp.sign = sign(cpobj)
     }
+    ## return(cp)
 
+    ## It is important to form the contrasts /after/ decluttering
     ## Retain only the changepoints we want results from:
     vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
     retain = which((cp %in% locs))
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
     vlist = vlist[retain]
+
+
+    ## Temporary addition regarding |myloc|
+    ## which.retain = which(cp %in% myloc)
+    ## print('after')
+    ## print(cp)
+    ## cp = cp[which.retain]
+    ## cp.sign = cp.sign[which.retain]
+    ## print('after')
+    ## print(cp)
+    ## vlist = vlist[which.retain]
+    ## return(vlist)
+
 
     ## Do noise-added inference
     results = lapply(1:length(vlist), function(iv){

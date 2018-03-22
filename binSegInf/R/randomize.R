@@ -99,8 +99,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         numIS.cumulative = numIS.cumulative + numIS
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
-        pvs.so.far = unlist(parts.so.far["pv",])
         print(things)
+        ## print(parts.so.far)
     }
 
     ## Calculate randomized TG statistic and return it.
