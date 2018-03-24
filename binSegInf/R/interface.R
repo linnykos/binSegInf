@@ -32,8 +32,10 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                   mc.cores=1,
                                   improve.nomass.problem=TRUE,
                                   start.time=NULL,
-                           how.close=5
+                           how.close=5,
                            ## myloc ## temporary!
+                           retain.only.null.cases,
+                           mn
                            ){
 
     ## Basic checks
@@ -84,6 +86,22 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     vlist = vlist[retain]
 
 
+    ## Temporary addition
+    if(retain.only.null.cases){
+        truth = sapply(vlist, function(myv){
+            sum(myv*mn)
+        })
+        retain = which(truth == 0)
+        vlist = vlist[retain]
+    }
+
+    if(length(vlist)==0){
+        h.fudged$pvs = NULL
+        h.fudged$results = NULL
+        h.fudged$anyleft = FALSE
+        return(h.fudged)
+    } else {
+
     ## Temporary addition regarding |myloc|
     ## which.retain = which(cp %in% myloc)
     ## print('after')
@@ -125,6 +143,8 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     names(pvs) = names(vlist)
     h.fudged$pvs = pvs
     h.fudged$results = results
+        h.fudged$anyleft = TRUE
+    }
 
     return(h.fudged)
 }
