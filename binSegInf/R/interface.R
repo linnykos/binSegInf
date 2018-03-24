@@ -32,8 +32,8 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                   mc.cores=1,
                                   improve.nomass.problem=TRUE,
                                   start.time=NULL,
-                           how.close=5,
-                           myloc ## temporary!
+                           how.close=5
+                           ## myloc ## temporary!
                            ){
 
     ## Basic checks
@@ -93,7 +93,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     ## print('after')
     ## print(cp)
     ## vlist = vlist[which.retain]
-    ## return(vlist)
+    ## ## return(vlist)
 
 
     ## Do noise-added inference
