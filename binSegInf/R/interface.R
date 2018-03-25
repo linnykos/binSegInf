@@ -96,10 +96,11 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     }
 
     if(length(vlist)==0){
-        h.fudged$pvs = NULL
-        h.fudged$results = NULL
-        h.fudged$anyleft = FALSE
-        return(h.fudged)
+        ## h.fudged$pvs = NULL
+        ## h.fudged$results = NULL
+        ## h.fudged$anyleft = FALSE
+        ## return(h.fudged)
+        return(NULL)
     } else {
 
     ## Temporary addition regarding |myloc|
@@ -130,8 +131,9 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                 start.time=start.time,
                                 min.num.things=min.num.things
                                 )
-        return(result)
         if(verbose) cat(fill=TRUE)
+
+        return(NULL)
     })
 
     ## names(pvs) = names(vlist)
@@ -141,6 +143,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     ## The actual end goal of this is to add p-values to the original fudged object
     pvs = sapply(results, function(result)result$pv)
     names(pvs) = names(vlist)
+        return(pvs) ## temporarily added
     h.fudged$pvs = pvs
     h.fudged$results = results
         h.fudged$anyleft = TRUE
