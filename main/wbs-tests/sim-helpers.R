@@ -70,11 +70,6 @@ dosim <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.co
 }
 
 
-## Generates one/two-jumped means
-onejump <- function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
-twojump <- function(lev,n){c(rep(0,n/3),rep(lev,n/3), rep(0,n/3))}
-fourjump <- function(lev,n){c(rep(0,n/5), rep(lev,n/5), rep(0,n/5), rep(-2*lev, n/5), rep(0,n/5) )}
-
 
 dosim_with_stoprule <- function(lev, n, meanfun, nsim, numSteps, numIS=NULL, randomized, mc.cores=4, numIntervals=n,
                                 inference.type = "rows", locs=1:n, consec=2, better.segment=FALSE, improve.nomass.problem=TRUE){
@@ -186,7 +181,8 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                                  "wbs.nonrand", "cbs.rand", "cbs.nonrand"), n,
                           lev, numIntervals=n, sigma.add=0.2, numIS=100,
                           meanfun=onejump, visc=NULL, numSteps=1, bits=1000,
-                          max.numIS=2000, verbose=FALSE){
+                          max.numIS=2000, verbose=FALSE,
+                          min.num.things=30){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
@@ -223,6 +219,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
                                                   improve.nomass.problem=improve.nomass.problem,
                                                   bits=bits, max.numIS=max.numIS, verbose=verbose,
+                                                  min.num.things=min.num.things
                                                   ))
         })
         return(data.frame(pvs=pvs,
@@ -275,7 +272,9 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                     sigma.add=sigma.add,
                                     orig.fudged.poly= poly.fudged, bits=bits,
-                                    max.numIS=max.numIS, verbose=verbose)
+                                    max.numIS=max.numIS, verbose=verbose,
+                                    min.num.things=min.num.things
+                                    )
         })
 
         return(data.frame(pvs=pvs,
@@ -325,7 +324,9 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
                                         sigma.add=sigma.add,
                                         orig.fudged.poly= combined.poly,
                                         bits=bits, max.numIS=max.numIS,
-                                        verbose=verbose)
+                                        verbose=verbose,
+                                        min.num.things=min.num.things
+                                        )
             })
             locs = as.numeric(names(vlist))
             return(data.frame(pvs=pvs, locs=locs))
@@ -385,7 +386,9 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                     sigma.add=sigma.add, orig.fudged.poly= poly.fudged, bits=bits,
                                     ## max.numIS=max.numIS)
-                                    max.numIS=max.numIS, verbose=verbose)
+                                    max.numIS=max.numIS, verbose=verbose,
+                                    min.num.things=min.num.things
+                                    )
         })
 
         return(data.frame(pvs=pvs,
@@ -442,7 +445,9 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
         pvs = sapply(vlist, function(v){
         pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
-                                bits=bits, max.numIS=max.numIS, verbose=verbose)
+                                bits=bits, max.numIS=max.numIS, verbose=verbose,
+                                min.num.things=min.num.things
+                                )
         })
 
         return(data.frame(pvs=pvs,
@@ -455,7 +460,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus",
         h.nonfudged = circularBinSeg_fixedSteps(y, numSteps=numSteps/2)
         poly.nonfudged = polyhedra(h.nonfudged)
 
-        ## Get randomized p-value
+        ## Get nonrandomized p-value
         vlist <- make_all_segment_contrasts(h.nonfudged)
         if(!is.null(visc)){
             retain = which(abs(as.numeric(names(vlist))) %in% visc)
