@@ -132,8 +132,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                 min.num.things=min.num.things
                                 )
         if(verbose) cat(fill=TRUE)
-
-        return(NULL)
+        return(result)
     })
 
     ## names(pvs) = names(vlist)
