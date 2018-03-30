@@ -76,7 +76,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         if(weight.new < 0 | weight.new > 1){
             weight.new=0 ## Nomass problem is to be caught here.
         }
-        info = data.frame(pv=pv.new,weight=weight.new)
+        ## info = data.frame(pv=pv.new,weight=weight.new)
+        info = cbind(pv=pv.new, weight=weight.new)
         return(info)
     }
 
@@ -94,13 +95,14 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         parts.so.far = cbind(parts.so.far, parts)
 
         ## Handling the problem of p-value being NaN/0/1
-        things = sum(parts.so.far["weight",]>0)
+        things = sum((parts.so.far["weight",]>0)&
+                     (parts.so.far["pv",] != 1) &
+                     (parts.so.far["pv",] != 0))
+
         enough.things = ((things >= min.num.things) | !improve.nomass.problem)
         numIS.cumulative = numIS.cumulative + numIS
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
-        ## print(things)
-        ## print(parts.so.far)
     }
 
     ## Calculate randomized TG statistic and return it.
