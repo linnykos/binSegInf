@@ -1,4 +1,3 @@
-
 ##' Synopsis: noise-added saturated inference, for fused lasso or binary
 ##' segmentation (really, any method that creates a valid polyhedron and has $cp
 ##' and $cp.sign)
@@ -9,9 +8,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                inference.type = c("rows", "pre-multiply"),
                                verbose=FALSE,
                                min.num.things=10,
-                               improve.nomass.problem=TRUE,
                                mc.cores=1,
-                               return.more.things=FALSE,
                                start.time=NULL
                                ){
 
@@ -26,7 +23,6 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         poly$gamma = rbind(poly$gamma, ic.poly$gamma) ## I don't like this rbind..
         poly$u = c(poly$u, ic.poly$u)
     }
-
 
     ##' Helper function
     one_IS_addnoise = function(isim, numIS.cumulative){
@@ -99,7 +95,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                      (parts.so.far["pv",] != 1) &
                      (parts.so.far["pv",] != 0))
 
-        enough.things = ((things >= min.num.things) | !improve.nomass.problem)
+        enough.things = (things >= min.num.things)
         numIS.cumulative = numIS.cumulative + numIS
         reached.limit = numIS.cumulative > max.numIS
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
@@ -108,12 +104,9 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     ## Calculate randomized TG statistic and return it.
     pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/
         sum(unlist(parts.so.far["weight",]))
-    if(return.more.things){
-        return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
+
+    return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
                     parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
-    } else {
-        return(pv)
-    }
 }
 
 ##' Synopsis: randomization wrapper for WBS.
@@ -122,9 +115,8 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
                             ic.poly=NULL, bits=50, max.numIS=2000,
-                            improve.nomass.problem=FALSE, min.num.things=30, verbose=FALSE,
+                            min.num.things=30, verbose=FALSE,
                             mc.cores=1,
-                            return.more.things=FALSE,
                             warn=FALSE,
                             start.time=NULL){
 
@@ -173,21 +165,16 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
         things = sum(parts.so.far["weight",] > 0)
         enough.things = (things > min.num.things)
         reached.limit = (numIS.cumulative > max.numIS)
-        if(!improve.nomass.problem | reached.limit | enough.things){ done = TRUE }
+        if( reached.limit | enough.things){ done = TRUE }
     }
 
     ## Calculate p-value
     pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/
         sum(unlist(parts.so.far["weight",]))
 
-    ## Return more information to parse
-    if(return.more.things){
-        return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
-                    parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
-                    ## winning.wbs.obj=winning.wbs.obj))
-    } else {
-        return(pv)
-    }
+    ## Return information from this simulation.
+    return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
+                parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
 }
 
 ##' Helper for WBSFT randomization. Rerun WBS to get _new_, single set of denom

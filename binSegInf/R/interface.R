@@ -1,4 +1,4 @@
-##' Conducts post-selection inference procedure for additive noise binary
+##' Conducts post-parseselection inference procedure for additive noise binary
 ##' segmentation inference -- segment test inference for all detected
 ##' changepoints -- for a given n-lengthed data vector y, with or without IC
 ##' stopping.
@@ -24,19 +24,19 @@
 ##'     the centroid clustering, to be.
 ##' @param return An object of class \code{bsFs} with p-values.
 inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
-                                  postprocess=TRUE, locs=1:length(y), numIS=100,
-                                  sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
-                                  numIntervals=length(y),
-                                  max.numIS=2000, verbose=FALSE, min.num.things=10,
-                                  added.noise=NULL,
-                                  mc.cores=1,
-                                  improve.nomass.problem=TRUE,
-                                  start.time=NULL,
+                           postprocess=TRUE, locs=1:length(y), numIS=100,
+                           sigma.add = 0.2, bits=50,
+                           inference.type=c("rows", "pre-multiply"),
+                           numIntervals=length(y),
+                           max.numIS=2000, verbose=FALSE, min.num.things=10,
+                           added.noise=NULL,
+                           mc.cores=1,
+                           start.time=NULL,
                            how.close=5,
                            ## myloc ## temporary!
-                           retain.only.null.cases,
-                           mn
-                           ){
+                           sim.options = list(retain.only.null.cases=FALSE,
+                                              mn=NULL,
+                                              old=FALSE)){
 
     ## Basic checks
     inference.type = match.arg(inference.type)
@@ -53,15 +53,12 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     h.fudged = binSeg_fixedSteps(y.fudged, numSteps=max.numSteps)
     h.fudged$y.orig = y
     if(icstop){
-        ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma+sigma.add, type="bic")
+        ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec,
+                        sigma=sigma+sigma.add, type="bic")
         stoptime = ic_obj$stoptime
         if(ic_obj$flag!="normal"){
-            ## print?
-            ## print('hi')
             print(ic_obj$flag)
             warning(paste0("IC stopping resulted in: ", ic_obj$flag))
-            ## return(ic_obj$flag)
-            ## return(h.fudged)
             return(NA)
         }
     } else {
@@ -76,32 +73,22 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         cp = abs(cpobj)
         cp.sign = sign(cpobj)
     }
-    ## return(cp)
 
     ## It is important to form the contrasts /after/ decluttering
     ## Retain only the changepoints we want results from:
     vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
-    retain = which((cp %in% locs))
-    if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-    vlist = vlist[retain]
-
+    vlist <- filter_vlist(vlist, locs)
+    if(length(vlist)==0) return(list(pvs=c(), null.true=c()))
 
     ## Temporary addition
-    if(retain.only.null.cases){
+    if(sim.options$retain.only.null.cases){
         truth = sapply(vlist, function(myv){
-            sum(myv*mn)
+            sum(myv*sim.options$mn)
         })
         retain = which(truth == 0)
         vlist = vlist[retain]
     }
-
-    if(length(vlist)==0){
-        ## h.fudged$pvs = NULL
-        ## h.fudged$results = NULL
-        ## h.fudged$anyleft = FALSE
-        ## return(h.fudged)
-        return(NULL)
-    } else {
+    if(length(vlist)==0) return(NULL)
 
     ## Temporary addition regarding |myloc|
     ## which.retain = which(cp %in% myloc)
@@ -118,7 +105,10 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     ## Do noise-added inference
     results = lapply(1:length(vlist), function(iv){
         v = vlist[[iv]]
-        if(verbose){ printprogress(iv, length(vlist), "segment tests"); cat(fill=TRUE); }
+        if(verbose){
+            printprogress(iv, length(vlist), "segment tests", fill=TRUE)
+        }
+        if(!sim.options$old){
         result = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
                                 sigma.add=sigma.add, orig.fudged.obj = h.fudged,
                                 numSteps = stoptime+consec,
@@ -126,28 +116,30 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                 inference.type=inference.type,
                                 max.numIS=max.numIS, verbose=verbose,
                                 mc.cores= mc.cores,
-                                improve.nomass.problem=TRUE,
                                 return.more.things=TRUE,
                                 start.time=start.time,
                                 min.num.things=min.num.things
                                 )
+        } else {
+        result = randomize_addnoise_old(y= y, v=v, sigma=sigma, numIS=numIS,
+                                sigma.add=sigma.add, orig.fudged.obj=h.fudged,
+                                numSteps=stoptime+consec,
+                                ic.poly=ic_obj$poly, bits=bits,
+                                inference.type=inference.type,
+                                max.numIS=max.numIS, verbose=verbose,
+                                )
+        }
         if(verbose) cat(fill=TRUE)
         return(result)
     })
 
-    ## names(pvs) = names(vlist)
-    ## ## return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), results=results ))
-    ## return(results)
-
-    ## The actual end goal of this is to add p-values to the original fudged object
+    ## Add results to the original fudged object:
     pvs = sapply(results, function(result)result$pv)
     names(pvs) = names(vlist)
-        return(pvs) ## temporarily added
+    return(pvs) ## temporarily added
     h.fudged$pvs = pvs
     h.fudged$results = results
-        h.fudged$anyleft = TRUE
-    }
-
+    h.fudged$anyleft = TRUE
     return(h.fudged)
 }
 
@@ -168,7 +160,7 @@ inference_wbs <- function(y=y, max.numSteps=20, numIntervals=length(y),
                           better.segment=FALSE,
                           locs=1:length(y), numIS=100,
                           inference.type=inference.type,
-                          improve.nomass.problem=TRUE, bits=1000,
+                          bits=1000,
                           max.numIS=2000,
                           verbose=FALSE, mc.cores=1,
                           min.num.things=30){
@@ -245,7 +237,6 @@ inference_wbs <- function(y=y, max.numSteps=20, numIntervals=length(y),
                                               cumsum.v=cumsum.v,
                                               stop.time=stoptime+consec,
                                               ic.poly=ic_poly,
-                                              improve.nomass.problem=improve.nomass.problem,
                                               bits=bits,
                                               max.numIS=max.numIS,
                                               mc.cores=mc.cores, min.num.things=min.num.things))

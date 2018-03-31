@@ -543,3 +543,17 @@ get_piecewise_mean <- function(y, cp){
   for(ind in segment.inds) mn[ind] <- mean(y[ind])
   return(mn)
 }
+
+
+##' Takes a named list of n-length contrast vectors, and filters them so that
+##' only the contrasts that are desired i.e. contained in \code{visc}.
+filter_vlist <- function(vlist, visc=NULL){
+    if(!is.null(visc)){
+        retain = which(abs(as.numeric(names(vlist))) %in% visc)
+        if(length(retain)==0){
+            return(data.frame(pvs=NA, locs=NA))
+        }
+        vlist = vlist[retain]
+    }
+    return(vlist)
+}
