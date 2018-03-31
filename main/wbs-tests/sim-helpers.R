@@ -255,9 +255,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus","sbs.rand
                                     sigma.add=sigma.add,
                                     orig.fudged.poly= poly.fudged, bits=bits,
                                     max.numIS=max.numIS, verbose=verbose,
-                                    min.num.things=min.num.things
-                                    )
-        })
+                                    min.num.things=min.num.things)$pv})
 
         return(data.frame(pvs=pvs,
                           locs=locs))
@@ -307,8 +305,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus","sbs.rand
                                         bits=bits, max.numIS=max.numIS,
                                         verbose=verbose,
                                         min.num.things=min.num.things
-                                        )
-            })
+                                        )$pv})
             locs = as.numeric(names(vlist))
             return(data.frame(pvs=pvs, locs=locs))
         } else {
@@ -387,8 +384,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus","sbs.rand
                                     sigma.add=sigma.add,
                                     orig.fudged.poly=poly.fudged, bits= bits,
                                     max.numIS=max.numIS, verbose=verbose,
-                                    min.num.things=min.num.things)
-        })
+                                    min.num.things=min.num.things)$pv})
         return(data.frame(pvs=pvs,
                           locs=locs))
     }
@@ -430,7 +426,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus","sbs.rand
             pv = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
                                     sigma.add=sigma.add, orig.fudged.poly= poly.fudged,
                                     bits=bits, max.numIS=max.numIS, verbose=verbose,
-                                    min.num.things=min.num.things)})
+                                    min.num.things=min.num.things)$pv})
         return(data.frame(pvs=pvs,
                           locs=locs))
     }
