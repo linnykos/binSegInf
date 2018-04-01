@@ -116,7 +116,6 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                                 inference.type=inference.type,
                                 max.numIS=max.numIS, verbose=verbose,
                                 mc.cores= mc.cores,
-                                return.more.things=TRUE,
                                 start.time=start.time,
                                 min.num.things=min.num.things
                                 )
