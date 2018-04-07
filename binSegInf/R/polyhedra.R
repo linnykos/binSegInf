@@ -86,15 +86,23 @@ print.polyhedra <- function(mypoly){
 
 
 
+##' Check if y is in polyhedra
 contained <- function(obj,...){UseMethod("contained")}
 contained.polyhedra <- function(obj, y){
     all(obj$gamma %*% y >= obj$u)
 }
 
-
+##' Make empty polyhedra object
 make_empty <- function(obj,...)
 contained <- function(obj,...){UseMethod("contained")}
 make_empty.polyhedra <- function(n){
     emptyrow = rbind(rep(NA,n))[-1,,drop=FALSE]
     return(polyhedra(obj=emptyrow, u=c()))
+}
+
+
+##' Obtains polyhedron from |path| object. A |path| object is created from
+##' generalized lasso dual path algorithm in the |genlassoinf| R package.
+polyhedra.path <- function(obj){
+    polyhedra(obj = obj$Gobj.naive$G, u = obj$Gobj.naive$u)
 }
