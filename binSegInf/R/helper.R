@@ -129,7 +129,16 @@ partition_TG <- function(y, poly, v, sigma, nullcontrast=0, bits=50, reduce,corr
 ##' @param main label to plot as main title.
 ##' @param cols colors if |pp| is a list of numeric vectors.
 ##' @export
-qqunif <- function(pp, main=NULL, plot.it=TRUE, cols=NULL,...){
+qqunif <- function(pp, main=NULL, plot.it=TRUE, cols=NULL, type=c("p","l"),...){
+
+    type = match.arg(type)
+    if(type=="l"){
+        pch=NULL
+        lty=1
+    } else {
+        pch=16
+        lty=NULL
+    }
 
     ## Internal helper
     myplotter <- function(xy,main,...){
@@ -141,8 +150,9 @@ qqunif <- function(pp, main=NULL, plot.it=TRUE, cols=NULL,...){
 
     ## If single numeric vector, plot it.
     if(class(pp)!="list"){
+            
         xy <- stats::qqplot(x=pp,
-                     y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE, pch=16)
+                     y=seq(from=0,to=1,length=length(pp)), plot.it=FALSE, pch=16, type=type)
         if(plot.it) myplotter(xy, main)
         return(invisible(xy))
 
@@ -151,15 +161,16 @@ qqunif <- function(pp, main=NULL, plot.it=TRUE, cols=NULL,...){
         assert_that(!is.null(cols))
         allpoints = lapply(pp, function(pvs){qqunif(pvs, plot.it=FALSE)})
         if(plot.it){
-            myplotter(allpoints[[1]], main, col=cols[1],pch=16)
+            myplotter(allpoints[[1]], main, col=cols[1],pch=16, type=type)
             if(length(allpoints)>1){
                 for(ii in 2:length(allpoints)){
-                    points(allpoints[[ii]], col = cols[ii], pch=16)
+                    points(allpoints[[ii]], col = cols[ii], pch=16,type=type)
                 }
             }
         }
         if(length(names(allpoints))>0){
-            legend("bottomright",legend=names(pp),col=cols,pch=rep(16,length(pp)))
+            legend("bottomright",legend=names(pp),col=cols,lty = rep(lty, length(pp)),
+                   pch=rep(pch,length(pp)))
         }
         return(invisible(allpoints))
     }
@@ -324,16 +335,16 @@ dual1d_Dmat = function(m){
 ##' @param seed Seed for random number generation
 ##' @return resampled \code{vec}.
 ##' @export
-bootstrap_sample <- function(vec,seed=NULL){
+bootstrap_sample <- function(vec, size=length(vec), seed=NULL){
     if(!is.null(seed)) set.seed(seed)
-    return(vec[bootstrap_ind(length(vec))])
+    return(vec[bootstrap_ind(n=length(vec), size=size)])
         ## sample.int(length(vec),replace=TRUE)]
 }
 
 ##' Creates a set of bootstrap indices.
-bootstrap_ind <- function(n,seed=NULL){
+bootstrap_ind <- function(n, size=n, seed=NULL){
     if(!is.null(seed)) set.seed(seed)
-    return(sample.int(n,replace=TRUE))
+    return(sample.int(n, size=size, replace=TRUE))
 }
 
 
