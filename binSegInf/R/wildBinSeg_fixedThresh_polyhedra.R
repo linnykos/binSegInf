@@ -119,3 +119,4 @@ check_polyhedra <- function(poly, y){
     stopifnot(all(poly$gamma %*% y >= poly$u))
 }
 
+

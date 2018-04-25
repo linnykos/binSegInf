@@ -46,10 +46,10 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
 
         ## Obtain (2norm-scaled) residual projection vectors
         if(ii==0){
-            myresid = rep(NA,n)
+            myresid = rep(NA, n)
         } else {
             myresid = get_basis(cps_old=(if(ii==1) c() else cp[1:(ii-1)]),
-                               cp_new=cp[ii], n=n)
+                                cp_new=cp[ii], n=n)
         }
 
         ## Store BIC and re
@@ -96,17 +96,18 @@ get_ic <- function(cp, y, sigma, consec=2, maxsteps=length(cp), type="bic", verb
         for(ii in all.relevant.steps){
 
             residual = resid[[toString(ii+1)]]
-            const    = pen[toString(ii+1)] - pen[toString(ii)]
+            const = pen[toString(ii+1)] - pen[toString(ii)]
+            pos.resid = sign(as.numeric(t(residual)%*%y))*residual/sqrt(sum(residual^2))
 
             if(seqdirs[toString(ii+1)] < 0){
                 ## Add one row \sqrt{C} < z_a \times a^Ty
-                newrows[irow+1,] = (sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
+                newrows[irow+1,] = pos.resid #(sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
                 newu[irow+1] = sqrt(const)
                 irow = irow + 1
             } else {
                 ## Add two rows -\sqrt{C} < z_a \times a^Ty < \sqrt{C}
-                newrows[irow+1,] = (sign(as.numeric(t(residual)%*%y)) * residual) / sqrt(sum(residual^2))
-                newrows[irow+2,] = (-sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
+                newrows[irow+1,] = pos.resid # (sign(as.numeric(t(residual)%*%y)) * residual) / sqrt(sum(residual^2))
+                newrows[irow+2,] = -pos.resid #(-sign(as.numeric(t(residual)%*%y)) * residual)/sqrt(sum(residual^2))
                 newu[irow+1] = -sqrt(const)
                 newu[irow+2] = -sqrt(const)
                 irow = irow + 2
@@ -180,9 +181,9 @@ is_valid.ic <- function(obj){
 ## vector; assume first step always dips; _almost_ always true
 ## @param ic a numeric vector
 .getorder <- function(ic){
-  seqdir = (c(NA,sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)])))
-  names(seqdir) = c(0:(length(ic)-1))
-  return(seqdir)
+    seqdir = c(NA, sign(ic[2:(length(ic))] - ic[1:(length(ic)-1)]))
+    names(seqdir) = 0:(length(ic) - 1)
+    return(seqdir)
 }
 
 

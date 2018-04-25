@@ -63,6 +63,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         }
     } else {
         stoptime = max.numSteps
+        ic_obj=NULL
     }
 
     ## Collect stopped model and postprocess
@@ -85,7 +86,8 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         truth = sapply(vlist, function(myv){
             sum(myv*sim.options$mn)
         })
-        retain = which(truth == 0)
+        tol=1E-20
+        retain = which(abs(truth)>tol)
         vlist = vlist[retain]
     }
     if(length(vlist)==0) return(NULL)

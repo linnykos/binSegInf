@@ -1,5 +1,5 @@
 #' Binary segmentation with fixed steps
-#'
+
 #' y must not have duplicated values. This is to avoid
 #' degenerate behavior of binary segmentation
 #'
@@ -149,4 +149,10 @@ summary.bsFs <- function(object, ...){
   res[start:end] <- .cusum_contrast(start, idx, end)
 
   res
+}
+
+
+##' Print function for convenience, of |wbs| class object.
+print.bsFs <- function(obj){
+    cat("Detected changepoints using WBS with", obj$numSteps, "steps is", obj$cp * obj$cp.sign, fill=TRUE)
 }

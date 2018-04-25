@@ -65,4 +65,3 @@ jump_sign <- function(obj, sorted = F){
 .get_length <- function(obj) {UseMethod(".get_length")}
 
 
-
