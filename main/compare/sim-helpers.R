@@ -13,7 +13,6 @@ dosim_compare <- function(type=c("fl","fl.noisy","fl.noisy.plus",
     y = mn + rnorm(n, 0, sigma)
     cumsum.y = cumsum(y)
     inference.type = "pre-multiply"
-    improve.nomass.problem = TRUE
 
 
     if(type == "wbs.marg"){
@@ -32,7 +31,6 @@ dosim_compare <- function(type=c("fl","fl.noisy","fl.noisy.plus",
             pv = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g, sigma=sigma,
                                                   numIS=numIS, inference.type=inference.type,
                                                   cumsum.y=cumsum.y,cumsum.v=cumsum.v,
-                                                  improve.nomass.problem=improve.nomass.problem,
                                                   bits=bits, max.numIS=max.numIS, verbose=verbose,
                                                   min.num.things=min.num.things
                                                   ))
