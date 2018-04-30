@@ -14,7 +14,7 @@ outputdir = "~/Desktop/dummyoutput"
 
 ## Simulation settings
 bits = 5000
-mc.cores = 1
+mc.cores = 6
 results = list()
 args = commandArgs(trailingOnly=TRUE)
 facs = as.numeric(args)
