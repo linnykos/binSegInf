@@ -226,7 +226,7 @@ dosim_compare <- function(type=c("fl.nonrand","fl.rand","fl.rand.plus","sbs.rand
         poly.wbs = polyhedra(obj=g$gamma, u=g$u)
         vlist <- make_all_segment_contrasts(g)
         vlist <- filter_vlist(vlist, visc)
-        locs = as.numeric(names(vlist))
+        if(length(vlist)==0) return(data.frame(pvs=NA,locs=NA))
 
         pvs = sapply(vlist, function(v){
             cumsum.v = cumsum(v)

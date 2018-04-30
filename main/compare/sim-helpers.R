@@ -5,7 +5,7 @@ dosim_compare <- function(type=c("fl","fl.noisy","fl.noisy.plus",
                           numIntervals=n, sigma.add=0.2, numIS=100,
                           meanfun=onejump, visc=NULL, numSteps=1, bits=1000,
                           max.numIS=2000, verbose=FALSE, min.num.things=30,
-                          sigma = 1){
+                          sigma = 1, seed=NULL){
 
     type = match.arg(type)
     if(is.null(visc))visc=1:n
@@ -13,6 +13,7 @@ dosim_compare <- function(type=c("fl","fl.noisy","fl.noisy.plus",
     y = mn + rnorm(n, 0, sigma)
     cumsum.y = cumsum(y)
     inference.type = "pre-multiply"
+    improve.nomass.problem = TRUE
 
 
     if(type == "wbs.marg"){
@@ -23,7 +24,8 @@ dosim_compare <- function(type=c("fl","fl.noisy","fl.noisy.plus",
         vlist <- make_all_segment_contrasts(g)
         vlist <- filter_vlist(vlist, visc)
         locs = as.numeric(names(vlist))
-        retain = which(abs(as.numeric(names(vlist))) %in% visc)
+        vlist <- filter_vlist(vlist, visc)
+        locs = as.numeric(names(vlist))
 
         ## Get the p-values
         pvs = sapply(vlist, function(v){

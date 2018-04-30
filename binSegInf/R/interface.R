@@ -20,8 +20,9 @@
 ##'     \code{verbose=TRUE}
 ##' @param postprocess \code{TRUE} if you'd like to centroid cluster the
 ##'     detected changepoints.
-##' @param howclose How close would you like points to be in each cluster, for
+##' @param how.close How close would you like points to be in each cluster, for
 ##'     the centroid clustering, to be.
+##' @param locs Which locations to test. Defaults to \code{1:length(y)}.
 ##' @param return An object of class \code{bsFs} with p-values.
 inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                            postprocess=TRUE, locs=1:length(y), numIS=100,
@@ -33,11 +34,8 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                            mc.cores=1,
                            start.time=NULL,
                            how.close=5,
-                           ## myloc ## temporary!
-                           sim.options = list(retain.only.null.cases=FALSE,
-                                              mn=NULL,
-                                              old=FALSE)){
-
+                           mn = NULL,
+                           sim.options = list(retain.only.null.cases=FALSE)){
     ## Basic checks
     inference.type = match.arg(inference.type)
     if(!is.null(added.noise)){
@@ -81,10 +79,10 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     vlist <- filter_vlist(vlist, locs)
     if(length(vlist)==0) return(list(pvs=c(), null.true=c()))
 
-    ## Temporary addition
+    ## (kind of) temporary addition
     if(sim.options$retain.only.null.cases){
         truth = sapply(vlist, function(myv){
-            sum(myv*sim.options$mn)
+            sum(myv*mn)
         })
         tol=1E-20
         retain = which(abs(truth)>tol)
@@ -92,55 +90,37 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
     }
     if(length(vlist)==0) return(NULL)
 
-    ## Temporary addition regarding |myloc|
-    ## which.retain = which(cp %in% myloc)
-    ## print('after')
-    ## print(cp)
-    ## cp = cp[which.retain]
-    ## cp.sign = cp.sign[which.retain]
-    ## print('after')
-    ## print(cp)
-    ## vlist = vlist[which.retain]
-    ## ## return(vlist)
-
-
     ## Do noise-added inference
-    results = lapply(1:length(vlist), function(iv){
-        v = vlist[[iv]]
-        if(verbose){
-            printprogress(iv, length(vlist), "segment tests", fill=TRUE)
-        }
-        if(!sim.options$old){
-        result = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.obj = h.fudged,
-                                numSteps = stoptime+consec,
-                                ic.poly = ic_obj$poly, bits=bits,
-                                inference.type=inference.type,
-                                max.numIS=max.numIS, verbose=verbose,
-                                mc.cores= mc.cores,
-                                start.time=start.time,
-                                min.num.things=min.num.things
-                                )
-        } else {
-        result = randomize_addnoise_old(y= y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.obj=h.fudged,
-                                numSteps=stoptime+consec,
-                                ic.poly=ic_obj$poly, bits=bits,
-                                inference.type=inference.type,
-                                max.numIS=max.numIS, verbose=verbose,
-                                )
-        }
-        if(verbose) cat(fill=TRUE)
-        return(result)
-    })
-
-    ## Add results to the original fudged object:
-    pvs = sapply(results, function(result)result$pv)
+    parts.list = list()
+    pvs = rep(NA, length(vlist))
     names(pvs) = names(vlist)
-    return(pvs) ## temporarily added
+    for(iv in 1:length(vlist)){
+        v = vlist[[iv]]
+        if(verbose) printprogress(iv, length(vlist), "segment tests", fill=TRUE)
+        result = randomize_addnoise(y=y, v=v, sigma=sigma, numIS=numIS,
+                                    sigma.add=sigma.add, orig.fudged.obj = h.fudged,
+                                    numSteps = stoptime+consec,
+                                    ic.poly = ic_obj$poly, bits=bits,
+                                    inference.type=inference.type,
+                                    max.numIS=max.numIS, verbose=verbose,
+                                    mc.cores= mc.cores,
+                                    start.time=start.time,
+                                    min.num.things=min.num.things)
+        if(verbose) cat(fill=TRUE)
+        parts.list[[iv]] = result$parts.so.far
+        pvs[iv] = result$pv
+    }
+
+    ## Add some information to the original fudged object:
     h.fudged$pvs = pvs
-    h.fudged$results = results
     h.fudged$anyleft = TRUE
+    h.fudged$vlist = vlist
+    h.fudged$parts.list = parts.list
+    h.fudged$stoptime = stoptime
+    if(!is.null(mn)){
+        h.fudged$resids = y - mn
+        h.fudged$mn = mn
+    }
     return(h.fudged)
 }
 
@@ -204,14 +184,6 @@ inference_wbs <- function(y=y, max.numSteps=20, numIntervals=length(y),
         cp.sign = sign(cpobj)
     }
 
-    ## # ## Plot things
-    ## plot(y)
-    ## abline(v=cp, col='purple',lwd=2)
-    ## abline(v=g$cp, col="grey80")
-    ## ## abline(v=g$cp[1:ic_obj$stoptime], col='blue', lwd=2)
-    ## text(x=g$cp+3, y=rep(1,length(g$cp)), label = 1:length(g$cp))
-
-
     ## Form contrasts
     if(better.segment){
         vlist <- make_all_segment_contrasts_from_wbs(wbs_obj=g, cps=cp)
@@ -243,5 +215,6 @@ inference_wbs <- function(y=y, max.numSteps=20, numIntervals=length(y),
                                               mc.cores=mc.cores, min.num.things=min.num.things))
         return(pv)})
     names(pvs) = names(vlist)
-    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), vlist=vlist) )
+    return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)),
+                vlist=vlist) )
 }

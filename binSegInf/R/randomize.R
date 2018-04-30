@@ -57,7 +57,8 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                                                     u=premult$u - premult$Gw,
                                                     bits=bits)
             pv = obj.new$pv
-            if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix
+            if(is.nan(obj.new$pv)) obj.new$pv=0 ## temporary fix ## Need to deal
+                                                ## with this.
         } else {
             stop("inference type not recognized!")
         }
@@ -65,23 +66,20 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         ## Handle boundary cases
         pv.new = obj.new$pv
         weight.new = obj.new$denom
-
-        ## Handle boundary cases
         if(is.nan(pv.new)) return(c(0,0)) ## Actually not calculable
         if(pv.new > 1 | pv.new < 0)  browser() ## Not sure why this would happen, but anyway!
         if(weight.new < 0 | weight.new > 1){
             weight.new=0 ## Nomass problem is to be caught here.
         }
-        ## info = data.frame(pv=pv.new,weight=weight.new)
-        info = cbind(pv=pv.new, weight=weight.new)
+        info = cbind(pv=pv.new, weight=weight.new, vlo=obj.new$vlo,
+                     vty=obj.new$vty, vup=obj.new$vup, sigma=sigma)
         return(info)
     }
 
-
-    ## Do importance sampling until you have some amount of variation.
-    parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
-    rownames(parts.so.far) = c("pv", "weight")
-    numIS.cumulative=0
+    ## Importance-sample until you have some amount of variation.
+    parts.so.far = cbind(c(Inf, Inf, Inf, Inf, Inf, Inf))[,-1,drop=FALSE]
+    rownames(parts.so.far) = c("pv", "weight", "vlo", "vty", "vup", "sigma")
+    numIS.cumulative = 0
     done = FALSE
     while(!done){
         parts = mcmapply(one_IS_addnoise, 1:numIS, numIS.cumulative,
@@ -101,12 +99,13 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         if(reached.limit | enough.things | sigma.add == 0){ done = TRUE }
     }
 
-    ## Calculate randomized TG statistic and return it.
+    ## Calculate randomized TG statistic.
     pv = sum(unlist(Map('*', parts.so.far["pv",], parts.so.far["weight",])))/
         sum(unlist(parts.so.far["weight",]))
 
-    return(list(things=things, min.num.things=min.num.things, numIS.cumulative=numIS.cumulative,
-                    parts.so.far=parts.so.far, pv=pv, sigma=sigma, v=v))
+    return(list(things=things, min.num.things=min.num.things,
+                numIS.cumulative=numIS.cumulative, parts.so.far=parts.so.far,
+                pv=pv, sigma=sigma, v=v, parts=parts))
 }
 
 ##' Synopsis: randomization wrapper for WBS.
@@ -151,7 +150,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
     ## Actual importance sampling is run here
     done = FALSE
-    parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
+    parts.so.far = cbind(c(Inf,Inf,Inf,Inf,Inf,Inf))[,-1,drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight")
     numIS.cumulative=0
     while(!done){
@@ -279,5 +278,6 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=50, warn=TRUE)
     denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
     pv = as.numeric(numer/denom)
 
-    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vy=vy, vup=vup))
+    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vty=vy, vup=vup,
+                sigma=sigma))
 }

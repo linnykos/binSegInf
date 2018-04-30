@@ -231,3 +231,30 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 
   return(list(pv=pv,vlo=vlo,vup=vup))
 }
+
+
+##' Calculating TG p-value from bootstrapping residuals
+pval_plugin = function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL, weight=FALSE) {
+
+    if(is.null(y)){ y.centered = y - mean(y) }
+    if(is.null(bootmat)){
+        bootmat = t(sapply(1:nboot, function(iboot){
+            y.centered[sample(n, size=n, replace=TRUE)]
+        }))
+    }
+    vtr = as.numeric(bootmat %*% v)
+    numer = sum(vtr > as.numeric(vty) & vtr < as.numeric(Vup) )
+    denom = sum(vtr > as.numeric(Vlo) & vtr < as.numeric(Vup))
+    if(!weight){  p = numer/denom; return(p)  }
+    if(weight){  w = denom  }
+}
+
+##' Calculating TG p-value from bootstrapping residuals
+pval_plugin_wrapper = function(y, G, v, nboot=1000, bootmat=NULL){
+        obj = pval(y, G, v)
+        Vlo = obj$vlo
+        Vup = obj$vup
+        vty = obj$vty
+        p = pval_plugin(Vlo, Vup, vty, v, y, nboot=nboot, bootmat=bootmat)
+        return(p)
+}
