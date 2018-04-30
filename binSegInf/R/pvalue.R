@@ -258,3 +258,46 @@ pval_plugin_wrapper = function(y, G, v, nboot=1000, bootmat=NULL){
         p = pval_plugin(Vlo, Vup, vty, v, y, nboot=nboot, bootmat=bootmat)
         return(p)
 }
+
+
+##' Computes TG p-value and related objects (vlo,vup,vty,denom,numer) in the
+##' case that Gy and Gv are pre-calculated; the option
+##' inference.type="pre-multiply".
+##' @param Gy G times y
+##' @param Gv G times v
+##' @param v constrast vector
+##' @param y data
+##' @param sigma noise level
+##' @param bits number of precision bits used for calculation of Gaussian
+##'     tails. Roughly 3*bits is the /number/ of digits that is being used.
+##' @return list containing pv,vlo,vup,vty,denom,numer.
+poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=1000, warn=TRUE){
+
+    ## Rounding ridiculously small numbers
+    Gv[which(abs(Gv)<1E-15)] = 0
+
+    vy = sum(v*y)
+    vv = sum(v^2)
+    sd = sigma*sqrt(vv)
+
+    rho = Gv / vv
+    vec = (u - Gy + rho*vy) / rho
+    vlo = suppressWarnings(max(vec[rho>0]))
+    vup = suppressWarnings(min(vec[rho<0]))
+    vy = max(min(vy, vup),vlo) ##This is the only difference. Should it be here? Yes
+
+    z = Rmpfr::mpfr(vy/sd, precBits=bits)
+    a = Rmpfr::mpfr(vlo/sd, precBits=bits)
+    b = Rmpfr::mpfr(vup/sd, precBits=bits)
+
+    if(!(a<=z &  z<=b) & warn){
+        warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
+        ## print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
+    }
+    numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
+    denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
+    pv = as.numeric(numer/denom)
+
+    return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vty=vy, vup=vup,
+                sigma=sigma))
+}
