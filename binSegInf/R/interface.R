@@ -55,7 +55,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                         sigma=sigma+sigma.add, type="bic")
         stoptime = ic_obj$stoptime
         if(ic_obj$flag!="normal"){
-            print(ic_obj$flag)
+            ## print(ic_obj$flag)
             warning(paste0("IC stopping resulted in: ", ic_obj$flag))
             return(NA)
         }
@@ -63,6 +63,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         stoptime = max.numSteps
         ic_obj=NULL
     }
+    return()
 
     ## Collect stopped model and postprocess
     cp = h.fudged$cp[1:stoptime]
