@@ -16,10 +16,9 @@ outputdir = "~/Desktop/dummyoutput"
 bits = 5000
 mc.cores = 1
 results = list()
-nsim = 10##2000
-nsims = seq(from=2000,to=5000, length=length(facs))
 args = commandArgs(trailingOnly=TRUE)
 facs = as.numeric(args)
+nsims = seq(from=2000,to=5000, length=length(facs))
 
 ## Over different sample sizes, collect results
 for(fac in facs){
