@@ -23,6 +23,7 @@ nsims = seq(from=2000,to=5000, length=length(facs))
 ## Over different sample sizes, collect results
 for(fac in facs){
 
+    nsim = nsims[fac]
     start.time = Sys.time()
     results = mclapply(1:nsim, function(isim){
         printprogress(isim, nsim,
