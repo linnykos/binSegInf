@@ -19,8 +19,7 @@ args = commandArgs(trailingOnly=TRUE)
 facs = as.numeric(args)
 nsims = seq(from=2000,to=4000, length=5)
 
-ebootstrap_sample(resid.cleanmn[-(1:200)])# Over different sample sizes, collect results
-s
+## Over different sample sizes, collect results
 for(fac in facs){
     printprogress(fac, facs, "factors", fill=TRUE)
     nsim = nsims[fac]
