@@ -16,8 +16,8 @@ onesim_rbs <- function(y.orig, bits=1000, fac=1, verbose=FALSE, reduced=FALSE){
     start.time = Sys.time()
     out = inference_bsFs(y=y, max.numSteps=15, consec=2,
                          sigma=sigma, postprocess= TRUE,
-                         locs=1:length(y), numIS=3,
-                         min.num.things=3,
+                         locs=1:length(y), numIS=10,
+                         min.num.things=30,
                          inference.type="pre-multiply",
                          bits=bits, sigma.add=sigma.add,
                          verbose=verbose, start.time=start.time,
