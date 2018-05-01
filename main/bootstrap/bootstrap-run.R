@@ -14,28 +14,31 @@ outputdir="../output"
 
 ## Simulation settings
 bits = 5000
-mc.cores = 1
+mc.cores = 6
 args = commandArgs(trailingOnly=TRUE)
 facs = as.numeric(args)
-nsims = seq(from=2000,to=5000, length=5)
+nsims = seq(from=2000,to=4000, length=5)
 
 ## Over different sample sizes, collect results
 for(fac in facs){
     printprogress(fac, facs, "factors", fill=TRUE)
     nsim = nsims[fac]
     start.time = Sys.time()
-    results = mclapply(1:nsim, function(isim){
-        printprogress(isim, nsim,
-                      lapsetime = round(difftime(Sys.time(), start.time,
-                                                 units = "hours"), 2))
-        myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=FALSE)
-        return(myresult)
-    }, mc.cores=mc.cores)
-    
-    ## Write to file
-    facstring = paste0(unlist(strsplit(toString(fac), split='.', fixed=TRUE)), collapse="")
-    filename = paste0("artif-rbs-fac-new-", facstring, ".Rdata")
-    save(results, file=file.path(outputdir, filename))
+    npart = 4
+    for(part in 1:npart){
+        results = mclapply(1:(nsim/npart), function(isim){
+            printprogress(isim, (nsim/npart),
+                          lapsetime = round(difftime(Sys.time(), start.time,
+                                                     units = "hours"), 2))
+            myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=FALSE)
+            return(myresult)
+        }, mc.cores=mc.cores)
+        
+        ## Write to file
+        ## facstring = paste0(unlist(strsplit(toString(fac), split='.', fixed=TRUE)), collapse="")
+        filename = paste0("artif-rbs-fac-new-", fac, "-part-", part,".Rdata")
+        save(results, file=file.path(outputdir, filename))
+    }
 }
 
 
