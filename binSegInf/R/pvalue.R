@@ -236,12 +236,15 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 ##' Calculating TG p-value from bootstrapping residuals
 pval_plugin = function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL, weight=FALSE) {
 
-    if(is.null(y)){ y.centered = y - mean(y) }
+    ## Basic checks
     if(is.null(bootmat)){
+        assert_that(!is.null(y))
+        y.centered = y - mean(y)
         bootmat = t(sapply(1:nboot, function(iboot){
             y.centered[sample(n, size=n, replace=TRUE)]
         }))
     }
+
     vtr = as.numeric(bootmat %*% v)
     numer = sum(vtr > as.numeric(vty) & vtr < as.numeric(Vup) )
     denom = sum(vtr > as.numeric(Vlo) & vtr < as.numeric(Vup))
@@ -289,7 +292,7 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=1000, warn=TRU
     z = Rmpfr::mpfr(vy/sd, precBits=bits)
     a = Rmpfr::mpfr(vlo/sd, precBits=bits)
     b = Rmpfr::mpfr(vup/sd, precBits=bits)
-
+    
     if(!(a<=z &  z<=b) & warn){
         warning("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
         ## print("F(vlo)<vy<F(vup) was violated, in partition_TG()!")
@@ -297,7 +300,6 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=1000, warn=TRU
     numer = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(z)))
     denom = as.numeric((Rmpfr::pnorm(b)-Rmpfr::pnorm(a)))
     pv = as.numeric(numer/denom)
-
     return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vty=vy, vup=vup,
                 sigma=sigma))
 }

@@ -63,7 +63,6 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         stoptime = max.numSteps
         ic_obj=NULL
     }
-    return()
 
     ## Collect stopped model and postprocess
     cp = h.fudged$cp[1:stoptime]
@@ -193,7 +192,6 @@ inference_wbs <- function(y=y, max.numSteps=20, numIntervals=length(y),
     }
 
     ## Retain only the changepoints we want results from:
-    print((abs(as.numeric(names(vlist)))))
     retain = which((abs(as.numeric(names(vlist))) %in% locs))
     if(length(retain)==0) return(list(pvs=c(), null.true=c()))
     vlist = vlist[retain]
