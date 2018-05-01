@@ -27,7 +27,7 @@ for(fac in facs){
     npart = 4
     for(part in 1:npart){
         results = mclapply(1:(nsim/npart), function(isim){
-            printprogress(isim, (nsim/npart),
+            printprogress(isim+(nsim/npart)*(part-1), (nsim),
                           lapsetime = round(difftime(Sys.time(), start.time,
                                                      units = "hours"), 2))
             myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=FALSE)
@@ -37,6 +37,7 @@ for(fac in facs){
         ## Write to file
         ## facstring = paste0(unlist(strsplit(toString(fac), split='.', fixed=TRUE)), collapse="")
         filename = paste0("artif-rbs-fac-new-", fac, "-part-", part,".Rdata")
+        cat("Saved", filename, fill=TRUE)
         save(results, file=file.path(outputdir, filename))
     }
 }
