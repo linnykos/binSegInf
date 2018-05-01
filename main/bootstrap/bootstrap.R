@@ -21,9 +21,7 @@ onesim_rbs <- function(y.orig, bits=1000, fac=1, verbose=FALSE, reduced=FALSE){
                          inference.type="pre-multiply",
                          bits=bits, sigma.add=sigma.add,
                          verbose=verbose, start.time=start.time,
-                         how.lose=5,
                          mn=mn,
-                         reduced=reduced,
                          bootstrap.inds=bootstrap.inds)
     return(out)
 }
