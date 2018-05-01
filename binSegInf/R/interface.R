@@ -35,7 +35,8 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
                            start.time=NULL,
                            how.close=5,
                            mn = NULL,
-                           sim.options = list(retain.only.null.cases=FALSE)){
+                           sim.options = list(retain.only.null.cases=FALSE),
+                           bootstrap.inds=NULL){
     ## Basic checks
     inference.type = match.arg(inference.type)
     if(!is.null(added.noise)){
@@ -121,6 +122,7 @@ inference_bsFs <- function(y=y, max.numSteps=20, consec=2, sigma, icstop=TRUE,
         h.fudged$resids = y - mn
         h.fudged$mn = mn
     }
+    h.fudged$bootstrap.inds = bootstrap.inds
     return(h.fudged)
 }
 

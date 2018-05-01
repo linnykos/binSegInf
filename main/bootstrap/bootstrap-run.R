@@ -9,12 +9,12 @@ filename = "coriell05296.Rdata"
 load(file=file.path(datadir,filename))
 source(file=file.path("../main/artificial/artif-helpers.R"))
 source(file=file.path("../main/bootstrap/bootstrap.R"))
-outputdir = "~/Desktop/dummyoutput"
+outputdir="../output"
 
 
 ## Simulation settings
 bits = 5000
-mc.cores = 6
+mc.cores = 1
 args = commandArgs(trailingOnly=TRUE)
 facs = as.numeric(args)
 nsims = seq(from=2000,to=5000, length=5)
@@ -38,6 +38,19 @@ for(fac in facs){
     save(results, file=file.path(outputdir, filename))
 }
 
+
+## ## Timing this
+## bits=5000
+## reduced.time = microbenchmark::microbenchmark({
+##     myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=TRUE, reduced=TRUE)
+## }, times=5)
+
+## nonreduced.time = microbenchmark::microbenchmark({
+##     myresult = onesim_rbs(y.orig, bits=bits, fac=fac, verbose=TRUE, reduced=FALSE)
+## }, times=5)
+
+
+
 ## ## Check this before running it.
 ## microbenchmark::microbenchmark({
 ##     set.seed(1)
@@ -59,3 +72,85 @@ for(fac in facs){
 ##                          mn=mn)
 ##     ## onesim_rbs(y.orig, bits=bits, fac=fac, verbose=FALSE)
 ## },times=5)
+
+
+a=c(6, 
+9, 
+6, 
+7, 
+7, 
+8, 
+7, 
+6, 
+8, 
+6, 
+9, 
+9, 
+7, 
+7, 
+6, 
+8, 
+11, 
+12, 
+6, 
+6, 
+9, 
+8, 
+13, 
+8, 
+9, 
+13, 
+10, 
+12, 
+9, 
+13, 
+9, 
+7, 
+5, 
+7, 
+7, 
+5, 
+6, 
+9, 
+9, 
+6, 
+13, 
+9, 
+10, 
+6, 
+10, 
+13, 
+6, 
+13, 
+6, 
+10, 
+6, 
+11, 
+13, 
+10, 
+7, 
+7, 
+6, 
+6, 
+9, 
+8, 
+7, 
+9, 
+8, 
+6, 
+8, 
+9, 
+6, 
+9, 
+10, 
+8, 
+9, 
+6, 
+12, 
+7, 
+9, 
+8, 
+7, 
+9, 
+7, 
+11)
