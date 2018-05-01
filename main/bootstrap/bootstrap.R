@@ -7,11 +7,11 @@ onesim_rbs <- function(y.orig, bits=1000, fac=1, verbose=FALSE, reduced=FALSE){
     sigma = sd(y.orig[1:200]) * fac
     sigma.add = sigma*0.2
     mn = newmn[-(1:200)]
-    ## y = mn + bootstrap_sample(resid.cleanmn[-(1:200)]) * fac
     n = length(mn)
     bootstrap.inds = bootstrap_ind(n, size=n)
     resids.orig = resid.cleanmn[-(1:200)]
     resids = resids.orig[bootstrap.inds]
+    y = mn + resids * fac
 
     start.time = Sys.time()
     out = inference_bsFs(y=y, max.numSteps=15, consec=2,
