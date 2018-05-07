@@ -234,27 +234,36 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 
 
 ##' Calculating TG p-value from bootstrapping residuals
-pval_plugin = function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL, weight=FALSE) {
+##' @param y data vector.
+##' @param bootmat vector whose rows are bootstrapped y's
+##' @param bootmat.times.v vector of bootmat %*% y
+##' @return 
+pval_plugin <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
+                        weight=FALSE, bootmat.times.v=NULL){
 
-    ## Basic checks
-    if(is.null(bootmat)){
-        assert_that(!is.null(y))
-        y.centered = y - mean(y)
-        bootmat = t(sapply(1:nboot, function(iboot){
-            y.centered[sample(n, size=n, replace=TRUE)]
-        }))
+    ## Calculate bootstrapped v^T(y^*-\bar y).
+    if(is.null(bootmat.times.v)){
+        if(is.null(bootmat)){
+            assert_that(!is.null(y))
+            y.centered = y - mean(y)
+            bootmat = t(sapply(1:nboot, function(iboot){
+                y.centered[sample(n, size=n, replace=TRUE)]
+            }))
+        }
+        bootmat.times.v = bootmat %*% v
     }
 
-    vtr = as.numeric(bootmat %*% v)
+    ## Calculate the requisite quantities
+    vtr = as.numeric(bootmat.times.v)
     numer = sum(vtr > as.numeric(vty) & vtr < as.numeric(Vup) )
     denom = sum(vtr > as.numeric(Vlo) & vtr < as.numeric(Vup))
-    if(!weight){  p = numer/denom; return(p)  }
-    if(weight){  w = denom  }
+    if(!weight){  p = numer/denom; return(p) }
+    if(weight){  w = denom ; return(w) }
 }
 
 ##' Calculating TG p-value from bootstrapping residuals
-pval_plugin_wrapper = function(y, G, v, nboot=1000, bootmat=NULL){
-        obj = pval(y, G, v)
+pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, sigma=1){
+        obj = poly.pval(y=y, G=G, v=v, u=rep(0,nrow(G)), sigma=sigma)
         Vlo = obj$vlo
         Vup = obj$vup
         vty = obj$vty
@@ -303,3 +312,5 @@ poly_pval_from_inner_products <- function(Gy,Gv, v,y,sigma,u,bits=1000, warn=TRU
     return(list(denom=denom, numer=numer, pv = pv, vlo=vlo, vty=vy, vup=vup,
                 sigma=sigma))
 }
+
+
