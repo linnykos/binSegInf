@@ -97,7 +97,7 @@ poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
   vup = suppressWarnings(min(vec[rho<0]))
 
   pv = tnorm.surv(z,0,sd,vlo,vup,bits)
-  return(list(pv=pv,vlo=vlo,vup=vup))
+  return(list(pv=pv,vlo=vlo,vup=vup, vty=z))
 }
 
 
@@ -266,7 +266,8 @@ pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, sigma=1){
         obj = poly.pval(y=y, G=G, v=v, u=rep(0,nrow(G)), sigma=sigma)
         Vlo = obj$vlo
         Vup = obj$vup
-        vty = obj$vty
+        ## vty = obj$vty
+        vty = sum(v*y)
         p = pval_plugin(Vlo, Vup, vty, v, y, nboot=nboot, bootmat=bootmat)
         return(p)
 }
