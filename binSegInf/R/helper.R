@@ -568,3 +568,19 @@ filter_vlist <- function(vlist, visc=NULL){
     }
     return(vlist)
 }
+
+##' Make n-length vector that induces piecewise mean that is cut at cp.
+##' @param y original data vector.
+##' @param cp changepoint.
+##' @return n-length vector with means 
+make_pw_mean <- function(y, cp ){
+    n = length(y)
+    ord = order(cp)
+    cp_aug = c(0,cp[ord], n)
+    d = rep(0,n)
+    for(ii in 1:(length(cp)+1)){
+        ind = (cp_aug[ii]+1):cp_aug[ii+1]
+        d[ind] = mean(y[ind])
+    }
+    return(d)
+}

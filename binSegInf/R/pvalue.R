@@ -239,13 +239,18 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 ##' @param bootmat.times.v vector of bootmat %*% y
 ##' @return 
 pval_plugin <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
-                        weight=FALSE, bootmat.times.v=NULL){
+                        weight=FALSE, bootmat.times.v=NULL, adjustmean=adjustmean){
 
     ## Calculate bootstrapped v^T(y^*-\bar y).
     if(is.null(bootmat.times.v)){
         if(is.null(bootmat)){
             assert_that(!is.null(y))
-            y.centered = y - mean(y)
+            if(is.null(adjustmean)){
+                y.centered = y - mean(y)
+            } else {
+                y.centered = y - adjustmean
+            }
+            n = length(y)
             bootmat = t(sapply(1:nboot, function(iboot){
                 y.centered[sample(n, size=n, replace=TRUE)]
             }))
@@ -262,13 +267,13 @@ pval_plugin <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
 }
 
 ##' Calculating TG p-value from bootstrapping residuals
-pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, sigma=1){
+pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, bootmat.times.v=NULL, sigma=1, adjustmean=NULL){
         obj = poly.pval(y=y, G=G, v=v, u=rep(0,nrow(G)), sigma=sigma)
         Vlo = obj$vlo
         Vup = obj$vup
         ## vty = obj$vty
         vty = sum(v*y)
-        p = pval_plugin(Vlo, Vup, vty, v, y, nboot=nboot, bootmat=bootmat)
+        p = pval_plugin(Vlo, Vup, vty, v, y, nboot=nboot, bootmat=bootmat, bootmat.times.v=bootmat.times.v, adjustmean=adjustmean)
         return(p)
 }
 
