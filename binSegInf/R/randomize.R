@@ -72,7 +72,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
             weight.new=0 ## Nomass problem is to be caught here.
         }
         info = cbind(pv=pv.new, weight=weight.new, vlo=obj.new$vlo,
-                     vty=obj.new$vty, vup=obj.new$vup, sigma=sigma)
+                     vty=obj.new$vy, vup=obj.new$vup, sigma=sigma)
         return(info)
     }
 

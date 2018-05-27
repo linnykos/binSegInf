@@ -558,6 +558,7 @@ get_piecewise_mean <- function(y, cp){
 
 ##' Takes a named list of n-length contrast vectors, and filters them so that
 ##' only the contrasts that are desired i.e. contained in \code{visc}.
+##' @export
 filter_vlist <- function(vlist, visc=NULL){
     if(!is.null(visc)){
         retain = which(abs(as.numeric(names(vlist))) %in% visc)
@@ -573,6 +574,7 @@ filter_vlist <- function(vlist, visc=NULL){
 ##' @param y Original data vector.
 ##' @param cp Changepoint location. Defaults to \code{c()}.
 ##' @return n-length vector with means
+##' @export
 make_pw_mean <- function(y, cp=c()){
    n = length(y)
     if(length(cp)==0){
