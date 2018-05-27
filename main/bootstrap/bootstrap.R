@@ -58,3 +58,29 @@ get.plugin.pval <- function(myresult, nboot=1000){
     }
     return(pvs)
 }
+
+
+#### Trying it /one/ time.
+
+## Add bootstrapped residuals around a cleaned mean, with known sigma
+fac=1
+sigma = sd(y.orig[1:200]) * fac
+sigma.add = sigma*0.2
+mn = newmn[-(1:200)]
+n = length(mn)
+bootstrap.inds = bootstrap_ind(n, size=n)
+resids.orig = resid.cleanmn[-(1:200)]
+resids = resids.orig[bootstrap.inds]
+y = mn + resids * fac
+verbose=TRUE
+start.time = Sys.time()
+out = inference_bsFs(y=y, max.numSteps=15, consec=2,
+                     sigma=sigma, postprocess= TRUE,
+                     locs=1:length(y), numIS=10,
+                     min.num.things=30,
+                     inference.type="pre-multiply",
+                     bits=bits, sigma.add=sigma.add,
+                     verbose=verbose, start.time=start.time,
+                     mn=mn,
+                     bootstrap.inds=bootstrap.inds,
+                     nboot=10000)
