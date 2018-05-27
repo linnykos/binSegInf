@@ -3,49 +3,53 @@ context("Test IC wrapper functions")
 test_that("IC minimization combined with fixed (nonrandomized) binseg model selection event has uniform p-values.",
 {
     ## Settings
-    nsim = 20
-    lev = 0
+    ## lev = 0
     n = 20
     consec = 2
     sigma = 1
     numIntervals = n
     onejump = function(lev,n){c(rep(0,n/2),rep(lev,n/2))}
     meanfun = onejump
-    mn = meanfun(lev,n)
-    nsim = 2000
-    results = mclapply(1:nsim, function(isim){
+    nsim = 5000
+    dosim <- function(lev){
+        results = lapply(1:nsim, function(isim){
 
-        ## Generate Data
-        y = mn + rnorm(n, 0, sigma)
+            ## Generate Data
+            mn = meanfun(lev,n)
+            y = mn + rnorm(n, 0, sigma)
 
-        ## Conduct nonrandomized polyhedron
-        h = binSeg_fixedSteps(y, numSteps = 8)
-        ic_obj = get_ic(h$cp, h$y, consec=consec, sigma=sigma, type="bic")
-        if(ic_obj$flag!="normal") return(NA)
-        stoptime = ic_obj$stoptime
-        ic.poly = ic_obj$poly
-        poly = polyhedra(h, numSteps=stoptime+consec)
+            ## Conduct nonrandomized polyhedron
+            h = binSeg_fixedSteps(y, numSteps = 8)
+            ic_obj = get_ic(h$cp, h$y, consec=consec, sigma=sigma, type="bic")
+            if(ic_obj$flag!="normal") return(NULL)
+            stoptime = ic_obj$stoptime
+            ic.poly = ic_obj$poly
+            poly = polyhedra(h, numSteps=stoptime+consec)
 
-        ## Get combined polyhedron
-        cp = h$cp[1:stoptime]
-        cp.sign = h$cp.sign[1:stoptime]
-        poly$gamma = rbind(poly$gamma, ic.poly$gamma)
-        poly$u = c(poly$u, ic.poly$u)
+            ## Get combined polyhedron
+            cp = h$cp[1:stoptime]
+            cp.sign = h$cp.sign[1:stoptime]
+            poly$gamma = rbind(poly$gamma, ic.poly$gamma)
+            poly$u = c(poly$u, ic.poly$u)
 
-        vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
-        pvs = lapply(vlist, function(v){
-            poly.pval2(y=y,v=v,poly=poly, sigma=sigma)$pv
+            vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
+            retain = which(sapply(vlist, function(v){all.equal(sum(v*mn),0)==TRUE}))
+            if(length(retain)==0) return(NULL)
+            vlist = vlist[retain]
+
+            pvs = lapply(vlist, function(v){
+                poly.pval2(y=y,v=v,poly=poly, sigma=sigma)$pv
+            })
+            return(pvs)
         })
-        return(pvs)
-    }, mc.cores=4)
-
-    ## all.pvs = results[sapply(results,length)==1]
-    all.pvs=unlist(results)
-    all.pvs = all.pvs[!is.na(all.pvs)]
-    qqunif(all.pvs)
+        return(results)
+    }
+    lev0.results = unlist(dosim(0))
+    lev1.results = unlist(dosim(1))
 
     ## Expect uniform
-    expect_equal(ks.test(all.pvs,"punif")$p.value > 0.05, TRUE)
+    expect_equal(ks.test(lev1.results,"punif")$p.value > 0.05, TRUE)
+    expect_equal(ks.test(lev0.results,"punif")$p.value > 0.05, TRUE)
 })
 
 

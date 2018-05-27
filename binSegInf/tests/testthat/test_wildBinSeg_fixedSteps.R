@@ -134,7 +134,6 @@ test_that("Randomized wbs inference has uniform null p-values, and right-skewed 
             poly = polyhedra(obj=g$gamma, u=g$u)
             vlist <- make_all_segment_contrasts(g)
             v = vlist[[1]]
-
             pv.rand = suppressWarnings(randomize_wbsfs(v=v, winning.wbs.obj=g,
                                                         sigma=sigma,
                                                         numIS = numIS))
