@@ -20,6 +20,8 @@ do_rwbs_inference <- function(y=y, max.numSteps=20, numIntervals=length(y),
         numIntervals = intervals$numIntervals
     }
 
+    n=length(y)
+
     ## Fit initial WBS for a generous number of steps
     if(is.null(intervals) & !is.null(numIntervals)){
         intervals = intervals(numIntervals=numIntervals, n=n)
@@ -92,113 +94,5 @@ do_rwbs_inference <- function(y=y, max.numSteps=20, numIntervals=length(y),
     names(pvs) = names(vlist)
     return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), vlist=vlist) )
 }
-
-
-##' Does a single randomized wbs (rwbs) inference for a given n-lengthed data
-##' vector y.
-##' @param added.noise is a manually inputted additive noise vector. This must
-##'     be generated from i.i.d. Gaussian noise with \code{sigma} standard
-##'     deviation. A rough check is in place, but really just trusting the user
-##'     at this point.
-do_rbs_inference <- function(y=y, max.numSteps=20, consec=2, sigma,
-                             postprocess=TRUE, locs=1:length(y), numIS=100,
-                             sigma.add = 0.2, bits=50, inference.type=c("rows", "pre-multiply"),
-                             numIntervals=length(y),
-                             max.numIS=2000, verbose=FALSE, min.num.things=10,
-                             added.noise=NULL,
-                             mc.cores=1,
-                             improve.nomass.problem=TRUE,
-                             return.more.things=FALSE,
-                             start.time=NULL,
-                             how.close=5,
-                             whichv = 1){
-
-    ## Basic checks
-    inference.type = match.arg(inference.type)
-    if(!is.null(added.noise)){
-        if( abs(sd(added.noise) - sigma.add) > sigma.add/2){
-            stop("Your added noise doesn't match sigma.add well.")
-        }
-    }
-
-
-    ## Fit model and get IC information
-    n = length(y)
-    new.noise = rnorm(length(y),0,sigma.add)
-    h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=max.numSteps)
-    ic_obj = get_ic(h.fudged$cp, h.fudged$y, consec=consec, sigma=sigma+sigma.add, type="bic")
-    stoptime = ic_obj$stoptime
-    if(ic_obj$flag!="normal"){return(ic_obj$flag)}
-
-    ## Stopped fudged model (not used because we can't store the polyhedra)
-    ## h.fudged = binSeg_fixedSteps(y + new.noise, numSteps=stoptime+consec)
-    ## poly.fudged = polyhedra(h.fudged)
-
-    ## Collect stopped model and postprocess
-    cp = h.fudged$cp[1:stoptime]
-    cp.sign = h.fudged$cp.sign[1:stoptime]
-    vlist <- make_all_segment_contrasts_from_cp(cp=cp, cp.sign=cp.sign, n=n)
-
-    if(postprocess){
-        cpobj = declutter_new(cp, cp.sign, how.close=how.close)
-        cp = abs(cpobj)
-        cp.sign = sign(cpobj)
-    }
-
-    ## Retain only the changepoints we want results from:
-    retain = which((cp %in% locs))
-    if(length(retain)==0) return(list(pvs=c(), null.true=c()))
-    vlist = vlist[retain]
-
-    ## Temporary addition
-    vlist=vlist[whichv]
-
-    ## Do noise-added inference
-    results = lapply(1:length(vlist), function(iv){
-        v = vlist[[iv]]
-        result = randomize_addnoise(y= y, v=v, sigma=sigma, numIS=numIS,
-                                sigma.add=sigma.add, orig.fudged.obj = h.fudged,
-                                numSteps = stoptime+consec,
-                                ic.poly = ic_obj$poly, bits=bits,
-                                inference.type=inference.type,
-                                max.numIS=max.numIS, verbose=verbose,
-                                mc.cores= mc.cores,
-                                improve.nomass.problem=TRUE,
-                                return.more.things=TRUE,
-                                start.time=start.time,
-                                min.num.things=min.num.things
-                                )
-        return(result)
-    })
-
-    ## pvs = sapply(results, function(result)result$pv)
-    ## names(pvs) = names(vlist)
-    ## return(list(pvs=pvs, locs.all=cp*cp.sign, locs.retained=as.numeric(names(pvs)), results=results ))
-
-    return(results)
-}
-
-
-## do_rfl_inference <- function(y=y, max.numSteps=10, consec=2, sigma,
-##                              postprocess=TRUE, locs=1:length(y), numIS=100,
-##                              sigma.add = 0.2, bits=50){
-##         ## Get nonrandomized p-value
-##         D = genlassoinf::makeDmat(n,type='tf',ord=0)
-##         f.nonfudged = genlassoinf::dualpathSvd2(y, D=D, maxsteps=1, approx=T)
-##         Gobj.nonfudged = genlassoinf::getGammat.naive(obj=f.nonfudged, y=y, condition.step=1)
-##         poly.nonfudged = polyhedra(obj=Gobj.nonfudged$G, u=Gobj.nonfudged$u)
-##         vlist <- make_all_segment_contrasts(f.nonfudged)
-##         if(!is.null(visc)){
-##             retain = which((f.nonfudged$cp %in% visc))
-##             if(length(retain)==0){
-##                 return(data.frame(pvs=NA, locs=NA))
-##             }
-##             vlist = vlist[retain]
-##         }
-##         locs = (f.nonfudged$cp * f.nonfudged$cp.sign)[retain]
-
-##         pvs = sapply(vlist, function(v){
-##             pv = poly.pval2(y=y, poly=poly.nonfudged, v=v, sigma=sigma, bits=bits)$pv
-##         })
 
 
