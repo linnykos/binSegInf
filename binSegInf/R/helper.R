@@ -570,7 +570,8 @@ filter_vlist <- function(vlist, visc=NULL){
     return(vlist)
 }
 
-##' Make n-length vector that induces piecewise mean that is cut at cp.
+##' Make n-length vector that induces piecewise mean that is cut at cp. Used for
+##' simulation examples.
 ##' @param y Original data vector.
 ##' @param cp Changepoint location. Defaults to \code{c()}.
 ##' @return n-length vector with means
