@@ -39,8 +39,7 @@ test_that(".cusum returns negatives", {
 
 test_that(".find_breakpoint is correct", {
   set.seed(10)
-  ## y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
-  y <- c(rep(0,3), rep(1,7)) + 0.01*rnorm(10)
+  y <- c(rep(0,5), rep(1,5)) + 0.01*rnorm(10)
   res <- .find_breakpoint(y, 1, 10)
 
   expect_true(length(res) == 2)
@@ -92,7 +91,7 @@ test_that("binSeg_fixedSteps works on one jump", {
   y <- c(rep(0, 10), rep(1, 10)) + 0.01*rnorm(20)
   res <- binSeg_fixedSteps(y, 1)
 
-  expect_true(length(res) == 4)
+  expect_true(length(res) == 5)
   expect_true(class(res) == "bsFs")
   expect_true(class(res$tree)[1] == "Node")
   expect_true(res$tree$breakpoint == 10)

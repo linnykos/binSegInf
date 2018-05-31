@@ -34,3 +34,44 @@ test_that("Algorithm output is the same as wbs:sbs() each time", {
     }
 })
 
+
+
+context("Test binary segmentation with fixed threshold")
+
+## Data settings
+numIntervals = 10
+n = 20
+threshold = 2
+lev = 0
+sigma = 1
+
+test_that("bsFt polyhedra is correct.", {
+  
+  ## Generate data, run algorithm
+  ## set.seed(0) gives single changepoint at -5
+  mn <- rep(c(0,lev), each=n/2)
+  y0 <- mn + rnorm(n, 0, sigma)
+  thresh = 1
+  obj = binSeg_fixedThresh(y0, thresh, verbose=FALSE, return.env=FALSE)
+  
+  ## Check that
+  mypoly = polyhedra(obj, verbose=TRUE)
+  nsim = 1000
+  for(isim in 1:nsim){
+    ynew = y0 + rnorm(n,0,0.1)
+    objnew = binSeg_fixedThresh(ynew, thresh, verbose=FALSE,
+                                return.env=FALSE)
+    if(all(mypoly$gamma %*% cbind(ynew) >= mypoly$u)){
+      expect_equal(obj$cp*obj$cp.sign, objnew$cp*obj$cp.sign)
+    } else {
+      expect_true(all.equal(obj$cp*obj$cp.sign, objnew$cp*obj$cp.sign)==FALSE | length(objnew$cp)==0)
+    }
+  }
+  ## obj$cp*obj$cp.sign
+  ## objnew$cp*obj$cp.sign
+})
+
+
+
+
+
