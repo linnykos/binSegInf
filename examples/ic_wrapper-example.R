@@ -1,8 +1,0 @@
-set.seed(1)
-y = c(rnorm(10),rnorm(10)+5,rnorm(10))
-sigma = 1 
-## obj = wildBinSeg_fixedSteps(y,10)
-obj <- list(cp = c(10,20,25,13,17,5))##Make some fake changepoints
-poly <- ic_wrapper(obj = obj, y = y, consec=2, maxsteps=length(cp), sigma,
-                   type = "bic")$poly
-print(poly)

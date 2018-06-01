@@ -86,6 +86,7 @@ pvalue <- function(y, polyhedra, contrast, sigma = 1, null_mean = 0,
 
 
 ##' Temporarily added from selectiveInference package.
+##' @export
 poly.pval <- function(y, G, u, v, sigma, bits=NULL) {
   z = sum(v*y)
   vv = sum(v^2)
@@ -268,8 +269,9 @@ pval_plugin <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
     if(weight){  w = denom ; return(w) }
 }
 
-##' Calculating TG p-value from bootstrapping residuals
-pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, bootmat.times.v=NULL, sigma=1, adjustmean=NULL){
+##' Calculating TG p-value from bootstrapped residuals
+##' @export
+poly_pval_bootsub <- function(y, G, v, nboot=1000, bootmat=NULL, bootmat.times.v=NULL, sigma=1, adjustmean=NULL){
         obj = poly.pval(y=y, G=G, v=v, u=rep(0,nrow(G)), sigma=sigma)
         Vlo = obj$vlo
         Vup = obj$vup
@@ -279,6 +281,8 @@ pval_plugin_wrapper <- function(y, G, v, nboot=1000, bootmat=NULL, bootmat.times
         return(p)
 }
 
+pval_plugin_wrapper = poly_pval_bootsub
+pval_plugin = poly_pval_bootsub_inner
 
 ##' Computes TG p-value and related objects (vlo,vup,vty,denom,numer) in the
 ##' case that Gy and Gv are pre-calculated; the option
