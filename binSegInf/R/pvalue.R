@@ -241,7 +241,7 @@ poly.pval2 <- function(y, poly=NULL, v, sigma, vup=NULL, vlo=NULL, bits=NULL, re
 ##' @param weight if TRUE, returns denominator of TG; if FALSE, returns entire
 ##'     p-value.
 ##' @return p-value or weight, depending on \code{weight} input.
-pval_plugin <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
+poly_pval_bootsub_inner <- function(Vlo, Vup, vty, v, y=NULL, nboot=1000, bootmat=NULL,
                         weight=FALSE, bootmat.times.v=NULL, adjustmean=adjustmean){
 
     ## Calculate bootstrapped v^T(y^*-\bar y).
@@ -281,8 +281,8 @@ poly_pval_bootsub <- function(y, G, v, nboot=1000, bootmat=NULL, bootmat.times.v
         return(p)
 }
 
-pval_plugin_wrapper = poly_pval_bootsub
 pval_plugin = poly_pval_bootsub_inner
+pval_plugin_wrapper = poly_pval_bootsub
 
 ##' Computes TG p-value and related objects (vlo,vup,vty,denom,numer) in the
 ##' case that Gy and Gv are pre-calculated; the option
