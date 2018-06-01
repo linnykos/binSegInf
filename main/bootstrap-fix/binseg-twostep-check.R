@@ -40,25 +40,20 @@ binseg_twostep <- function(y){
     weights.binseg = apply(base.coef, 1, function(myrow)1/sqrt(sum(myrow^2)))
     binseg.coef = base.coef * weights.binseg
     B = binseg.coef
-
-    ## Second step binary segmentation
     cp2 = which.max(abs(B %*% y))
     s2 = sign(sum(B[cp2,]*y))
     G2[1:(n-3),] = t(s2*B[cp2,] - t(B[-cp2,]))
     G2[(n-2):(2*n-6),] = t(s2*B[cp2,] + t(B[-cp2,]))
-
     gamma = rbind(G1,G2)
-    ## return(list(gamma=gamma, u=rep(0, nrow(gamma)), G1=G1, G2=G2,
-    ##             y=y, cp=c(cp1,cp2), cp.sign=c(s1,s2)))
 
     ## Form the two contrasts
     vlist = make_all_segment_contrasts_from_cp(c(cp1,cp2), c(s1,s2), n, "unitnorm")
     v1 = vlist[[1]]
     v2 = vlist[[2]]
 
+    ## Calculate p-values
     p1 = pval(y, gamma, v1)$p
     p2 = pval(y, gamma, v2)$p
-
     pvs = c(p1,p2)
     names(pvs) = c(cp1,cp2)
     

@@ -1,5 +1,5 @@
 #' TG confidence interval from post-selection inference. Assumes that one-sided
-#' test is in the right-sided direction i.e. H_0: v^T\mu>0.
+#' test is in the right-sided direction i.e. H_0: v^T mu>0.
 #'
 #' @param y numeric vector
 #' @param polyhedra polyhedra object
@@ -48,13 +48,6 @@ confidence_interval <- function(y, polyhedra, contrast, sigma = 1, alpha = 0.05,
 }
 
 
-## TODO: when committing, this goes in as a commit message:
-## Just so you know (Kevin), I'm replacing parts of your confidence interval function, especially the part that inserts get_nonzero_mean_pv_fun()
-## - There is about a 4-5 times speedup.
-## - You wrote an option called |alpha| that actually means 1-\alpha, if we follow the convention that \alpha to be the significance level of a test.
-## - The grid of $v^T\mu$ you were searching for was too small; I added an option called |fac|, which defaults to 10 that allows for c(-fac*diff, fac*diff), instead of the c(-2*diff, 2*diff) that you originally wrote.
-
-
 ##' Selects the index of \code{vec} that is larger than \code{alpha}. Or
 ##' something like that.
 .select_index <- function(vec, alpha, lower = T){
@@ -98,15 +91,16 @@ get_nonzero_mean_pv_fun <- function(y, G, u, v, sigma, alpha,
 
 
 ##' A more barebones, readable version of a one-sided CI from a
-##' right-sided-alternative TG test. Matches the output of confidence_interval()
-##' when using the \code{alternative="one-sided"} option.
+##' right-sided-alternative TG test. Matches the output of
+##' \code{confidence_interval()} when using the \code{alternative="one-sided"}
+##' option.
 my.one.sided.ci <- function(y,poly,contrast,sigma,alpha,fac=10,
                             gridsize=250, griddepth=2){
     ## Basic check
     if(sum(contrast*y)<0) warning("Is your contrast designed for a right-direction one-sided
 test? I doubt it, since you currently have a negative sum(contrast*y)..")
 
-    ## Make a range of v^T\mu to scan over.
+    ## Make a range of v^T mu to scan over.
     diff <- max(y) - min(y)
     seq.val <- seq(-fac*diff, fac*diff, length.out = gridsize)
 

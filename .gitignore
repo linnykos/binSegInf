@@ -12,5 +12,6 @@
 main/figures/
 man/
 output/
-binSegInf/NAMESPACE
+*NAMESPACE
 *.Rd
+*.tar.gz

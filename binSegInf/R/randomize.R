@@ -1,8 +1,35 @@
-##' Synopsis: noise-added saturated inference, for fused lasso or binary
-##' segmentation (really, any method that creates a valid polyhedron and has $cp
-##' and $cp.sign)
+##' Conduct noise-added saturated model inference, for fused lasso or binary
+##' segmentation (But also applies to sequential changepoint methods that
+##' creates a valid polyhedron and has $cp and $cp.sign, like fused lasso from
+##' the genlassoinf::dualpathSvd2()). Implements an importance sampling scheme.
+##' @param y Data
+##' @param sigma Gaussian noise standard deviation in data around mean.
+##' @param sigma.add Amount of Gaussian noise to add. NOTE if equal to zero,
+##'     then reverts back to a non-marginalized noise addition.
+##' @param v Test contrast vector. This is assumed to be fixed in the model
+##'     selection event.
+##' @param orig.fudged.poly Original polyhedron object (of class
+##'     \code{polyhedra}) from adding a single noise.
+##' @param numSteps Number of steps originally taken. Defaults to \code{NA}.
+##' @param numIS Number of importance sampling replicates originally
+##'     desired. The importance sampling continues until there are
+##'     \code{min.num.things} number of valid importance sampling draws.
+##' @param max.numIS Maximum number of importance sampling replicates to take.
+##' @param inference.type If equal to "rows", then the calculation of TG
+##'     statistics is done without modification. If equal to "pre-multiply",
+##'     then internally Gy = \eqn{\Gamma y} and Gv = \eqn{\Gamma v}. This serves
+##'     two purposes: first, if each polyhedra is too big in the first place,
+##'     this helps. Secondly, it speeds up calculation considerably
+##'     (poly_pval_from_inner_products() does this work, given Gv and Gy.)
+##' @param ic.poly Polyhedron of the (2-rise) stopping event.
+##' @param mc.cores Number of cores to use for importance sampling. Defaults to
+##'     \code{1}.
+##' @param start.time Start time of running time; usually output from
+##'     \code{Sys.time()}.
+##' @param verbose If \code{TRUE}, the importance sampling progress
+##' @export
 randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
-                               numSteps=NA, numIS, bits=50,
+                               numSteps=NA, numIS, bits=1000,
                                orig.fudged.obj = NULL, ic.poly=NULL,
                                max.numIS=2000,
                                inference.type = c("rows", "pre-multiply"),
@@ -16,7 +43,6 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     inference.type = match.arg(inference.type)
     if(sigma.add==0) numIS=max.numIS=1
 
-
     ## If applicable, append IC poly to the original poly
     poly = orig.fudged.poly
     if(!is.null(ic.poly)){
@@ -24,7 +50,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
         poly$u = c(poly$u, ic.poly$u)
     }
 
-    ##' Helper function
+    ## Helper function
     one_IS_addnoise = function(isim, numIS.cumulative){
         if(verbose) {printprogress(isim+numIS.cumulative, numIS+numIS.cumulative,
                                   "importance sampling replicate",
@@ -108,9 +134,38 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
                 pv=pv, sigma=sigma, v=v, parts=parts))
 }
 
-##' Synopsis: randomization wrapper for WBS.
+
+##' Conduct randomized inference for WBS. Implements an importance sampling
+##' scheme.
+##' @param y Data
+##' @param sigma Gaussian noise standard deviation in data around mean.
+##' @param winning.wbs.obj Winning WBS object of class \code{wbsFs}.
+##' @param v Test contrast vector. This is assumed to be fixed in the model
+##'     selection event.
+##' @param orig.fudged.poly Original polyhedron object (of class
+##'     \code{polyhedra}) from adding a single noise.
+##' @param numSteps Number of steps originally taken. Defaults to \code{NA}.
+##' @param numIS Number of importance sampling replicates originally
+##'     desired. The importance sampling continues until there are
+##'     \code{min.num.things} number of valid importance sampling draws.
+##' @param max.numIS Maximum number of importance sampling replicates to take.
+##' @param inference.type If equal to "rows", then the calculation of TG
+##'     statistics is done without modification. If equal to "pre-multiply",
+##'     then internally Gy = \eqn{\Gamma y} and Gv = \eqn{\Gamma v}. This serves
+##'     two purposes: first, if each polyhedra is too big in the first place,
+##'     this helps. Secondly, it speeds up calculation considerably
+##'     (poly_pval_from_inner_products() does this work, given Gv and Gy.)
+##' @param ic.poly Polyhedron of the (2-rise) stopping event.
+##' @param mc.cores Number of cores to use for importance sampling. Defaults to
+##'     \code{1}.
+##' @param start.time Start time of running time; usually output from
+##'     \code{Sys.time()}.
+##' @param bits Number of precision bits to use for the calculation of the
+##'     Gaussian probabilities (regarding Vup and Vlo and vty).
+##' @param verbose If \code{TRUE}, the importance sampling progress
+##' @export 
 randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
-                            comprehensive=FALSE, inference.type=c("rows", "pre-multiply"),
+                            inference.type=c("rows", "pre-multiply"),
                             cumsum.y=NULL,cumsum.v=NULL, stop.time=min(winning.wbs.obj$numSteps,
                                                                        length(winning.wbs.obj$cp)),
                             ic.poly=NULL, bits=50, max.numIS=2000,
@@ -126,7 +181,6 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
     if(inference.type=="pre-multiply" & (is.null(cumsum.y) | is.null(cumsum.v)) ){
         stop("Provide cumulative sums of y and v, if you want to use the pre-multiply option.")
     }
-    if(comprehensive) numIS=1
 
     ## Helper function (bundler) for a single importance sampling replicate
     one_IS_wbs = function(isim, numIS.cumulative){

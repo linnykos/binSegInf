@@ -1,10 +1,15 @@
 ## Synopsis: Using the bootstrap plugin of 5.2 in asympinf paper (but with our
 ## /known/ residuals instead of $Y-\bar Y$); producing *NONNULL* p-values
-
-library(smoothmest)
-source("../main/bootstrap-fix/helpers.R")
 outputdir = "../output"
-la("~/repos/genlassoinf/genlassoinf/")
+
+## A set of error functions to use for simulations.
+lapl <- function(n,samp=NULL){ rexp(n,rate=sqrt(2)) * sample(c(-1,1),n,replace=TRUE)}
+rt2 <- function(n,samp=NULL){ rt(n, df=2) }
+rt3 <- function(n,samp=NULL,scale=FALSE){
+    df = 3
+    if(scale){ std = sqrt(df/(df-2)) } else { std = 1 }
+    return(rt(n, df=3)/std)
+}
 
 ## Simulation settings
 nrep = 5000
