@@ -187,7 +187,7 @@ is_valid.wbsFs <- function(obj){
 
 
 ##' Polyhedra export function.
-##' @param obj Object of class |wbsFs|.
+##' @param obj Object of class |wbsFs|
 ##' @return object of class |polyhedra|.
 ##' @export
 polyhedra.wbsFs <- function(obj){
