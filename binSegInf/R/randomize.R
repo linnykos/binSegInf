@@ -204,7 +204,7 @@ randomize_wbsfs <- function(v, winning.wbs.obj, numIS = 100, sigma,
 
     ## Actual importance sampling is run here
     done = FALSE
-    parts.so.far = cbind(c(Inf,Inf,Inf,Inf,Inf,Inf))[,-1,drop=FALSE]
+    parts.so.far = cbind(c(Inf,Inf))[,-1,drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight")
     numIS.cumulative=0
     while(!done){
