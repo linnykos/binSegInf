@@ -103,7 +103,7 @@ randomize_addnoise <- function(y, sigma, sigma.add, v, orig.fudged.poly=NULL,
     }
 
     ## Importance-sample until you have some amount of variation.
-    parts.so.far = cbind(c(Inf, Inf, Inf, Inf, Inf, Inf))[,-1,drop=FALSE]
+    parts.so.far = cbind(c(Inf, Inf, Inf, Inf, Inf, Inf))[,-1, drop=FALSE]
     rownames(parts.so.far) = c("pv", "weight", "vlo", "vty", "vup", "sigma")
     numIS.cumulative = 0
     done = FALSE

@@ -162,6 +162,7 @@ wildBinSeg_fixedSteps <- function(y, numSteps, numIntervals=NULL,
 
 
 ##' Print function for convenience, of |wbs| class object.
+##' @export
 print.wbsFs <- function(obj){
     if(obj$mimic) cat("Mimicked object!", fill=TRUE)
     cat("Detected changepoints using WBS with", obj$numSteps, "steps is", obj$cp * obj$cp.sign, fill=TRUE)
