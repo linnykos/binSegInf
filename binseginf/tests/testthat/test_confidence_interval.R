@@ -133,8 +133,8 @@ test_that("Coverage is correct.", {
     onesim <- function(){
         ## Grid of values for $v^T\theta$.
         y = rnorm(n,0,sigma)
-        g = binSegInf::binSeg_fixedSteps(y,1)
-        p = binSegInf::polyhedra(g)
+        g = binseginf::binSeg_fixedSteps(y,1)
+        p = binseginf::polyhedra(g)
         contrast = make_all_segment_contrasts(g)[[1]]
 
         ## 1. The actual inner function of the official ci function
@@ -167,8 +167,8 @@ testthat("One-sided confidence interval under a particular setting is correct.")
      set.seed(0)
      sigma=1
      y = runif(n,0,sigma)
-     g = binSegInf::binSeg_fixedSteps(y,1)
-     p = binSegInf::polyhedra(g)
+     g = binseginf::binSeg_fixedSteps(y,1)
+     p = binseginf::polyhedra(g)
      contrast = make_all_segment_contrasts(g)[[1]]
 
      expect_equal(all.equal(confidence_interval(y,p, contrast,sigma=1,alpha=alph,alternative="one.sided", fac=10),
