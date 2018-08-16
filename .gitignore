@@ -12,6 +12,5 @@
 main/figures/
 man/
 output/
-*NAMESPACE
 *.Rd
 *.tar.gz
